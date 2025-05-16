@@ -4,8 +4,9 @@
  */
 package managementtrevel.LoginAndRegist;
 
-import managementtrevel.LoginAndRegist.LoginUser;
 import javax.swing.JOptionPane;
+
+import views.Auth.LoginUser;
 
 /**
  *
