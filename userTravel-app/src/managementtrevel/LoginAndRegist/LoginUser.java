@@ -6,8 +6,8 @@ package managementtrevel.LoginAndRegist;
 
 import javax.swing.JOptionPane;
 
-import views.HomeUser.HomeScreen;
-
+import managementtrevel.LoginAndRegist.LoginUser;
+import managementtrevel.HomeUser.HomeScreen;;
 
 /**
  *

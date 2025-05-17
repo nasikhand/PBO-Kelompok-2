@@ -6,7 +6,7 @@ package managementtrevel.LoginAndRegist;
 
 import javax.swing.JOptionPane;
 
-import views.Auth.LoginUser;
+import managementtrevel.LoginAndRegist.LoginUser;;
 
 /**
  *
