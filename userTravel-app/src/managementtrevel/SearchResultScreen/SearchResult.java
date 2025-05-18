@@ -1,3 +1,7 @@
+package managementtrevel.SearchResultScreen;
+
+import managementtrevel.TripDetailScreen.TripDetail;
+
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
@@ -36,7 +40,7 @@ public class SearchResult extends javax.swing.JFrame {
         jLabel4 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         label1 = new java.awt.Label();
-        jButton2 = new javax.swing.JButton();
+        btn_detail = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
@@ -118,10 +122,10 @@ public class SearchResult extends javax.swing.JFrame {
         label1.setBackground(new java.awt.Color(153, 153, 153));
         label1.setText("FOTO");
 
-        jButton2.setText("Detail");
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
+        btn_detail.setText("Detail");
+        btn_detail.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
+                btn_detailActionPerformed(evt);
             }
         });
 
@@ -158,7 +162,7 @@ public class SearchResult extends javax.swing.JFrame {
                             .addComponent(jLabel7))
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addComponent(jButton2)
+                        .addComponent(btn_detail)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 35, Short.MAX_VALUE)
                         .addComponent(jButton3)
                         .addGap(105, 105, 105))))
@@ -177,7 +181,7 @@ public class SearchResult extends javax.swing.JFrame {
                         .addComponent(jLabel7)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton2)
+                    .addComponent(btn_detail)
                     .addComponent(jButton3))
                 .addContainerGap(25, Short.MAX_VALUE))
         );
@@ -258,9 +262,10 @@ public class SearchResult extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_jComboBox1ActionPerformed
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton2ActionPerformed
+    private void btn_detailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_detailActionPerformed
+        new TripDetail().show();
+        this.dispose();
+    }//GEN-LAST:event_btn_detailActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
         // TODO add your handling code here:
@@ -306,8 +311,8 @@ public class SearchResult extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btn_detail;
     private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
