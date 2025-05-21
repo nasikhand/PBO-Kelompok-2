@@ -5,7 +5,11 @@
 package views.Auth;
 
 import db.Koneksi;
+import model.UserModel;
+
 import javax.swing.JOptionPane;
+
+import controller.AuthController;
 import views.HomeUser.HomeScreen;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -203,46 +207,31 @@ public class LoginUser extends javax.swing.JFrame {
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
 
         String email = txt_email.getText();
-        String password = new String(txt_password.getPassword()); 
+        String password = new String(txt_password.getPassword());
 
-        if(txt_email.getText().equals("")){
-            JOptionPane.showMessageDialog(null,"Email Harus Diisi");
-            txt_email.requestFocus();
-        }else if(txt_password.getText().equals("")){
-            JOptionPane.showMessageDialog(null,"Password Harus Diisi");
-            txt_password.requestFocus();
-        }
+    if(email.isEmpty()){
+        JOptionPane.showMessageDialog(null,"Email Harus Diisi");
+        txt_email.requestFocus();
+        return;
+    }
+    if(password.isEmpty()){
+        JOptionPane.showMessageDialog(null,"Password Harus Diisi");
+        txt_password.requestFocus();
+        return;
+    }
 
-        // ✅ Cek default admin dulu
-        if (email.equals("123") && password.equals("123")) {
-            JOptionPane.showMessageDialog(null, "Login sebagai admin default");
-            new HomeScreen().show();
-            this.dispose();
-            return; // berhenti di sini, tidak lanjut cek database
-        }
+    AuthController auth = new AuthController();
+    UserModel loggedUser = auth.login(email, password);
 
-        try {
-            Connection conn = Koneksi.getConnection();
-            String sql = "SELECT * FROM user WHERE email = ? AND password = ?";
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setString(1, email);
-            stmt.setString(2, password); // untuk keamanan, sebaiknya gunakan hash
+    if(loggedUser != null){
+        JOptionPane.showMessageDialog(null, "Login berhasil, Selamat datang " + loggedUser.getNamaLengkap());
+        new HomeScreen().show();
+        this.dispose();
+    } else {
+        JOptionPane.showMessageDialog(null, "Email atau password salah");
+    }
 
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                JOptionPane.showMessageDialog(null, "Login berhasil");
-                new HomeScreen().show();
-                this.dispose();
-            } else {
-                JOptionPane.showMessageDialog(null, "Email atau password salah");
-            }
-
-            rs.close();
-            stmt.close();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Terjadi kesalahan: " + e.getMessage());
-        }
+        
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void RegisterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RegisterActionPerformed
