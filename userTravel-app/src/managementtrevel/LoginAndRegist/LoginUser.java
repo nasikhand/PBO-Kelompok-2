@@ -4,10 +4,13 @@
  */
 package managementtrevel.LoginAndRegist;
 
+ 
+import controller.AuthController;
 import javax.swing.JOptionPane;
 
-import managementtrevel.LoginAndRegist.LoginUser;
-import managementtrevel.HomeUser.HomeScreen;;
+import managementtrevel.HomeUser.HomeScreen;
+import model.UserModel;
+
 
 /**
  *
@@ -197,18 +200,30 @@ public class LoginUser extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        if(txt_email.getText().equals("")){
+        
+        String email = txt_email.getText();
+        String password = new String(txt_password.getPassword());
+
+        if(email.isEmpty()){
             JOptionPane.showMessageDialog(null,"Email Harus Diisi");
             txt_email.requestFocus();
-        }else if(txt_password.getText().equals("")){
+            return;
+        }
+        if(password.isEmpty()){
             JOptionPane.showMessageDialog(null,"Password Harus Diisi");
             txt_password.requestFocus();
-        }else if(txt_email.getText().contains("123") && txt_password.getText().contains("123")){
+            return;
+        }
+
+        AuthController auth = new AuthController();
+        UserModel loggedUser = auth.login(email, password);
+
+        if(loggedUser != null){
+            JOptionPane.showMessageDialog(null, "Login berhasil, Selamat datang " + loggedUser.getNamaLengkap());
             new HomeScreen().show();
             this.dispose();
-        }
-        else{
-            JOptionPane.showMessageDialog(null,"Username atau Password Tidak Sesuai");
+        } else {
+            JOptionPane.showMessageDialog(null, "Email atau password salah");
         }
     }//GEN-LAST:event_jButton3ActionPerformed
 

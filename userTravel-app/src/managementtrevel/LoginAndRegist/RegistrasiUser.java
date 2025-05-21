@@ -4,6 +4,7 @@
  */
 package managementtrevel.LoginAndRegist;
 
+import controller.RegisterController;
 import managementtrevel.LoginAndRegist.LoginUser;
 import javax.swing.JOptionPane;
 
@@ -256,9 +257,22 @@ public class RegistrasiUser extends javax.swing.JFrame {
             txt_alamat.requestFocus();
         }
         else{
-            JOptionPane.showMessageDialog(null,"Registrasi Berhasil, Silahkan Login Kembali");
-            new LoginUser().show();
-            this.dispose();
+            RegisterController controller = new RegisterController();
+            // Panggil controller register
+            boolean sukses = controller.register(
+                txt_username.getText(),
+                txt_email.getText(),
+                txt_password.getText()
+            );
+
+            if (sukses) {
+                JOptionPane.showMessageDialog(null,"Registrasi Berhasil, Silahkan Login Kembali");
+                new LoginUser().show();
+                this.dispose();
+            } else {
+                JOptionPane.showMessageDialog(null,"Email sudah terdaftar, gunakan email lain");
+                txt_email.requestFocus();
+            }
         }
     }//GEN-LAST:event_jButton3ActionPerformed
 
