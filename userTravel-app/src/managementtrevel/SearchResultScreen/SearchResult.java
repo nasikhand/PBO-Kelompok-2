@@ -66,6 +66,16 @@ public class SearchResult extends javax.swing.JFrame {
         btn_selanjutnya = new javax.swing.JButton();
         jLabel8 = new javax.swing.JLabel();
         btn_back = new javax.swing.JButton();
+        jPanel4 = new javax.swing.JPanel();
+        label2 = new java.awt.Label();
+        btn_detail1 = new javax.swing.JButton();
+        btn_bookingcepat1 = new javax.swing.JButton();
+        jLabel9 = new javax.swing.JLabel();
+        tf_namakota1 = new javax.swing.JTextField();
+        tf_hari1 = new javax.swing.JTextField();
+        tf_orang2 = new javax.swing.JTextField();
+        tf_orang3 = new javax.swing.JTextField();
+        tf_harga1 = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -126,7 +136,7 @@ public class SearchResult extends javax.swing.JFrame {
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cb_durasi, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 203, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 341, Short.MAX_VALUE)
                 .addComponent(btn_reset)
                 .addContainerGap())
         );
@@ -135,6 +145,8 @@ public class SearchResult extends javax.swing.JFrame {
 
         jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel4.setText("Hasil Search:");
+
+        jPanel3.setBackground(new java.awt.Color(255, 255, 255));
 
         label1.setAlignment(java.awt.Label.CENTER);
         label1.setBackground(new java.awt.Color(153, 153, 153));
@@ -157,27 +169,22 @@ public class SearchResult extends javax.swing.JFrame {
         jLabel7.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel7.setText("Harga:");
 
-        tf_namakota.setBackground(new java.awt.Color(242, 242, 242));
         tf_namakota.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         tf_namakota.setText("Nama kota");
         tf_namakota.setBorder(null);
 
-        tf_hari.setBackground(new java.awt.Color(242, 242, 242));
         tf_hari.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         tf_hari.setText("...Hari");
         tf_hari.setBorder(null);
 
-        tf_orang.setBackground(new java.awt.Color(242, 242, 242));
         tf_orang.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         tf_orang.setText("...Orang");
         tf_orang.setBorder(null);
 
-        tf_orang1.setBackground(new java.awt.Color(242, 242, 242));
         tf_orang1.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         tf_orang1.setText("Rating");
         tf_orang1.setBorder(null);
 
-        tf_harga.setBackground(new java.awt.Color(242, 242, 242));
         tf_harga.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         tf_harga.setText("Rp...");
         tf_harga.setBorder(null);
@@ -193,7 +200,7 @@ public class SearchResult extends javax.swing.JFrame {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(btn_detail)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 35, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 47, Short.MAX_VALUE)
                         .addComponent(btn_bookingcepat)
                         .addGap(105, 105, 105))
                     .addGroup(jPanel3Layout.createSequentialGroup()
@@ -232,7 +239,7 @@ public class SearchResult extends javax.swing.JFrame {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btn_detail)
                     .addComponent(btn_bookingcepat))
-                .addContainerGap(25, Short.MAX_VALUE))
+                .addContainerGap(37, Short.MAX_VALUE))
         );
 
         btn_sebelum.setText("< Sebelum");
@@ -255,6 +262,102 @@ public class SearchResult extends javax.swing.JFrame {
             }
         });
 
+        jPanel4.setBackground(new java.awt.Color(255, 255, 255));
+
+        label2.setAlignment(java.awt.Label.CENTER);
+        label2.setBackground(new java.awt.Color(153, 153, 153));
+        label2.setText("FOTO");
+
+        btn_detail1.setText("Detail");
+        btn_detail1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_detail1ActionPerformed(evt);
+            }
+        });
+
+        btn_bookingcepat1.setText("Booking Cepat");
+        btn_bookingcepat1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_bookingcepat1ActionPerformed(evt);
+            }
+        });
+
+        jLabel9.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel9.setText("Harga:");
+
+        tf_namakota1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        tf_namakota1.setText("Nama kota");
+        tf_namakota1.setBorder(null);
+
+        tf_hari1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        tf_hari1.setText("...Hari");
+        tf_hari1.setBorder(null);
+
+        tf_orang2.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        tf_orang2.setText("...Orang");
+        tf_orang2.setBorder(null);
+
+        tf_orang3.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        tf_orang3.setText("Rating");
+        tf_orang3.setBorder(null);
+
+        tf_harga1.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        tf_harga1.setText("Rp...");
+        tf_harga1.setBorder(null);
+
+        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+        jPanel4.setLayout(jPanel4Layout);
+        jPanel4Layout.setHorizontalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addGap(25, 25, 25)
+                .addComponent(label2, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(31, 31, 31)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addComponent(btn_detail1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btn_bookingcepat1)
+                        .addGap(105, 105, 105))
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel4Layout.createSequentialGroup()
+                                .addComponent(jLabel9)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(tf_harga1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(jPanel4Layout.createSequentialGroup()
+                                .addComponent(tf_namakota1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(tf_hari1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(tf_orang2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(tf_orang3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+        );
+        jPanel4Layout.setVerticalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addGap(25, 25, 25)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(label2, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(tf_namakota1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(tf_hari1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(tf_orang2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(tf_orang3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel9)
+                            .addComponent(tf_harga1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btn_detail1)
+                    .addComponent(btn_bookingcepat1))
+                .addContainerGap(25, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -271,9 +374,10 @@ public class SearchResult extends javax.swing.JFrame {
                         .addGap(115, 115, 115))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                 .addComponent(jLabel4)
-                                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addComponent(btn_back)
                                 .addGap(417, 417, 417)))
@@ -288,7 +392,9 @@ public class SearchResult extends javax.swing.JFrame {
                 .addComponent(jLabel4)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 142, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
+                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btn_sebelum, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btn_selanjutnya)
@@ -342,6 +448,14 @@ public class SearchResult extends javax.swing.JFrame {
         this.dispose();
     }//GEN-LAST:event_btn_backActionPerformed
 
+    private void btn_detail1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_detail1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btn_detail1ActionPerformed
+
+    private void btn_bookingcepat1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_bookingcepat1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btn_bookingcepat1ActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -380,7 +494,9 @@ public class SearchResult extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btn_back;
     private javax.swing.JButton btn_bookingcepat;
+    private javax.swing.JButton btn_bookingcepat1;
     private javax.swing.JButton btn_detail;
+    private javax.swing.JButton btn_detail1;
     private javax.swing.JButton btn_reset;
     private javax.swing.JButton btn_sebelum;
     private javax.swing.JButton btn_selanjutnya;
@@ -392,14 +508,22 @@ public class SearchResult extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
+    private javax.swing.JPanel jPanel4;
     private java.awt.Label label1;
+    private java.awt.Label label2;
     private javax.swing.JTextField tf_harga;
+    private javax.swing.JTextField tf_harga1;
     private javax.swing.JTextField tf_hari;
+    private javax.swing.JTextField tf_hari1;
     private javax.swing.JTextField tf_namakota;
+    private javax.swing.JTextField tf_namakota1;
     private javax.swing.JTextField tf_orang;
     private javax.swing.JTextField tf_orang1;
+    private javax.swing.JTextField tf_orang2;
+    private javax.swing.JTextField tf_orang3;
     // End of variables declaration//GEN-END:variables
 }

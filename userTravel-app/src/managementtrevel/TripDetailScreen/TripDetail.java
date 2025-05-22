@@ -7,6 +7,7 @@ package managementtrevel.TripDetailScreen;
 import Asset.SidebarPanel;
 import javax.swing.JFrame;
 import javax.swing.JLayeredPane;
+import managementtrevel.BookingScreen.BookingScreen;
 import managementtrevel.HomeUser.HomeScreen;
 
 /**
@@ -56,7 +57,7 @@ public class TripDetail extends javax.swing.JFrame {
         jLabel7 = new javax.swing.JLabel();
         jLabel14 = new javax.swing.JLabel();
         tf_pajak_th = new javax.swing.JTextField();
-        jTextField2 = new javax.swing.JTextField();
+        tf_totalharga = new javax.swing.JTextField();
         tf_orang_th1 = new javax.swing.JTextField();
         tf_base_th = new javax.swing.JTextField();
         lbl_titikdua = new javax.swing.JLabel();
@@ -65,6 +66,7 @@ public class TripDetail extends javax.swing.JFrame {
         tf_hargabase = new javax.swing.JTextField();
         tf_hargaorang = new javax.swing.JTextField();
         tf_hargapajak = new javax.swing.JTextField();
+        jLabel1 = new javax.swing.JLabel();
         btn_book = new javax.swing.JButton();
         jPanel8 = new javax.swing.JPanel();
         jLabel18 = new javax.swing.JLabel();
@@ -104,10 +106,11 @@ public class TripDetail extends javax.swing.JFrame {
                 .addGap(27, 27, 27))
         );
 
+        jPanel6.setBackground(new java.awt.Color(255, 255, 255));
+
         jLabel3.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel3.setText("Trip Details");
 
-        tf_hari1.setBackground(new java.awt.Color(242, 242, 242));
         tf_hari1.setText("... hari");
         tf_hari1.setBorder(null);
         tf_hari1.addActionListener(new java.awt.event.ActionListener() {
@@ -116,7 +119,6 @@ public class TripDetail extends javax.swing.JFrame {
             }
         });
 
-        tf_tanggal.setBackground(new java.awt.Color(242, 242, 242));
         tf_tanggal.setText("Tanggal");
         tf_tanggal.setBorder(null);
         tf_tanggal.addActionListener(new java.awt.event.ActionListener() {
@@ -152,12 +154,13 @@ public class TripDetail extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        jPanel7.setBackground(new java.awt.Color(255, 255, 255));
+
         jLabel7.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel7.setText("Total Harga");
 
         jLabel14.setText("--------------------------------------------------");
 
-        tf_pajak_th.setBackground(new java.awt.Color(242, 242, 242));
         tf_pajak_th.setText("Pajak");
         tf_pajak_th.setBorder(null);
         tf_pajak_th.addActionListener(new java.awt.event.ActionListener() {
@@ -166,16 +169,14 @@ public class TripDetail extends javax.swing.JFrame {
             }
         });
 
-        jTextField2.setBackground(new java.awt.Color(242, 242, 242));
-        jTextField2.setText("Total:");
-        jTextField2.setBorder(null);
-        jTextField2.addActionListener(new java.awt.event.ActionListener() {
+        tf_totalharga.setText("Rp....");
+        tf_totalharga.setBorder(null);
+        tf_totalharga.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextField2ActionPerformed(evt);
+                tf_totalhargaActionPerformed(evt);
             }
         });
 
-        tf_orang_th1.setBackground(new java.awt.Color(242, 242, 242));
         tf_orang_th1.setText("...Orang");
         tf_orang_th1.setBorder(null);
         tf_orang_th1.addActionListener(new java.awt.event.ActionListener() {
@@ -184,7 +185,6 @@ public class TripDetail extends javax.swing.JFrame {
             }
         });
 
-        tf_base_th.setBackground(new java.awt.Color(242, 242, 242));
         tf_base_th.setText("Base");
         tf_base_th.setBorder(null);
         tf_base_th.addActionListener(new java.awt.event.ActionListener() {
@@ -199,7 +199,6 @@ public class TripDetail extends javax.swing.JFrame {
 
         lbl_titikdua2.setText(":");
 
-        tf_hargabase.setBackground(new java.awt.Color(242, 242, 242));
         tf_hargabase.setText("Rp");
         tf_hargabase.setBorder(null);
         tf_hargabase.addActionListener(new java.awt.event.ActionListener() {
@@ -208,7 +207,6 @@ public class TripDetail extends javax.swing.JFrame {
             }
         });
 
-        tf_hargaorang.setBackground(new java.awt.Color(242, 242, 242));
         tf_hargaorang.setText("Rp");
         tf_hargaorang.setBorder(null);
         tf_hargaorang.addActionListener(new java.awt.event.ActionListener() {
@@ -217,7 +215,6 @@ public class TripDetail extends javax.swing.JFrame {
             }
         });
 
-        tf_hargapajak.setBackground(new java.awt.Color(242, 242, 242));
         tf_hargapajak.setText("Rp");
         tf_hargapajak.setBorder(null);
         tf_hargapajak.addActionListener(new java.awt.event.ActionListener() {
@@ -225,6 +222,9 @@ public class TripDetail extends javax.swing.JFrame {
                 tf_hargapajakActionPerformed(evt);
             }
         });
+
+        jLabel1.setText("Total Harga");
+        jLabel1.setToolTipText("");
 
         javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
@@ -260,8 +260,10 @@ public class TripDetail extends javax.swing.JFrame {
                         .addContainerGap()
                         .addComponent(jLabel14))
                     .addGroup(jPanel7Layout.createSequentialGroup()
-                        .addGap(31, 31, 31)
-                        .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel1)
+                        .addGap(18, 18, 18)
+                        .addComponent(tf_totalharga, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(22, Short.MAX_VALUE))
         );
         jPanel7Layout.setVerticalGroup(
@@ -287,8 +289,10 @@ public class TripDetail extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel14)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(12, Short.MAX_VALUE))
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(tf_totalharga, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel1))
+                .addContainerGap(139, Short.MAX_VALUE))
         );
 
         btn_book.setText("Book");
@@ -416,34 +420,38 @@ public class TripDetail extends javax.swing.JFrame {
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(178, Short.MAX_VALUE)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(tf_rating1, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tf_namahotel, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(btn_book)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                            .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                            .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(btn_book)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(tf_namakota, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(jPanel8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jPanel9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jPanel10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(tf_hari, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addGap(82, 82, 82))
+                        .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(76, 76, 76))
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(86, 86, 86)
-                .addComponent(btn_back_TD)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(149, 149, 149)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(tf_rating1, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(tf_namahotel, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                    .addComponent(tf_namakota, javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(jPanel8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(jPanel9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(jPanel10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(tf_hari, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(114, 114, 114)
+                        .addComponent(btn_back_TD)))
+                .addContainerGap(104, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -515,7 +523,8 @@ public class TripDetail extends javax.swing.JFrame {
     }//GEN-LAST:event_btn_back_TDActionPerformed
 
     private void btn_bookActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_bookActionPerformed
-        // TODO add your handling code here:
+        new BookingScreen().show();
+        this.dispose();
     }//GEN-LAST:event_btn_bookActionPerformed
 
     private void tf_tanggalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tf_tanggalActionPerformed
@@ -530,9 +539,9 @@ public class TripDetail extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_tf_pajak_thActionPerformed
 
-    private void jTextField2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField2ActionPerformed
+    private void tf_totalhargaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tf_totalhargaActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField2ActionPerformed
+    }//GEN-LAST:event_tf_totalhargaActionPerformed
 
     private void tf_orang_th1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tf_orang_th1ActionPerformed
         // TODO add your handling code here:
@@ -592,6 +601,7 @@ public class TripDetail extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btn_back_TD;
     private javax.swing.JButton btn_book;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel18;
@@ -606,7 +616,6 @@ public class TripDetail extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel7;
     private javax.swing.JPanel jPanel8;
     private javax.swing.JPanel jPanel9;
-    private javax.swing.JTextField jTextField2;
     private javax.swing.JLabel lbl_titikdua;
     private javax.swing.JLabel lbl_titikdua1;
     private javax.swing.JLabel lbl_titikdua2;
@@ -622,5 +631,6 @@ public class TripDetail extends javax.swing.JFrame {
     private javax.swing.JTextField tf_pajak_th;
     private javax.swing.JTextField tf_rating1;
     private javax.swing.JTextField tf_tanggal;
+    private javax.swing.JTextField tf_totalharga;
     // End of variables declaration//GEN-END:variables
 }
