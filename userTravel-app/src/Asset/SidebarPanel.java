@@ -3,7 +3,7 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import managementtrevel.HomeUser.HomeScreen;
-import managementtrevel.HomeUser.ProfileFrame;
+import managementtrevel.HomeUser.UserProfile;
 
 public class SidebarPanel extends JPanel {
     private final int COLLAPSED_WIDTH = 60;
@@ -41,7 +41,7 @@ public class SidebarPanel extends JPanel {
 
         profileButton.addActionListener(e -> {
             SwingUtilities.getWindowAncestor(this).dispose();
-            new ProfileFrame().setVisible(true);
+            new UserProfile().setVisible(true);
         });
 
         logoutButton.addActionListener(e -> {
