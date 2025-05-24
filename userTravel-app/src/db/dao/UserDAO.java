@@ -42,4 +42,46 @@ public class UserDAO {
             return false;
         }
     }
+
+//    Ambil data profil untuk user profile
+    public UserModel findById(int id) {
+        try (Connection conn = Koneksi.getConnection()) {
+            String sql = "SELECT * FROM user WHERE id = ?";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, id);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return new UserModel(
+                    rs.getInt("id"),
+                    rs.getString("nama_lengkap"),
+                    rs.getString("email"),
+                    rs.getString("password"),
+                    rs.getString("nomor_telepon"),
+                    rs.getString("alamat")
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public boolean updateProfile(UserModel user) {
+        try (Connection conn = Koneksi.getConnection()) {
+            String sql = "UPDATE user SET nama_lengkap = ?, email = ?, nomor_telepon = ?, alamat = ? WHERE id = ?";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, user.getNamaLengkap());
+            stmt.setString(2, user.getEmail());
+            stmt.setString(3, user.getNomorTelepon());
+            stmt.setString(4, user.getAlamat());
+            stmt.setInt(5, user.getId());
+            int updated = stmt.executeUpdate();
+            return updated > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 }
