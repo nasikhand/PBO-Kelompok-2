@@ -2,12 +2,12 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
+// Tambahan integrasi ke DashboardAdmin.java
 package view;
-
-import controller.DashboardController;
 
 import javax.swing.*;
 import java.awt.*;
+import controller.DashboardController;
 
 public class DashboardAdmin extends JFrame {
 
@@ -38,37 +38,52 @@ public class DashboardAdmin extends JFrame {
 
         JButton btnDashboard = new JButton("Dashboard");
         JButton btnKelolaPaket = new JButton("Kelola Perjalanan");
+        JButton btnKelolaDestinasi = new JButton("Kelola Destinasi");
+        JButton btnKelolaKota = new JButton("Kelola Kota");
+        JButton btnLaporan = new JButton("Laporan");
 
         btnDashboard.setAlignmentX(Component.LEFT_ALIGNMENT);
         btnKelolaPaket.setAlignmentX(Component.LEFT_ALIGNMENT);
+        btnKelolaDestinasi.setAlignmentX(Component.LEFT_ALIGNMENT);
+        btnKelolaKota.setAlignmentX(Component.LEFT_ALIGNMENT);
+        btnLaporan.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         sidebar.add(btnDashboard);
         sidebar.add(Box.createVerticalStrut(10));
         sidebar.add(btnKelolaPaket);
+        sidebar.add(Box.createVerticalStrut(10));
+        sidebar.add(btnKelolaDestinasi);
+        sidebar.add(Box.createVerticalStrut(10));
+        sidebar.add(btnKelolaKota);
+        sidebar.add(Box.createVerticalStrut(10));
+        sidebar.add(btnLaporan);
 
         // === Content Area (CardLayout) ===
         contentLayout = new CardLayout();
         contentPanel = new JPanel(contentLayout);
         contentPanel.add(makeDashboardPanel(), "dashboard");
         contentPanel.add(new PaketPanel(), "paket");
+        contentPanel.add(new DestinasiPanel(), "destinasi");
+        contentPanel.add(new KotaPanel(), "kota");
+        contentPanel.add(new LaporanPanel(), "laporan");
 
         // === Button Actions ===
         btnDashboard.addActionListener(e -> contentLayout.show(contentPanel, "dashboard"));
         btnKelolaPaket.addActionListener(e -> contentLayout.show(contentPanel, "paket"));
+        btnKelolaDestinasi.addActionListener(e -> contentLayout.show(contentPanel, "destinasi"));
+        btnKelolaKota.addActionListener(e -> contentLayout.show(contentPanel, "kota"));
+        btnLaporan.addActionListener(e -> contentLayout.show(contentPanel, "laporan"));
 
-        // === Layout All ===
         add(sidebar, BorderLayout.WEST);
         add(contentPanel, BorderLayout.CENTER);
 
         setVisible(true);
     }
 
-    // === DASHBOARD PANEL ===
     private JPanel makeDashboardPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
 
-        // Top Stats
         JPanel topInfoPanel = new JPanel(new GridLayout(1, 4, 15, 15));
         topInfoPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
         topInfoPanel.setBackground(Color.WHITE);
@@ -91,7 +106,6 @@ public class DashboardAdmin extends JFrame {
                 DashboardController.getTripsActive() + "<br>Active",
                 new Color(255, 165, 0)));
 
-        // Center Panels
         JPanel centerPanel = new JPanel(new GridLayout(2, 2, 15, 15));
         centerPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 20, 20));
         centerPanel.setBackground(Color.WHITE);
@@ -101,7 +115,6 @@ public class DashboardAdmin extends JFrame {
         centerPanel.add(createBoxPanel("🕒 Recent Booking", "..."));
         centerPanel.add(new JPanel());
 
-        // User Info Footer
         JLabel userInfoLabel = new JLabel("Login sebagai [Admin]", SwingConstants.RIGHT);
         userInfoLabel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         userInfoLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -112,8 +125,6 @@ public class DashboardAdmin extends JFrame {
 
         return panel;
     }
-
-    // === Utility Components ===
 
     private JPanel createStatPanel(String title, String htmlContent, Color bgColor) {
         JPanel panel = new JPanel(new BorderLayout());
@@ -142,4 +153,3 @@ public class DashboardAdmin extends JFrame {
         return panel;
     }
 }
-

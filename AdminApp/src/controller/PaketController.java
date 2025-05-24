@@ -18,7 +18,7 @@ public class PaketController {
         String query = "SELECT * FROM paket_perjalanan";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
+             Statement stmt = conn.createStatement(); 
              ResultSet rs = stmt.executeQuery(query)) {
 
             while (rs.next()) {
