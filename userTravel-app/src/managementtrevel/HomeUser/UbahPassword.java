@@ -4,17 +4,76 @@
  */
 package managementtrevel.HomeUser;
 
+import controller.UbahPasswordController;
+import db.dao.UserDAO;
+import model.Session;
+
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author aldy
  */
 public class UbahPassword extends javax.swing.JFrame {
 
+    // Deklarasi variabel controller dan db dao di sini
+    private UbahPasswordController controller;
+    private UserDAO userDAO;
+    
     /**
      * Creates new form UbahPassword
      */
     public UbahPassword() {
         initComponents();
+
+        // Inisialisasi userDAO dulu (sesuaikan konstruktornya)
+        userDAO = new UserDAO();
+
+        // Buat controller dengan userDAO sebagai parameter
+        controller = new UbahPasswordController(userDAO);
+
+        btn_konfirmasi.addActionListener(e -> {
+            String passwordSekarang = new String(txt_passwordSekarang.getPassword());
+            String passwordBaru = new String(txt_passwordBaru.getPassword());
+            String konfirmasiPasswordBaru = new String(txt_konfirmasiPasswordBaru.getPassword());
+
+            if (!Session.isLoggedIn()) {
+                JOptionPane.showMessageDialog(this, "User belum login!");
+                return;
+            }
+
+            if (!passwordBaru.equals(konfirmasiPasswordBaru)) {
+                JOptionPane.showMessageDialog(this, "Password baru dan konfirmasi tidak sama!");
+                return;
+            }
+
+            if (passwordBaru.length() < 6) {
+                JOptionPane.showMessageDialog(this, "Password baru minimal 6 karakter!");
+                return;
+            }
+
+            // Kirim ke controller untuk validasi password lama dan update password
+            String hasil = controller.ubahPassword(
+                Session.currentUser.getId(),
+                passwordSekarang,  // password lama plain text dikirim ke controller
+                passwordBaru,
+                konfirmasiPasswordBaru
+            );
+
+            JOptionPane.showMessageDialog(this, hasil);
+
+            if (hasil.equals("Password berhasil diubah.")) {
+                // Update session password dengan hash baru jika kamu menyimpan password hashed di session
+                // Kalau session simpan password hashed:
+                // Session.currentUser.setPassword(controller.hashPassword(passwordBaru));
+                // Tapi kalau session simpan plain password, ini juga boleh:
+                Session.currentUser.setPassword(passwordBaru);
+
+                this.dispose();
+                new UserProfile().setVisible(true);
+            }
+        });
+
     }
 
     /**

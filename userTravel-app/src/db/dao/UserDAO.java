@@ -63,8 +63,11 @@ public class UserDAO {
                     rs.getInt("id"),
                     rs.getString("nama_lengkap"),
                     rs.getString("email"),
+                    rs.getString("password"),
                     rs.getString("no_telepon"),
-                    rs.getString("alamat")
+                    rs.getString("alamat"),
+                    rs.getString("gambar") 
+
                 );
             }
         } catch (Exception e) {
@@ -102,5 +105,36 @@ public class UserDAO {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+   public boolean cekPasswordLama(int userId, String passwordLama) {
+        String sql = "SELECT password FROM user WHERE id = ?";
+        try (Connection conn = Koneksi.getConnection();  // buka koneksi di sini
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                String passwordDb = rs.getString("password");
+                return passwordDb.equals(passwordLama);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean updatePassword(int userId, String passwordBaru) {
+        String sql = "UPDATE user SET password = ? WHERE id = ?";
+        try (Connection conn = Koneksi.getConnection();  // buka koneksi di sini
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, passwordBaru);
+            stmt.setInt(2, userId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }
