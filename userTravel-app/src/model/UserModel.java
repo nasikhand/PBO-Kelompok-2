@@ -7,6 +7,7 @@ public class UserModel {
     private String password;
     private String nomorTelepon;
     private String alamat;
+    private String gambar;
 
     // Constructor untuk registrasi (tanpa ID, telepon, alamat)
     public UserModel(String namaLengkap, String email, String password) {
@@ -41,14 +42,15 @@ public class UserModel {
         this.alamat = alamat;
     }
 
-    // Constructor lengkap (6 parameter)
-    public UserModel(int id, String namaLengkap, String email, String password, String nomorTelepon, String alamat) {
+    // Constructor lengkap (7 parameter)
+    public UserModel(int id, String namaLengkap, String email, String password, String nomorTelepon, String alamat, String gambar) {
         this.id = id; 
         this.namaLengkap = namaLengkap;
         this.email = email;
         this.password = password;
         this.nomorTelepon = nomorTelepon;
         this.alamat = alamat;
+        this.gambar = gambar;
     }
 
     // Getter dan Setter
@@ -98,5 +100,13 @@ public class UserModel {
 
     public void setAlamat(String alamat) {
         this.alamat = alamat;
+    }
+
+    public String getGambar() {
+    return gambar;
+    }
+
+    public void setGambar(String gambar) {
+        this.gambar = gambar;
     }
 }

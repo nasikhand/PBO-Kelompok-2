@@ -21,7 +21,8 @@ public class UserDAO {
                     rs.getString("email"),
                     rs.getString("password"),
                     rs.getString("no_telepon"),
-                    rs.getString("alamat")
+                    rs.getString("alamat"),
+                    rs.getString("gambar")
 
                 );
             }
@@ -91,4 +92,15 @@ public class UserDAO {
         }
     }
 
+    public void updateGambar(int userId, String pathGambar) {
+        try (Connection conn = Koneksi.getConnection()) {
+            String sql = "UPDATE user SET gambar = ? WHERE id = ?";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, pathGambar);
+            stmt.setInt(2, userId);
+            stmt.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
