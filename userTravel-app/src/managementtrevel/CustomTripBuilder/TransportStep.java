@@ -3,14 +3,12 @@ package managementtrevel.CustomTripBuilder;
 import Asset.SidebarPanel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
-public class DateStep extends JFrame {
+public class TransportStep extends JFrame {
 
     private JPanel panelBuildSteps;
     private JPanel panelCustomTripMain;
@@ -29,11 +27,18 @@ public class DateStep extends JFrame {
     private JLabel lblCustomTripBuilderTitle;
     private JButton btnSaveTrip;
 
-    private JPanel panelDateSelection;
-    private JLabel lblStartDate;
-    private JTextField txtStartDate;
-    private JLabel lblEndDate;
-    private JTextField txtEndDate;
+    private JPanel panelSelectTransport;
+    private JLabel lblTransportMode;
+    private JComboBox<String> cmbTransportMode;
+    private JLabel lblTransportDetails;
+    private JTextArea txtTransportDetails;
+    private JScrollPane scrollPaneTransportDetails;
+
+    private JPanel panelSuggestTransport;
+    private JLabel lblSuggestTransportInfo;
+
+    private JPanel panelTransportOption;
+    private JLabel lblTransportOptionInfo;
 
     private JPanel panelTripSummary;
     private JLabel lblSummaryStartDateDisplay;
@@ -50,22 +55,23 @@ public class DateStep extends JFrame {
 
     private DefaultListModel<String> listModelDestinasiDisplay;
     private final List<String> currentDestinations;
-    private String selectedStartDate;
-    private String selectedEndDate;
+    private final String currentStartDate;
+    private final String currentEndDate;
 
     private final String ACTIVE_STEP = "● ";
     private final String INACTIVE_STEP = "○ ";
-    private final String START_DATE_PLACEHOLDER = "YYYY-MM-DD";
-    private final String END_DATE_PLACEHOLDER = "YYYY-MM-DD";
 
-    public DateStep(List<String> destinations) {
+    public TransportStep(List<String> destinations, String startDate, String endDate) {
         this.currentDestinations = destinations != null ? destinations : new ArrayList<>();
+        this.currentStartDate = startDate;
+        this.currentEndDate = endDate;
+        
         initializeUI();
         setupLogicAndVisuals();
     }
 
     private void initializeUI() {
-        setTitle("Custom Trip - Select Dates");
+        setTitle("Custom Trip - Select Transport");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1100, 720);
         setMinimumSize(new Dimension(950, 650));
@@ -115,7 +121,7 @@ public class DateStep extends JFrame {
 
         JPanel panelMainHeader = new JPanel(new BorderLayout());
         panelMainHeader.setOpaque(false); 
-        lblCustomTripBuilderTitle = new JLabel("Custom Trip Builder - Select Dates");
+        lblCustomTripBuilderTitle = new JLabel("Custom Trip Builder - Select Transport");
         lblCustomTripBuilderTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         btnSaveTrip = new JButton("[Save]");
         btnSaveTrip.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -134,44 +140,66 @@ public class DateStep extends JFrame {
         panelRightContent.setOpaque(false);
         panelRightContent.setBorder(new EmptyBorder(0,5,0,0)); 
 
-        panelDateSelection = new JPanel(new GridBagLayout());
-        panelDateSelection.setOpaque(false);
-        panelDateSelection.setBorder(BorderFactory.createTitledBorder("Select Travel Dates"));
-        GridBagConstraints gbcDate = new GridBagConstraints();
-        gbcDate.insets = new Insets(10, 10, 10, 10);
-        gbcDate.anchor = GridBagConstraints.WEST;
+        panelSelectTransport = new JPanel(new GridBagLayout());
+        panelSelectTransport.setOpaque(false);
+        panelSelectTransport.setBorder(BorderFactory.createTitledBorder("Select Transport"));
+        GridBagConstraints gbcTransport = new GridBagConstraints();
+        gbcTransport.insets = new Insets(5, 5, 5, 5);
+        gbcTransport.anchor = GridBagConstraints.WEST;
 
-        lblStartDate = new JLabel("Start Date:");
-        lblStartDate.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        gbcDate.gridx = 0; gbcDate.gridy = 0;
-        panelDateSelection.add(lblStartDate, gbcDate);
+        lblTransportMode = new JLabel("Transport Mode:");
+        lblTransportMode.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        gbcTransport.gridx = 0; gbcTransport.gridy = 0;
+        panelSelectTransport.add(lblTransportMode, gbcTransport);
 
-        txtStartDate = new JTextField(15);
-        txtStartDate.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        txtStartDate.setToolTipText("Enter start date in YYYY-MM-DD format");
-        gbcDate.gridx = 1; gbcDate.gridy = 0; gbcDate.fill = GridBagConstraints.HORIZONTAL; gbcDate.weightx = 1.0;
-        panelDateSelection.add(txtStartDate, gbcDate);
+        String[] transportOptions = {"Flight", "Train", "Bus", "Car Rental", "Private Car", "Other"};
+        cmbTransportMode = new JComboBox<>(transportOptions);
+        cmbTransportMode.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        gbcTransport.gridx = 1; gbcTransport.gridy = 0; gbcTransport.fill = GridBagConstraints.HORIZONTAL; gbcTransport.weightx = 1.0;
+        panelSelectTransport.add(cmbTransportMode, gbcTransport);
 
-        lblEndDate = new JLabel("End Date:");
-        lblEndDate.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        gbcDate.gridx = 0; gbcDate.gridy = 1; gbcDate.fill = GridBagConstraints.NONE; gbcDate.weightx = 0;
-        panelDateSelection.add(lblEndDate, gbcDate);
+        lblTransportDetails = new JLabel("Details/Notes:");
+        lblTransportDetails.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        gbcTransport.gridx = 0; gbcTransport.gridy = 1; gbcTransport.fill = GridBagConstraints.NONE; gbcTransport.weightx = 0;
+        panelSelectTransport.add(lblTransportDetails, gbcTransport);
 
-        txtEndDate = new JTextField(15);
-        txtEndDate.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        txtEndDate.setToolTipText("Enter end date in YYYY-MM-DD format");
-        gbcDate.gridx = 1; gbcDate.gridy = 1; gbcDate.fill = GridBagConstraints.HORIZONTAL; gbcDate.weightx = 1.0;
-        panelDateSelection.add(txtEndDate, gbcDate);
+        txtTransportDetails = new JTextArea(5, 20); 
+        txtTransportDetails.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        txtTransportDetails.setLineWrap(true);
+        txtTransportDetails.setWrapStyleWord(true);
+        txtTransportDetails.setToolTipText("Enter flight numbers, pickup locations, company names, etc.");
+        scrollPaneTransportDetails = new JScrollPane(txtTransportDetails);
+        scrollPaneTransportDetails.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        gbcTransport.gridx = 1; gbcTransport.gridy = 1; gbcTransport.fill = GridBagConstraints.BOTH; gbcTransport.weightx = 1.0; gbcTransport.weighty = 0.5; 
+        panelSelectTransport.add(scrollPaneTransportDetails, gbcTransport);
         
-        gbcDate.gridx = 0; gbcDate.gridy = 2; gbcDate.gridwidth = 2; gbcDate.weighty = 1.0;
-        panelDateSelection.add(new JLabel(), gbcDate); 
+        panelSelectTransport.setPreferredSize(new Dimension(0, 180)); 
+        panelLeftContent.add(panelSelectTransport);
 
-        panelLeftContent.add(panelDateSelection);
-        panelLeftContent.add(Box.createVerticalGlue()); 
+        panelSuggestTransport = new JPanel(new BorderLayout());
+        panelSuggestTransport.setOpaque(false);
+        panelSuggestTransport.setBorder(BorderFactory.createTitledBorder("Suggest Transport"));
+        lblSuggestTransportInfo = new JLabel("Transport suggestions will appear here...", JLabel.CENTER);
+        lblSuggestTransportInfo.setFont(new Font("Segoe UI", Font.ITALIC, 12));
+        lblSuggestTransportInfo.setForeground(Color.GRAY);
+        panelSuggestTransport.add(lblSuggestTransportInfo, BorderLayout.CENTER);
+        panelSuggestTransport.setPreferredSize(new Dimension(0, 100));
+        panelLeftContent.add(panelSuggestTransport);
+
+        panelTransportOption = new JPanel(new BorderLayout());
+        panelTransportOption.setOpaque(false);
+        panelTransportOption.setBorder(BorderFactory.createTitledBorder("Transport Option"));
+        lblTransportOptionInfo = new JLabel("Options for selected transport...", JLabel.CENTER);
+        lblTransportOptionInfo.setFont(new Font("Segoe UI", Font.ITALIC, 12));
+        lblTransportOptionInfo.setForeground(Color.GRAY);
+        panelTransportOption.add(lblTransportOptionInfo, BorderLayout.CENTER);
+        panelTransportOption.setPreferredSize(new Dimension(0, 100));
+        panelLeftContent.add(panelTransportOption);
+        panelLeftContent.add(Box.createVerticalGlue());
 
         panelTripSummary = new JPanel(new BorderLayout(5,5));
         panelTripSummary.setOpaque(false);
-        panelTripSummary.setBorder(BorderFactory.createTitledBorder("Trip Summary (Destinations & Dates)"));
+        panelTripSummary.setBorder(BorderFactory.createTitledBorder("Trip Summary"));
         
         JPanel panelSummaryDates = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
         panelSummaryDates.setOpaque(false);
@@ -179,7 +207,7 @@ public class DateStep extends JFrame {
         lblSummaryStartDateDisplay.setFont(new Font("Segoe UI", Font.ITALIC, 11));
         lblSummaryEndDateDisplay = new JLabel("End: N/A");
         lblSummaryEndDateDisplay.setFont(new Font("Segoe UI", Font.ITALIC, 11));
-        panelSummaryDates.add(new JLabel("Selected Dates: "));
+        panelSummaryDates.add(new JLabel("Dates: "));
         panelSummaryDates.add(lblSummaryStartDateDisplay);
         panelSummaryDates.add(new JLabel(" to "));
         panelSummaryDates.add(lblSummaryEndDateDisplay);
@@ -235,67 +263,19 @@ public class DateStep extends JFrame {
         iconOnlySidebar.setBounds(0, 0, 65, Integer.MAX_VALUE); 
         layeredPane.add(iconOnlySidebar, JLayeredPane.PALETTE_LAYER); 
         
-        updateBuildStepLabels(2); 
+        updateBuildStepLabels(3); 
         
         if (currentDestinations != null) {
             for (String dest : currentDestinations) {
                 listModelDestinasiDisplay.addElement(dest);
             }
         }
+        lblSummaryStartDateDisplay.setText("Start: " + (currentStartDate != null ? currentStartDate : "N/A"));
+        lblSummaryEndDateDisplay.setText("End: " + (currentEndDate != null ? currentEndDate : "N/A"));
         
-        txtStartDate.setText(START_DATE_PLACEHOLDER);
-        txtStartDate.setForeground(Color.GRAY);
-        txtEndDate.setText(END_DATE_PLACEHOLDER);
-        txtEndDate.setForeground(Color.GRAY);
-        lblSummaryStartDateDisplay.setText("Start: N/A");
-        lblSummaryEndDateDisplay.setText("End: N/A");
-
         btnSaveTrip.addActionListener(this::btnSaveTripActionPerformed);
         btnPrevStep.addActionListener(this::btnPrevStepActionPerformed);
         btnNextStep.addActionListener(this::btnNextStepActionPerformed);
-        
-        txtStartDate.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if (txtStartDate.getText().equals(START_DATE_PLACEHOLDER)) {
-                    txtStartDate.setText("");
-                    txtStartDate.setForeground(Color.BLACK);
-                }
-            }
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (txtStartDate.getText().isEmpty()) {
-                    txtStartDate.setText(START_DATE_PLACEHOLDER);
-                    txtStartDate.setForeground(Color.GRAY);
-                    lblSummaryStartDateDisplay.setText("Start: N/A");
-                } else {
-                    if(!txtStartDate.getText().equals(START_DATE_PLACEHOLDER)){
-                        lblSummaryStartDateDisplay.setText("Start: " + txtStartDate.getText());
-                    }
-                }
-            }
-        });
-        txtEndDate.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if (txtEndDate.getText().equals(END_DATE_PLACEHOLDER)) {
-                    txtEndDate.setText("");
-                    txtEndDate.setForeground(Color.BLACK);
-                }
-            }
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (txtEndDate.getText().isEmpty()) {
-                    txtEndDate.setText(END_DATE_PLACEHOLDER);
-                    txtEndDate.setForeground(Color.GRAY);
-                    lblSummaryEndDateDisplay.setText("End: N/A");
-                } else {
-                    if(!txtEndDate.getText().equals(END_DATE_PLACEHOLDER)){
-                        lblSummaryEndDateDisplay.setText("End: " + txtEndDate.getText());
-                    }
-                }
-            }
-        });
     }
     
     private void updateBuildStepLabels(int activeStep) {
@@ -319,55 +299,54 @@ public class DateStep extends JFrame {
     }
 
     private void btnSaveTripActionPerformed(ActionEvent evt) {
-        selectedStartDate = txtStartDate.getText().trim();
-        selectedEndDate = txtEndDate.getText().trim();
-        
-        if (selectedStartDate.equals(START_DATE_PLACEHOLDER) || selectedEndDate.equals(END_DATE_PLACEHOLDER) || 
-            selectedStartDate.isEmpty() || selectedEndDate.isEmpty()) {
-             JOptionPane.showMessageDialog(this, "Please select valid start and end dates before saving.", "Cannot Save", JOptionPane.WARNING_MESSAGE);
-            return;
+        String transportMode = "";
+        if (cmbTransportMode.getSelectedItem() != null) {
+            transportMode = cmbTransportMode.getSelectedItem().toString();
         }
-
+        String transportDetails = txtTransportDetails.getText().trim();
+        
         String message = """
-            Trip configuration (with dates) saved (simulated).
+            Trip configuration (with transport) saved (simulated).
             Destinations: %s
-            Start Date: %s
-            End Date: %s
+            Dates: %s to %s
+            Transport: %s%s
             """.formatted(
                 currentDestinations, 
-                selectedStartDate, 
-                selectedEndDate
+                currentStartDate, 
+                currentEndDate, 
+                transportMode, 
+                (transportDetails.isEmpty() ? "" : " (" + transportDetails + ")")
             );
         JOptionPane.showMessageDialog(this, message, "Save Successful", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void btnPrevStepActionPerformed(ActionEvent evt) {
-        DestinationStep destinationStep = new DestinationStep(); 
-        destinationStep.setVisible(true);
-        this.dispose(); 
+        DateStep dateStep = new DateStep(currentDestinations != null ? currentDestinations : new ArrayList<>());
+        dateStep.setVisible(true);
+        this.dispose();
     }
 
     private void btnNextStepActionPerformed(ActionEvent evt) {
-        selectedStartDate = txtStartDate.getText().trim();
-        selectedEndDate = txtEndDate.getText().trim();
+        String transportMode = "";
+        if (cmbTransportMode.getSelectedItem() != null) {
+            transportMode = cmbTransportMode.getSelectedItem().toString();
+        }
+        String transportDetails = txtTransportDetails.getText().trim();
 
-        if (selectedStartDate.isEmpty() || selectedStartDate.equals(START_DATE_PLACEHOLDER)) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid Start Date.", "Input Error", JOptionPane.ERROR_MESSAGE);
-            txtStartDate.requestFocus();
+        if (transportMode.isEmpty()) {
+             JOptionPane.showMessageDialog(this, "Please select a transport mode to proceed.", "Transport Not Selected", JOptionPane.WARNING_MESSAGE);
+            cmbTransportMode.requestFocus();
             return;
         }
-        if (selectedEndDate.isEmpty() || selectedEndDate.equals(END_DATE_PLACEHOLDER)) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid End Date.", "Input Error", JOptionPane.ERROR_MESSAGE);
-            txtEndDate.requestFocus();
-            return;
-        }
-        if (selectedStartDate.length() < 8 || selectedEndDate.length() < 8) { 
-             JOptionPane.showMessageDialog(this, "Please ensure dates are in a valid format (e.g., YYYY-MM-DD).", "Date Format Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        TransportStep transportStepFrame = new TransportStep(this.currentDestinations, selectedStartDate, selectedEndDate);
-        transportStepFrame.setVisible(true);
+        
+        AccommodationStep accommodationStepFrame = new AccommodationStep(
+            this.currentDestinations, 
+            this.currentStartDate, 
+            this.currentEndDate,
+            transportMode,
+            transportDetails
+        );
+        accommodationStepFrame.setVisible(true);
         this.dispose(); 
     }
 
@@ -382,15 +361,16 @@ public class DateStep extends JFrame {
             }
             UIManager.setLookAndFeel(lookAndFeel);
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(DateStep.class.getName()).log(java.util.logging.Level.INFO, "Could not set Look and Feel", ex);
+            java.util.logging.Logger.getLogger(TransportStep.class.getName()).log(java.util.logging.Level.INFO, "Could not set Look and Feel.", ex);
         }
 
         java.awt.EventQueue.invokeLater(() -> {
             List<String> sampleDestinations = new ArrayList<>();
-            sampleDestinations.add("Bali, Indonesia");
-            sampleDestinations.add("Lombok, Indonesia");
+            sampleDestinations.add("Kyoto, Japan");
+            String sampleStartDate = "2026-03-15";
+            String sampleEndDate = "2026-03-22";
             
-            new DateStep(sampleDestinations).setVisible(true);
+            new TransportStep(sampleDestinations, sampleStartDate, sampleEndDate).setVisible(true);
         });
     }
 }
