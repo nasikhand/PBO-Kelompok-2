@@ -238,7 +238,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="txt_alamatUser" min="-2" pref="43" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="btn_simpan" pref="36" max="32767" attributes="0"/>
+                      <Component id="btn_simpan" pref="42" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -334,7 +334,7 @@
                                   <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
                                   <Component id="jLabel7" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace min="0" pref="252" max="32767" attributes="0"/>
+                              <EmptySpace min="0" pref="248" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>

@@ -3,11 +3,11 @@ package controller;
 import db.dao.UserDAO;
 import model.UserModel;
 
-public class UserController {
+public class UserProfileController {
     private UserDAO userDAO = new UserDAO();
 
     public boolean updateProfile(UserModel user) {
-        // Kamu bisa tambahkan validasi di sini nanti
+        // tambahkan validasi di sini nanti
         return userDAO.updateProfile(user);
     }
 

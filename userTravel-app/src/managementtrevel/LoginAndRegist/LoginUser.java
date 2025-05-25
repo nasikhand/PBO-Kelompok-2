@@ -9,6 +9,7 @@ import controller.AuthController;
 import javax.swing.JOptionPane;
 
 import managementtrevel.HomeUser.HomeScreen;
+import model.Session;
 import model.UserModel;
 
 
@@ -219,6 +220,10 @@ public class LoginUser extends javax.swing.JFrame {
         UserModel loggedUser = auth.login(email, password);
 
         if(loggedUser != null){
+
+            // Simpan session
+            Session.currentUser = loggedUser;
+            
             JOptionPane.showMessageDialog(null, "Login berhasil, Selamat datang " + loggedUser.getNamaLengkap());
             new HomeScreen().show();
             this.dispose();

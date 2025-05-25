@@ -7,14 +7,14 @@ import java.security.MessageDigest;
 public class RegisterController {
     private UserDAO userDAO = new UserDAO();
 
-    public boolean register(String namaLengkap, String email, String password) {
+    public boolean register(String namaLengkap, String email, String password, String nomorTelepon, String alamat) {
         // cek email sudah ada atau belum via DAO
         if (userDAO.findByEmail(email) != null) {
             return false; // email sudah terdaftar
         }
 
         String hashedPassword = hashPassword(password);
-        UserModel newUser = new UserModel(namaLengkap, email, hashedPassword);
+        UserModel newUser = new UserModel(namaLengkap, email, hashedPassword, nomorTelepon, alamat);
         return userDAO.save(newUser);
     }
 

@@ -8,8 +8,11 @@ import Asset.SidebarPanel;
 import javax.swing.JFrame;
 import javax.swing.JLayeredPane;
 import javax.swing.JOptionPane;
+
+import managementtrevel.LoginAndRegist.LoginUser;
 import managementtrevel.SearchResultScreen.SearchResult;
 import managementtrevel.TripDetailScreen.TripDetail;
+import model.Session;
 /**
  *
  * @author aldy
@@ -23,9 +26,14 @@ public class HomeScreen extends javax.swing.JFrame {
     public HomeScreen() {
     initComponents();
     
-    //Bagian ini bisa diubah jadi username dari database
-    String username = "Aldi";
-    labelNama.setText("Selamat Datang, " + username);  
+    if (Session.currentUser != null) {
+        labelNama.setText("Selamat Datang, " + Session.currentUser.getNamaLengkap());
+    } else {
+        // Jika belum login, bisa arahkan ke login
+        new LoginUser().setVisible(true);
+        this.dispose();
+    }
+
     
     setTitle("Halaman Utama");
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

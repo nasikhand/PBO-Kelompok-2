@@ -262,7 +262,9 @@ public class RegistrasiUser extends javax.swing.JFrame {
             boolean sukses = controller.register(
                 txt_username.getText(),
                 txt_email.getText(),
-                txt_password.getText()
+                txt_password.getText(),
+                txt_noTelepon.getText(),
+                txt_alamat.getText()
             );
 
             if (sukses) {

@@ -10,6 +10,7 @@ public class UserDAO {
         try (Connection conn = Koneksi.getConnection()) {
             String sql = "SELECT * FROM user WHERE email = ?";
             PreparedStatement stmt = conn.prepareStatement(sql);
+            
             stmt.setString(1, email);
             ResultSet rs = stmt.executeQuery();
 
@@ -18,7 +19,10 @@ public class UserDAO {
                     rs.getInt("id"),
                     rs.getString("nama_lengkap"),
                     rs.getString("email"),
-                    rs.getString("password")
+                    rs.getString("password"),
+                    rs.getString("no_telepon"),
+                    rs.getString("alamat")
+
                 );
             }
         } catch (Exception e) {
@@ -30,11 +34,13 @@ public class UserDAO {
     // Simpan user baru (registrasi)
     public boolean save(UserModel user) {
         try (Connection conn = Koneksi.getConnection()) {
-            String sql = "INSERT INTO user (nama_lengkap, email, password) VALUES (?, ?, ?)";
+            String sql = "INSERT INTO user (nama_lengkap, email, password, no_telepon, alamat) VALUES (?, ?, ?, ?, ?)";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, user.getNamaLengkap());
             stmt.setString(2, user.getEmail());
             stmt.setString(3, user.getPassword());  // password sudah harus dalam kondisi hashed
+            stmt.setString(4, user.getNomorTelepon());  // Tambahkan ini
+            stmt.setString(5, user.getAlamat());  
             int affectedRows = stmt.executeUpdate();
             return affectedRows > 0;
         } catch (Exception e) {
@@ -56,8 +62,7 @@ public class UserDAO {
                     rs.getInt("id"),
                     rs.getString("nama_lengkap"),
                     rs.getString("email"),
-                    rs.getString("password"),
-                    rs.getString("nomor_telepon"),
+                    rs.getString("no_telepon"),
                     rs.getString("alamat")
                 );
             }
@@ -69,7 +74,7 @@ public class UserDAO {
 
     public boolean updateProfile(UserModel user) {
         try (Connection conn = Koneksi.getConnection()) {
-            String sql = "UPDATE user SET nama_lengkap = ?, email = ?, nomor_telepon = ?, alamat = ? WHERE id = ?";
+            String sql = "UPDATE user SET nama_lengkap = ?, email = ?, no_telepon = ?, alamat = ? WHERE id = ?";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, user.getNamaLengkap());
             stmt.setString(2, user.getEmail());
@@ -77,6 +82,8 @@ public class UserDAO {
             stmt.setString(4, user.getAlamat());
             stmt.setInt(5, user.getId());
             int updated = stmt.executeUpdate();
+
+            
             return updated > 0;
         } catch (Exception e) {
             e.printStackTrace();

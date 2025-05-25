@@ -5,6 +5,9 @@
 package managementtrevel.HomeUser;
 
 import Asset.SidebarPanel;
+import controller.UserProfileController;
+import model.Session;
+import model.UserModel;
 import javax.swing.JFrame;
 import javax.swing.JLayeredPane;
 import javax.swing.JOptionPane;
@@ -19,9 +22,73 @@ public class UserProfile extends javax.swing.JFrame {
     /**
      * Creates new form UserProfile
      */
+    
+    private UserProfileController controller;
+    private int userId;
+
+    private void setProfileData() {
+        if (Session.isLoggedIn()) {
+            UserModel user = Session.currentUser;
+
+            txt_namaUser.setText(user.getNamaLengkap());
+            txt_emailUser.setText(user.getEmail());
+            txt_nomerTeleponUser.setText(user.getNomorTelepon());
+            txt_alamatUser.setText(user.getAlamat());
+        }
+    }
+
+    private void btn_simpanActionPerformed(java.awt.event.ActionEvent evt) {
+        String nama = txt_namaUser.getText();
+        String email = txt_emailUser.getText();
+        String telepon = txt_nomerTeleponUser.getText();
+        String alamat = txt_alamatUser.getText();
+
+        // Ambil ID langsung dari Session
+        int id = Session.currentUser.getId();
+        UserModel user = new UserModel(id, nama, email, telepon, alamat);
+
+        boolean success = controller.updateProfile(user);
+
+        if (success) {
+            JOptionPane.showMessageDialog(this, "Data berhasil diperbarui!");
+
+            Session.currentUser = user;  // update session agar data sinkron
+        } else {
+            JOptionPane.showMessageDialog(this, "Gagal memperbarui data.");
+            // Kembalikan ke data awal dari session
+            UserModel currentUser = Session.currentUser;
+
+            txt_namaUser.setText(currentUser.getNamaLengkap());
+            txt_emailUser.setText(currentUser.getEmail());
+            txt_nomerTeleponUser.setText(currentUser.getNomorTelepon());
+            txt_alamatUser.setText(currentUser.getAlamat());
+            }
+    }
+
     public UserProfile() {
         initComponents();
+
+        // Inisialisasi controller
+        this.controller = new UserProfileController();
+
+        // Ambil user ID dari session
+        userId = Session.currentUser.getId();
+
+
+        if (Session.isLoggedIn()) {
+            UserModel user = Session.currentUser;
+            this.userId = user.getId();
+            
+            // Tampilkan data user ke form
+            setProfileData();
+
+            this.userId = user.getId(); // Simpan id user jika diperlukan
+        } else {
+            JOptionPane.showMessageDialog(this, "User belum login!");
+            // Bisa arahkan ke halaman login atau tutup form
+        }
         
+
         setTitle("Halaman Profile");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 600);
@@ -166,6 +233,12 @@ public class UserProfile extends javax.swing.JFrame {
         btn_simpan.setFont(new java.awt.Font("Helvetica Neue", 1, 14)); // NOI18N
         btn_simpan.setForeground(new java.awt.Color(255, 255, 255));
         btn_simpan.setText("Simpan");
+
+        btn_simpan.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_simpanActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);

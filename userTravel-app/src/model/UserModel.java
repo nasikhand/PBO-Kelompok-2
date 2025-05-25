@@ -23,9 +23,27 @@ public class UserModel {
         this.password = password;
     }
 
+    // Constructor lengkap (5 parameter dan id)
+    public UserModel(int id, String namaLengkap, String email, String nomorTelepon, String alamat) {
+        this.id = id;
+        this.namaLengkap = namaLengkap;
+        this.email = email;
+        this.nomorTelepon = nomorTelepon;
+        this.alamat = alamat;
+    }
+
+    // Constructor lengkap (5 parameter tanpa id)
+    public UserModel(String namaLengkap, String email, String password, String nomorTelepon, String alamat) {
+        this.namaLengkap = namaLengkap;
+        this.email = email;
+        this.password = password;
+        this.nomorTelepon = nomorTelepon;
+        this.alamat = alamat;
+    }
+
     // Constructor lengkap (6 parameter)
     public UserModel(int id, String namaLengkap, String email, String password, String nomorTelepon, String alamat) {
-        this.id = id;
+        this.id = id; 
         this.namaLengkap = namaLengkap;
         this.email = email;
         this.password = password;
