@@ -3,27 +3,19 @@ package controller;
 import java.sql.Connection;
 import java.util.List;
 
-import db.dao.PaketPerjalananDAO;
-import model.PaketPerjalananModel;
+import db.dao.DestinasiDAO;
+import model.DestinasiModel;
+
 
 public class CariCepatController {
-    private PaketPerjalananDAO dao;
+
+    private DestinasiDAO destinasiDao;
 
     public CariCepatController(Connection conn) {
-        this.dao = new PaketPerjalananDAO(conn);
+        this.destinasiDao = new DestinasiDAO(conn);
     }
 
-    public List<PaketPerjalananModel> cari(String destinasi, String tanggal, String travelersStr) {
-        int jumlahTraveler = parseJumlahTraveler(travelersStr);
-        return dao.cariCepat(destinasi, tanggal, jumlahTraveler);
-    }
-
-    private int parseJumlahTraveler(String input) {
-        // "1 Orang" -> 1, "Travelers" -> 1 default
-        try {
-            return Integer.parseInt(input.split(" ")[0]);
-        } catch (Exception e) {
-            return 1;
-        }
+    public List<DestinasiModel> getDaftarDestinasi() {
+        return destinasiDao.getAllDestinasi();
     }
 }

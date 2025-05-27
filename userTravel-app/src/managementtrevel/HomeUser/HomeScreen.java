@@ -14,6 +14,16 @@ import managementtrevel.LoginAndRegist.LoginUser;
 import managementtrevel.SearchResultScreen.SearchResult;
 import managementtrevel.TripDetailScreen.TripDetail;
 import model.Session;
+
+import db.Koneksi;
+import controller.CariCepatController;
+import model.DestinasiModel;
+import java.sql.Connection;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.Date;
+
+
 /**
  *
  * @author aldy
@@ -21,6 +31,10 @@ import model.Session;
 public class HomeScreen extends javax.swing.JFrame {
 
     private boolean isSidebarVisible = false;
+    private List<DestinasiModel> daftarDestinasi;
+    private Date tanggalDipilih;
+    private String jumlahTravelerDipilih = null;
+    
     /**
      * Creates new form Home
      */
@@ -34,6 +48,30 @@ public class HomeScreen extends javax.swing.JFrame {
         new LoginUser().setVisible(true);
         this.dispose();
     }
+    
+    // Ambil koneksi dan data destinasi
+    Connection conn = Koneksi.getConnection();
+    CariCepatController controller = new CariCepatController(conn);
+
+    // Ambil data destinasi dari controller
+    this.daftarDestinasi = controller.getDaftarDestinasi();
+
+    // Kosongkan combo box dulu
+    destinasi.removeAllItems();
+
+    // Tambahkan destinasi ke combo box, setelah data diisi
+    destinasi.addItem("-- Pilih Destinasi --");
+    for (DestinasiModel dest : daftarDestinasi) {
+        destinasi.addItem(dest.getNamaDestinasi());
+    }
+
+    // inisialisasi dan event listener calendar
+    Calendar.getDateEditor().addPropertyChangeListener(evt -> {
+        if ("date".equals(evt.getPropertyName())) {
+            tanggalDipilih = Calendar.getDate();
+            System.out.println("Tanggal dipilih: " + tanggalDipilih);
+        }
+    });
 
     
     setTitle("Halaman Utama");
@@ -51,7 +89,6 @@ public class HomeScreen extends javax.swing.JFrame {
     layeredPane.add(sidebar, JLayeredPane.POPUP_LAYER); // tambahkan di atas layer default
 }
 
-    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -66,11 +103,11 @@ public class HomeScreen extends javax.swing.JFrame {
         labelNama = new javax.swing.JLabel();
         jPanel4 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
-        txt_destinasi = new javax.swing.JTextField();
-        txt_tanggal = new javax.swing.JTextField();
         pilih_travelers = new javax.swing.JComboBox<>();
         tombolCari = new javax.swing.JButton();
         btn_CustomTrip = new javax.swing.JButton();
+        Calendar = new com.toedter.calendar.JDateChooser();
+        destinasi = new javax.swing.JComboBox<>();
         jPanel5 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
@@ -123,42 +160,13 @@ public class HomeScreen extends javax.swing.JFrame {
         jLabel1.setFont(new java.awt.Font("Helvetica Neue", 1, 14)); // NOI18N
         jLabel1.setText("Cari Cepat");
 
-        txt_destinasi.setText("Pilih Destinasi");
-        txt_destinasi.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusGained(java.awt.event.FocusEvent evt) {
-                txt_destinasiFocusGained(evt);
-            }
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                txt_destinasiFocusLost(evt);
-            }
-        });
-        txt_destinasi.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txt_destinasiActionPerformed(evt);
-            }
-        });
-
-        txt_tanggal.setText("Pilih Tanggal");
-        txt_tanggal.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusGained(java.awt.event.FocusEvent evt) {
-                txt_tanggalFocusGained(evt);
-            }
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                txt_tanggalFocusLost(evt);
-            }
-        });
-        txt_tanggal.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txt_tanggalActionPerformed(evt);
-            }
-        });
-
         pilih_travelers.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Travelers", "1 Orang", "2 Orang", "3 Orang", "4 Orang", "5 Orang" }));
         pilih_travelers.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 pilih_travelersFocusGained(evt);
             }
         });
+
         pilih_travelers.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 pilih_travelersActionPerformed(evt);
@@ -181,40 +189,49 @@ public class HomeScreen extends javax.swing.JFrame {
             }
         });
 
+        destinasi.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        destinasi.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                destinasiActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
-                        .addComponent(txt_destinasi, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(46, 46, 46)
-                        .addComponent(txt_tanggal, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(43, 43, 43)
-                        .addComponent(pilih_travelers, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(42, 42, 42)
-                        .addComponent(tombolCari)
-                        .addGap(18, 18, 18)
-                        .addComponent(btn_CustomTrip)
-                        .addGap(21, 21, 21))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addGap(326, 326, 326))))
+                .addComponent(jLabel1)
+                .addGap(326, 326, 326))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
+                .addGap(35, 35, 35)
+                .addComponent(destinasi, javax.swing.GroupLayout.PREFERRED_SIZE, 138, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(32, 32, 32)
+                .addComponent(Calendar, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(34, 34, 34)
+                .addComponent(pilih_travelers, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(tombolCari)
+                .addGap(26, 26, 26)
+                .addComponent(btn_CustomTrip, javax.swing.GroupLayout.PREFERRED_SIZE, 128, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(21, 21, 21))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txt_destinasi, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txt_tanggal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(pilih_travelers, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tombolCari)
-                    .addComponent(btn_CustomTrip))
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(destinasi, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(Calendar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(pilih_travelers, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(tombolCari)
+                                .addComponent(btn_CustomTrip)))))
                 .addContainerGap(13, Short.MAX_VALUE))
         );
 
@@ -316,7 +333,7 @@ public class HomeScreen extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel8Layout.createSequentialGroup()
-                        .addComponent(jLabel29, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel29, javax.swing.GroupLayout.DEFAULT_SIZE, 179, Short.MAX_VALUE)
                         .addGap(79, 79, 79))
                     .addGroup(jPanel8Layout.createSequentialGroup()
                         .addComponent(jLabel3)
@@ -665,7 +682,7 @@ public class HomeScreen extends javax.swing.JFrame {
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 388, Short.MAX_VALUE)))
+                        .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 395, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
@@ -700,39 +717,17 @@ public class HomeScreen extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void txt_destinasiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txt_destinasiActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txt_destinasiActionPerformed
-
-    private void txt_tanggalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txt_tanggalActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txt_tanggalActionPerformed
-
-    private void txt_destinasiFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txt_destinasiFocusGained
-        if (txt_destinasi.getText().equals("Pilih Destinasi")) {
-        txt_destinasi.setText("");
+    private void pilih_travelersActionPerformed(java.awt.event.ActionEvent evt) {
+        int selectedIndex = pilih_travelers.getSelectedIndex();
+    
+        // Indeks 0 adalah "Travelers" (default)
+        if (selectedIndex > 0) {
+            jumlahTravelerDipilih = pilih_travelers.getSelectedItem().toString();
+            System.out.println("Jumlah traveler dipilih: " + jumlahTravelerDipilih);
+        } else {
+            jumlahTravelerDipilih = null;
         }
-    }//GEN-LAST:event_txt_destinasiFocusGained
-
-    private void txt_destinasiFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txt_destinasiFocusLost
-        if (txt_destinasi.getText().isEmpty()) {
-        txt_destinasi.setText("Pilih Destinasi");
-        }
-    }//GEN-LAST:event_txt_destinasiFocusLost
-
-    private void txt_tanggalFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txt_tanggalFocusGained
-        if (txt_tanggal.getText().equals("Pilih Tanggal")) {
-        txt_tanggal.setText("");
-        }
-    }//GEN-LAST:event_txt_tanggalFocusGained
-
-    private void txt_tanggalFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txt_tanggalFocusLost
-        if (txt_tanggal.getText().isEmpty()) {
-        txt_tanggal.setText("Pilih Tanggal");
-        }
-    }//GEN-LAST:event_txt_tanggalFocusLost
-
-    private void pilih_travelersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pilih_travelersActionPerformed
+//GEN-FIRST:event_pilih_travelersActionPerformed
  
     }//GEN-LAST:event_pilih_travelersActionPerformed
 
@@ -740,18 +735,31 @@ public class HomeScreen extends javax.swing.JFrame {
 
     }//GEN-LAST:event_pilih_travelersFocusGained
 
-    private void tombolCariActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tombolCariActionPerformed
-        if(txt_destinasi.getText().equals("Pilih Destinasi")){
-            JOptionPane.showMessageDialog(null,"Masukkan Destinasi Anda");
-            txt_destinasi.requestFocus();
-        }else if(txt_tanggal.getText().equals("Pilih Tanggal")){
-            JOptionPane.showMessageDialog(null,"Pilih Tanggal Terlebih Dulu");
-            txt_tanggal.requestFocus();
-        }else if(pilih_travelers.getSelectedIndex() == 0){
-            JOptionPane.showMessageDialog(null,"Pilih Jumlah Travelers Dulu");
+    private void tombolCariActionPerformed(java.awt.event.ActionEvent evt) {
+//GEN-FIRST:event_tombolCariActionPerformed
+        if(destinasi.getSelectedIndex() == 0) {  // 0 adalah "-- Pilih Destinasi --"
+        JOptionPane.showMessageDialog(null, "Masukkan Destinasi Anda");
+        destinasi.requestFocus();
+        } else if(tanggalDipilih == null) {
+        JOptionPane.showMessageDialog(null, "Pilih Tanggal Terlebih Dahulu");
+        Calendar.requestFocus();
+        } else if(pilih_travelers.getSelectedIndex() == 0){
+            JOptionPane.showMessageDialog(null,"Silahkan Pilih Jumlah Travelers");
             pilih_travelers.requestFocus();
-        }else{
-            new SearchResult().show();
+        } else {
+            // Ambil data setelah validasi
+            String destinasiTerpilih = daftarDestinasi.get(destinasi.getSelectedIndex() - 1).getNamaDestinasi();
+            String tanggalStr = new SimpleDateFormat("yyyy-MM-dd").format(tanggalDipilih);
+            String travelers = jumlahTravelerDipilih; // Ini sudah diset di actionPerformed sebelumnya
+
+            // Cek hasilnya di console
+            System.out.println("Destinasi: " + destinasiTerpilih);
+            System.out.println("Tanggal: " + tanggalStr);
+            System.out.println("Travelers: " + travelers);
+
+            // Bisa lempar data ke layar berikutnya (misal lewat constructor)
+            SearchResult hasil = new SearchResult(destinasiTerpilih, tanggalStr, travelers);
+            hasil.setVisible(true);
             this.dispose();
         }
     }//GEN-LAST:event_tombolCariActionPerformed
@@ -796,6 +804,18 @@ public class HomeScreen extends javax.swing.JFrame {
         this.dispose();
     }//GEN-LAST:event_btn_CustomTripActionPerformed
 
+    private void destinasiActionPerformed(java.awt.event.ActionEvent evt) {
+        int selectedIndex = destinasi.getSelectedIndex();
+
+        if (selectedIndex > 0 && daftarDestinasi != null) {
+            DestinasiModel selectedDest = daftarDestinasi.get(selectedIndex - 1); 
+            System.out.println("Dipilih: " + selectedDest.getNamaDestinasi());
+            // Tambahkan aksi lain jika perlu, misalnya tampilkan detail ke textfield
+        }
+//GEN-FIRST:event_destinasiActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_destinasiActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -832,10 +852,12 @@ public class HomeScreen extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private com.toedter.calendar.JDateChooser Calendar;
     private javax.swing.JButton btn_CustomTrip;
     private javax.swing.JButton btn_detail1;
     private javax.swing.JButton btn_detail2;
     private javax.swing.JButton btn_detail3;
+    private javax.swing.JComboBox<String> destinasi;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton13;
     private javax.swing.JButton jButton15;
@@ -880,7 +902,5 @@ public class HomeScreen extends javax.swing.JFrame {
     private javax.swing.JPanel popular_destination2;
     private javax.swing.JPanel popular_destination3;
     private javax.swing.JButton tombolCari;
-    private javax.swing.JTextField txt_destinasi;
-    private javax.swing.JTextField txt_tanggal;
     // End of variables declaration//GEN-END:variables
 }

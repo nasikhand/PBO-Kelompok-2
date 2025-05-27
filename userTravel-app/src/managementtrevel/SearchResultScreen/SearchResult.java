@@ -16,11 +16,21 @@ import managementtrevel.HomeUser.HomeScreen;
  */
 public class SearchResult extends javax.swing.JFrame {
 
+    private String destinasiTerpilih;
+    private String tanggalDipilih;
+    private String travelers;
+
     /**
      * Creates new form SearchResult
      */
-    public SearchResult() {
+    public SearchResult(String destinasi, String tanggal, String travelers) {
+
+        this.destinasiTerpilih = destinasi;
+        this.tanggalDipilih = tanggal;
+        this.travelers = travelers;
+
     initComponents();
+
     setTitle("Search Result");
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setSize(800, 600);
