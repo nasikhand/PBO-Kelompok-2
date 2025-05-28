@@ -1,4 +1,7 @@
 package model;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 public class PaketPerjalananModel {
     private int id;
@@ -12,6 +15,7 @@ public class PaketPerjalananModel {
     private String status;
     private String gambar;
     private double rating;
+    
 
     // Constructor
 
@@ -67,4 +71,15 @@ public class PaketPerjalananModel {
 
     public double getRating() { return rating; }
     public void setRating(double rating) { this.rating = rating; }
+
+    public long getDurasi() {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            LocalDate mulai = LocalDate.parse(this.tanggalMulai, formatter);
+            LocalDate akhir = LocalDate.parse(this.tanggalAkhir, formatter);
+            return ChronoUnit.DAYS.between(mulai, akhir) + 1; // +1 biar termasuk kedua hari
+        } catch (Exception e) {
+            return 0;
+        }
+    }
 }
