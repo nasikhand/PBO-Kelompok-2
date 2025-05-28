@@ -5,6 +5,8 @@
 package managementtrevel.HomeUser;
 
 import Asset.SidebarPanel;
+
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLayeredPane;
 import javax.swing.JOptionPane;
@@ -16,12 +18,20 @@ import managementtrevel.TripDetailScreen.TripDetail;
 import model.Session;
 
 import db.Koneksi;
+import db.dao.KotaDAO;
 import controller.CariCepatController;
+import controller.PaketPerjalananController;
 import model.DestinasiModel;
+import model.PaketPerjalananModel;
+
 import java.sql.Connection;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Calendar;
 import java.util.Date;
+import java.awt.Image;
+import java.io.File;
+
 
 
 /**
@@ -34,6 +44,133 @@ public class HomeScreen extends javax.swing.JFrame {
     private List<DestinasiModel> daftarDestinasi;
     private Date tanggalDipilih;
     private String jumlahTravelerDipilih = null;
+    private PaketPerjalananController paketPerjalananController;
+
+
+    
+    public void loadTopRated(PaketPerjalananModel paket) {
+        
+        if (paket != null) {
+            String namaKota = getNamaKotaById(paket.getKotaId());
+            long durasi = paket.getDurasi();
+
+            jLabel20.setText(namaKota + " - " + durasi + " hari - " + paket.getKuota() + " orang");
+            jLabel21.setText("Rating: " + paket.getRating());
+            jLabel22.setText("Harga: Rp " + String.format("%,.0f", paket.getHarga()));
+
+            String userDir = System.getProperty("user.dir");
+            File baseDir = new File(userDir).getParentFile();
+
+            String gambarRelatif = paket.getGambar();
+            if (gambarRelatif.startsWith("/")) {
+                gambarRelatif = gambarRelatif.substring(1);
+            }
+
+            File gambarFile = new File(baseDir, gambarRelatif);
+
+            if (gambarFile.exists()) {
+                ImageIcon icon = new ImageIcon(
+                    new ImageIcon(gambarFile.getAbsolutePath())
+                    .getImage()
+                    .getScaledInstance(jLabel10.getWidth(), jLabel10.getHeight(), Image.SCALE_SMOOTH)
+                );
+                jLabel10.setIcon(icon);
+                jLabel10.setText("");
+            } else {
+                System.out.println("Gambar paket tidak ditemukan: " + gambarFile.getAbsolutePath());
+                jLabel10.setText("Gambar tidak tersedia");
+            }
+        } else {
+            jLabel20.setText("Data tidak ditemukan");
+        }
+    }
+
+    public void loadTopRated2(PaketPerjalananModel paket) {
+        if (paket != null) {
+            // Set teks label
+            String namaKota = getNamaKotaById(paket.getKotaId());
+            long durasi = paket.getDurasi();
+
+            jLabel31.setText(namaKota + " - " + durasi + " hari - " + paket.getKuota() + " orang");
+            jLabel32.setText("Rating: " + paket.getRating());
+            jLabel33.setText("Harga: Rp " + String.format("%,.0f", paket.getHarga()));
+
+            // Set gambar
+            String gambarRelatif = paket.getGambar();
+            if (gambarRelatif.startsWith("/")) {
+                gambarRelatif = gambarRelatif.substring(1);
+            }
+            String userDir = System.getProperty("user.dir");
+            File baseDir = new File(userDir).getParentFile();
+
+            File gambarFile = new File(baseDir, gambarRelatif);
+            if (gambarFile.exists()) {
+                ImageIcon icon = new ImageIcon(new ImageIcon(gambarFile.getAbsolutePath())
+                    .getImage().getScaledInstance(jLabel12.getWidth(), jLabel12.getHeight(), Image.SCALE_SMOOTH));
+                jLabel12.setIcon(icon);
+                jLabel12.setText("");
+            } else {
+                jLabel12.setText("Gambar tidak tersedia");
+                System.out.println("Gambar paket tidak ditemukan: " + gambarFile.getAbsolutePath());
+            }
+        } else {
+            jLabel31.setText("Data tidak ditemukan");
+            jLabel12.setText("FOTO");
+            jLabel12.setIcon(null);
+            jLabel32.setText("Rating:");
+            jLabel33.setText("Harga:");
+        }
+    }
+
+    public void loadTopRated3(PaketPerjalananModel paket) {
+        if (paket != null) {
+            String namaKota = getNamaKotaById(paket.getKotaId());
+            long durasi = paket.getDurasi();
+
+            jLabel34.setText(namaKota + " - " + durasi + " hari - " + paket.getKuota() + " orang");
+            jLabel35.setText("Rating: " + paket.getRating());
+            jLabel36.setText("Harga: Rp " + String.format("%,.0f", paket.getHarga()));
+
+            String gambarRelatif = paket.getGambar();
+            if (gambarRelatif.startsWith("/")) {
+                gambarRelatif = gambarRelatif.substring(1);
+            }
+
+            String userDir = System.getProperty("user.dir");
+            File baseDir = new File(userDir).getParentFile();
+            File gambarFile = new File(baseDir, gambarRelatif);
+
+            if (gambarFile.exists()) {
+                ImageIcon icon = new ImageIcon(
+                    new ImageIcon(gambarFile.getAbsolutePath())
+                    .getImage()
+                    .getScaledInstance(jLabel13.getWidth(), jLabel13.getHeight(), Image.SCALE_SMOOTH)
+                );
+                jLabel13.setIcon(icon);
+                jLabel13.setText(""); // Hapus teks FOTO jika gambar ada
+            } else {
+                jLabel13.setIcon(null);
+                jLabel13.setText("Gambar tidak tersedia");
+                System.out.println("Gambar paket tidak ditemukan: " + gambarFile.getAbsolutePath());
+            }
+        } else {
+            jLabel34.setText("Data tidak ditemukan");
+            jLabel35.setText("Rating:");
+            jLabel36.setText("Harga:");
+            jLabel13.setIcon(null);
+            jLabel13.setText("FOTO");
+        }
+    }
+
+
+
+    
+
+    private String getNamaKotaById(int kotaId) {
+        // implementasi mengambil nama kota dari ID
+        return new KotaDAO().getNamaKotaById(kotaId); // atau sesuai DAO kamu
+    }
+
     
     /**
      * Creates new form Home
@@ -52,6 +189,7 @@ public class HomeScreen extends javax.swing.JFrame {
     // Ambil koneksi dan data destinasi
     Connection conn = Koneksi.getConnection();
     CariCepatController controller = new CariCepatController(conn);
+    
 
     // Ambil data destinasi dari controller
     this.daftarDestinasi = controller.getDaftarDestinasi();
@@ -72,6 +210,22 @@ public class HomeScreen extends javax.swing.JFrame {
             System.out.println("Tanggal dipilih: " + tanggalDipilih);
         }
     });
+
+
+    // Inisialisasi paketPerjalananController dengan koneksi
+    paketPerjalananController = new PaketPerjalananController(conn);
+    
+    List<PaketPerjalananModel> topRated = paketPerjalananController.getTopRatedPakets(3);
+
+    if (topRated.size() > 0) {
+        loadTopRated(topRated.get(0));
+    }
+    if (topRated.size() > 1) {
+        loadTopRated2(topRated.get(1));
+    }
+    if (topRated.size() > 2) {
+        loadTopRated3(topRated.get(2)); // Jangan lupa buat method ini jika belum ada
+    }
 
     
     setTitle("Halaman Utama");

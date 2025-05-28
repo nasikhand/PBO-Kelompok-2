@@ -13,7 +13,9 @@ public class PaketPerjalananController {
     private PaketPerjalananDAO dao;
      private Connection conn;
 
+
     public PaketPerjalananController(Connection conn) {
+        this.conn = conn; 
         this.dao = new PaketPerjalananDAO(conn);
     }
 
@@ -33,28 +35,9 @@ public class PaketPerjalananController {
         return true;
     }
 
-    public List<PaketPerjalananModel> getTop3Rating() {
-    List<PaketPerjalananModel> list = new ArrayList<>();
-    try {
-        String query = "SELECT * FROM paketperjalanan ORDER BY rating DESC LIMIT 3";
-        PreparedStatement stmt = conn.prepareStatement(query);
-        ResultSet rs = stmt.executeQuery();
-        while (rs.next()) {
-            PaketPerjalananModel paket = new PaketPerjalananModel();
-            paket.setId(rs.getInt("id"));
-            paket.setNamaPaket(rs.getString("nama_paket"));
-            paket.setTanggalMulai(rs.getString("tanggal_mulai"));
-            paket.setTanggalAkhir(rs.getString("tanggal_akhir"));
-            paket.setKuota(rs.getInt("kuota"));
-            paket.setRating(rs.getDouble("rating"));
-            paket.setHarga(rs.getDouble("harga"));
-            paket.setGambar(rs.getString("gambar")); // misal ini path gambar
-            list.add(paket);
-        }
-    } catch (SQLException e) {
-        e.printStackTrace();
+     // Ambil paket dengan rating tertinggi
+    public List<PaketPerjalananModel> getTopRatedPakets(int limit) {
+        return dao.getTopRatedPakets(limit);
     }
-    return list;
-}
 
 }

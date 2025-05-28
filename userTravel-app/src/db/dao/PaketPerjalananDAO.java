@@ -18,7 +18,7 @@ public class PaketPerjalananDAO {
 
     public List<PaketPerjalananModel> getAllPaket() {
         List<PaketPerjalananModel> list = new ArrayList<>();
-        String query = "SELECT * FROM paketperjalanan";
+        String query = "SELECT * FROM paket_perjalanan";
 
         try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(query)) {
@@ -48,7 +48,7 @@ public class PaketPerjalananDAO {
     }
 
     public PaketPerjalananModel getById(int id) {
-        String query = "SELECT * FROM paketperjalanan WHERE id = ?";
+        String query = "SELECT * FROM paket_perjalanan WHERE id = ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
@@ -77,7 +77,7 @@ public class PaketPerjalananDAO {
 
     public List<PaketPerjalananModel> getPaketByDestinasi(String destinasi) {
         List<PaketPerjalananModel> list = new ArrayList<>();
-        String sql = "SELECT * FROM paketperjalanan WHERE nama_paket LIKE ?";
+        String sql = "SELECT * FROM paket_perjalanan WHERE nama_paket LIKE ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, "%" + destinasi + "%");
             ResultSet rs = ps.executeQuery();
@@ -102,4 +102,34 @@ public class PaketPerjalananDAO {
         return list;
     }
 
+    // Method untuk mengambil paket perjalanan berdasarkan rating tertinggi
+    public List<PaketPerjalananModel> getTopRatedPakets(int limit) {
+        List<PaketPerjalananModel> list = new ArrayList<>();
+        String query = "SELECT * FROM paket_perjalanan ORDER BY rating DESC LIMIT ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, limit);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    PaketPerjalananModel paket = new PaketPerjalananModel();
+                    paket.setId(rs.getInt("id"));
+                    paket.setKotaId(rs.getInt("kota_id"));
+                    paket.setNamaPaket(rs.getString("nama_paket"));
+                    paket.setTanggalMulai(rs.getString("tanggal_mulai"));
+                    paket.setTanggalAkhir(rs.getString("tanggal_akhir"));
+                    paket.setKuota(rs.getInt("kuota"));
+                    paket.setHarga(rs.getDouble("harga"));
+                    paket.setDeskripsi(rs.getString("deskripsi"));
+                    paket.setStatus(rs.getString("status"));
+                    paket.setGambar(rs.getString("gambar"));
+                    paket.setRating(rs.getDouble("rating"));
+                    list.add(paket);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // bisa diganti dengan Logger jika ingin lebih rapi
+        }
+
+        return list;
+    }
 }
