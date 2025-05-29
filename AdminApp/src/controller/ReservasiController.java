@@ -9,7 +9,12 @@ import model.Reservasi;
 import model.Penumpang;
 import javax.swing.JOptionPane;
 import java.math.BigDecimal;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Date; // Pastikan import java.sql.Date ada
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +32,7 @@ public class ReservasiController {
                        "FROM reservasi r " +
                        "LEFT JOIN paket_perjalanan pp ON r.trip_id = pp.id AND r.trip_type = 'paket_perjalanan' " +
                        "LEFT JOIN custom_trip ct ON r.trip_id = ct.id AND r.trip_type = 'custom_trip' " +
-                       "ORDER BY r.tanggal_reservasi DESC";
+                       "ORDER BY r.tanggal_reservasi DESC, r.id DESC";
 
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
@@ -44,6 +49,8 @@ public class ReservasiController {
                 reservasi.setTripType(rs.getString("trip_type"));
                 reservasi.setTripId(rs.getInt("trip_id"));
                 reservasi.setNamaTrip(rs.getString("nama_trip"));
+                // Anda mungkin ingin mengambil nama pemesan jika ada user_id di custom_trip
+                // dan menghubungkannya ke tabel user
                 daftarReservasi.add(reservasi);
             }
         } catch (SQLException e) {
@@ -83,7 +90,7 @@ public class ReservasiController {
                 while (rs.next()) {
                     Penumpang penumpang = new Penumpang();
                     penumpang.setId(rs.getInt("id"));
-                    penumpang.setReservasiId(idReservasi); // Set manual jika diperlukan
+                    penumpang.setReservasiId(idReservasi);
                     penumpang.setNamaPenumpang(rs.getString("nama_penumpang"));
                     penumpang.setJenisKelamin(rs.getString("jenis_kelamin"));
                     penumpang.setTanggalLahir(rs.getDate("tanggal_lahir"));
@@ -157,28 +164,40 @@ public class ReservasiController {
         return 0;
     }
 
-    public List<Object[]> getLaporanPenjualanPerPaket() {
+    public List<Object[]> getLaporanPenjualanPerPaket(Date tanggalMulai, Date tanggalAkhir) {
         List<Object[]> laporan = new ArrayList<>();
         String query = "SELECT pp.nama_paket, COUNT(r.id) AS jumlah_reservasi, SUM(p.jumlah_pembayaran) AS total_pendapatan " +
                        "FROM reservasi r " +
                        "JOIN paket_perjalanan pp ON r.trip_id = pp.id AND r.trip_type = 'paket_perjalanan' " +
                        "JOIN pembayaran p ON r.id = p.reservasi_id " +
-                       "WHERE p.status_pembayaran = 'lunas' " +
-                       "GROUP BY pp.nama_paket " +
-                       "ORDER BY total_pendapatan DESC";
+                       "WHERE p.status_pembayaran = 'lunas' ";
+
+        List<Date> params = new ArrayList<>();
+        if (tanggalMulai != null && tanggalAkhir != null) {
+            query += "AND p.tanggal_pembayaran BETWEEN ? AND ? ";
+            params.add(tanggalMulai);
+            params.add(tanggalAkhir);
+        }
+        query += "GROUP BY pp.nama_paket ORDER BY total_pendapatan DESC";
         
         try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
+             PreparedStatement stmt = conn.prepareStatement(query)) {
             
             if (conn == null) return laporan;
 
-            while (rs.next()) {
-                laporan.add(new Object[]{
-                    rs.getString("nama_paket"),
-                    rs.getInt("jumlah_reservasi"),
-                    rs.getBigDecimal("total_pendapatan")
-                });
+            int paramIndex = 1;
+            for(Date param : params){
+                stmt.setDate(paramIndex++, param);
+            }
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    laporan.add(new Object[]{
+                        rs.getString("nama_paket"),
+                        rs.getInt("jumlah_reservasi"),
+                        rs.getBigDecimal("total_pendapatan")
+                    });
+                }
             }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, "Gagal mengambil laporan penjualan per paket: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
@@ -187,27 +206,39 @@ public class ReservasiController {
         return laporan;
     }
 
-    public List<Object[]> getLaporanPenjualanPerJenisTrip() {
+    public List<Object[]> getLaporanPenjualanPerJenisTrip(Date tanggalMulai, Date tanggalAkhir) {
         List<Object[]> laporan = new ArrayList<>();
         String query = "SELECT r.trip_type, COUNT(r.id) AS jumlah_reservasi, SUM(p.jumlah_pembayaran) AS total_pendapatan " +
                        "FROM reservasi r " +
                        "JOIN pembayaran p ON r.id = p.reservasi_id " +
-                       "WHERE p.status_pembayaran = 'lunas' " +
-                       "GROUP BY r.trip_type " +
-                       "ORDER BY total_pendapatan DESC";
+                       "WHERE p.status_pembayaran = 'lunas' ";
+
+        List<Date> params = new ArrayList<>();
+        if (tanggalMulai != null && tanggalAkhir != null) {
+            query += "AND p.tanggal_pembayaran BETWEEN ? AND ? ";
+            params.add(tanggalMulai);
+            params.add(tanggalAkhir);
+        }
+        query += "GROUP BY r.trip_type ORDER BY total_pendapatan DESC";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
+             PreparedStatement stmt = conn.prepareStatement(query)) {
 
             if (conn == null) return laporan;
+            
+            int paramIndex = 1;
+            for(Date param : params){
+                stmt.setDate(paramIndex++, param);
+            }
 
-            while (rs.next()) {
-                laporan.add(new Object[]{
-                    rs.getString("trip_type"),
-                    rs.getInt("jumlah_reservasi"),
-                    rs.getBigDecimal("total_pendapatan")
-                });
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    laporan.add(new Object[]{
+                        rs.getString("trip_type"),
+                        rs.getInt("jumlah_reservasi"),
+                        rs.getBigDecimal("total_pendapatan")
+                    });
+                }
             }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, "Gagal mengambil laporan penjualan per jenis trip: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);

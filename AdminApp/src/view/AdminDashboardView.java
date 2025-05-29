@@ -249,7 +249,7 @@ public class AdminDashboardView extends JFrame {
 
         // Grafik 1: Penjualan per Paket (Bar Chart)
         DefaultCategoryDataset datasetPenjualanPaket = new DefaultCategoryDataset();
-        List<Object[]> dataPenjualanPaket = reservasiController.getLaporanPenjualanPerPaket();
+        List<Object[]> dataPenjualanPaket = reservasiController.getLaporanPenjualanPerPaket(null, null);
         int jumlahPaketDitampilkan = 0;
         if (dataPenjualanPaket != null && !dataPenjualanPaket.isEmpty()) {
             for (Object[] item : dataPenjualanPaket) {
