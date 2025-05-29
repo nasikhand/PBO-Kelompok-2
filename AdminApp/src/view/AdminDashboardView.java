@@ -3,167 +3,190 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package view;
-import view.KelolaPenggunaView;
 
 import model.Admin;
+import controller.ReservasiController;
+import controller.UserController;
+import controller.PerjalananController;
+
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PiePlot;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.general.DefaultPieDataset;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.MatteBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class AdminDashboardView extends JFrame {
 
-    // Definisi warna untuk konsistensi tema
-    private final Color PANEL_LATAR = new Color(33, 42, 53);
-    private final Color PANEL_SAMPING_LATAR = new Color(40, 50, 63);
-    private final Color WARNA_AKSEN = new Color(2, 117, 216);
+    // Definisi warna yang lebih modern dan konsisten
+    private final Color WARNA_LATAR_UTAMA = new Color(30, 32, 34);
+    private final Color WARNA_PANEL_SAMPING = new Color(38, 40, 42);
+    private final Color WARNA_AKSEN_BIRU = new Color(20, 125, 250);
+    private final Color WARNA_AKSEN_HOVER = new Color(50, 150, 255);
+    private final Color WARNA_TEKS_UTAMA = new Color(220, 220, 220);
+    private final Color WARNA_TEKS_SEKUNDER = new Color(160, 160, 160);
+    private final Color WARNA_KARTU_LATAR = new Color(45, 48, 52);
+    // vvv PERBAIKI NAMA KONSTANTA INI (jika ada yang salah sebelumnya) vvv
+    private final Color WARNA_GRAFIK_LATAR_PANEL = new Color(45, 48, 52); // Latar panel yang membungkus grafik
+    private final Color WARNA_PLOT_GRAFIK = new Color(55, 58, 62);    // Latar area plot grafik
 
-    // Komponen utama untuk layout
     private JPanel panelKontenUtama;
     private CardLayout cardLayout;
-
-    // Peta untuk menyimpan panel yang sudah dibuat (untuk Lazy Loading)
     private Map<String, JPanel> panelCache = new HashMap<>();
 
+    private ReservasiController reservasiController;
+    private UserController userController;
+    private PerjalananController perjalananController;
+
     public AdminDashboardView(Admin admin) {
-        // Pengaturan Frame Utama
         setTitle("Dasbor Administrator - Sinar Jaya Travel");
-        setSize(1280, 720);
+        setMinimumSize(new Dimension(1280, 760));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Panel Latar Belakang Utama
+        this.reservasiController = new ReservasiController();
+        this.userController = new UserController();
+        this.perjalananController = new PerjalananController();
+
         JPanel panelLatar = new JPanel(new BorderLayout());
-        panelLatar.setBackground(PANEL_LATAR);
+        panelLatar.setBackground(WARNA_LATAR_UTAMA);
         setContentPane(panelLatar);
 
-        // Membuat Panel Navigasi Samping
         JPanel panelNavigasiSamping = buatPanelNavigasiSamping(admin);
         panelLatar.add(panelNavigasiSamping, BorderLayout.WEST);
 
-        // Membuat Panel Konten Utama dengan CardLayout
         cardLayout = new CardLayout();
         panelKontenUtama = new JPanel(cardLayout);
-        panelKontenUtama.setOpaque(false); // Transparan agar latar belakang utama terlihat
+        panelKontenUtama.setBorder(new EmptyBorder(15, 20, 15, 20));
+        panelKontenUtama.setOpaque(false);
         panelLatar.add(panelKontenUtama, BorderLayout.CENTER);
 
-        // Hanya buat dan tampilkan panel beranda dasbor saat pertama kali dibuka
         JPanel panelBerandaDasbor = buatPanelBerandaDasbor();
         panelKontenUtama.add(panelBerandaDasbor, "DASBOR");
-        panelCache.put("DASBOR", panelBerandaDasbor); // Simpan panel ke cache
+        panelCache.put("DASBOR", panelBerandaDasbor);
 
-        // Tampilkan dasbor sebagai default
         cardLayout.show(panelKontenUtama, "DASBOR");
     }
 
-    /**
-     * Membuat panel navigasi samping yang berisi judul, daftar menu, dan info admin.
-     * @param admin Objek admin yang sedang login.
-     * @return JPanel yang sudah jadi.
-     */
     private JPanel buatPanelNavigasiSamping(Admin admin) {
+        // ... (kode buatPanelNavigasiSamping tetap sama dari jawaban sebelumnya)
         JPanel panelSamping = new JPanel();
         panelSamping.setLayout(new BoxLayout(panelSamping, BoxLayout.Y_AXIS));
-        panelSamping.setBackground(PANEL_SAMPING_LATAR);
-        panelSamping.setPreferredSize(new Dimension(240, 0));
+        panelSamping.setBackground(WARNA_PANEL_SAMPING);
+        panelSamping.setPreferredSize(new Dimension(260, 0));
+        panelSamping.setBorder(new MatteBorder(0, 0, 0, 1, new Color(55,55,55)));
 
-        JLabel judulAplikasi = new JLabel("SINAR JAYA TRAVEL", SwingConstants.CENTER);
-        judulAplikasi.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        judulAplikasi.setForeground(Color.WHITE);
+        JPanel headerPanel = new JPanel();
+        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
+        headerPanel.setBackground(WARNA_PANEL_SAMPING);
+        headerPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        headerPanel.setBorder(new EmptyBorder(25, 15, 35, 15));
+
+        JLabel judulAplikasi = new JLabel("SINAR JAYA ADMIN", SwingConstants.CENTER);
+        judulAplikasi.setFont(new Font("Segoe UI Semibold", Font.BOLD, 20));
+        judulAplikasi.setForeground(WARNA_TEKS_UTAMA);
         judulAplikasi.setAlignmentX(Component.CENTER_ALIGNMENT);
-        judulAplikasi.setBorder(new EmptyBorder(20, 10, 20, 10));
-        panelSamping.add(judulAplikasi);
+        headerPanel.add(judulAplikasi);
+        panelSamping.add(headerPanel);
 
-        // Menambahkan item-item menu navigasi
-        tambahItemNavigasi(panelSamping, "Dasbor", "DASBOR");
-        tambahItemNavigasi(panelSamping, "Kelola Perjalanan", "PERJALANAN");
-        tambahItemNavigasi(panelSamping, "Kelola Reservasi", "RESERVASI");
-        tambahItemNavigasi(panelSamping, "Kelola Pengguna", "PENGGUNA");
-        tambahItemNavigasi(panelSamping, "Kelola Laporan", "LAPORAN");
+        tambahItemNavigasi(panelSamping, "📊 Dasbor", "DASBOR");
+        tambahItemNavigasi(panelSamping, "✈️ Kelola Perjalanan", "PERJALANAN");
+        tambahItemNavigasi(panelSamping, "📋 Kelola Reservasi", "RESERVASI");
+        tambahItemNavigasi(panelSamping, "👥 Kelola Pengguna", "PENGGUNA");
+        tambahItemNavigasi(panelSamping, "📈 Kelola Laporan", "LAPORAN");
 
-        panelSamping.add(Box.createVerticalGlue()); // Mendorong info admin ke bawah
+        panelSamping.add(Box.createVerticalGlue());
 
-        // Info admin dan tombol logout
+        JPanel footerPanel = new JPanel();
+        footerPanel.setLayout(new BoxLayout(footerPanel, BoxLayout.Y_AXIS));
+        footerPanel.setBackground(WARNA_PANEL_SAMPING);
+        footerPanel.setBorder(new EmptyBorder(15, 15, 20, 15));
+        footerPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
         JLabel labelAdmin = new JLabel(admin.getNamaLengkap(), SwingConstants.CENTER);
         labelAdmin.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        labelAdmin.setForeground(Color.WHITE);
+        labelAdmin.setForeground(WARNA_TEKS_UTAMA);
         labelAdmin.setAlignmentX(Component.CENTER_ALIGNMENT);
+        footerPanel.add(labelAdmin);
+        
+        JLabel emailAdminLabel = new JLabel(admin.getEmail(), SwingConstants.CENTER);
+        emailAdminLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        emailAdminLabel.setForeground(WARNA_TEKS_SEKUNDER);
+        emailAdminLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        footerPanel.add(emailAdminLabel);
+        footerPanel.add(Box.createRigidArea(new Dimension(0,10)));
 
-        JLabel labelKeluar = new JLabel("Keluar", SwingConstants.CENTER);
-        labelKeluar.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        labelKeluar.setForeground(WARNA_AKSEN);
+        JLabel labelKeluar = new JLabel("🚪 Keluar", SwingConstants.CENTER);
+        labelKeluar.setFont(new Font("Segoe UI Semibold", Font.PLAIN, 13));
+        labelKeluar.setForeground(WARNA_AKSEN_BIRU);
         labelKeluar.setCursor(new Cursor(Cursor.HAND_CURSOR));
         labelKeluar.setAlignmentX(Component.CENTER_ALIGNMENT);
         labelKeluar.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int response = JOptionPane.showConfirmDialog(null, "Apakah Anda yakin ingin keluar?", "Konfirmasi Keluar", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-                if (response == JOptionPane.YES_OPTION) {
-                    System.exit(0);
-                }
+            @Override public void mouseClicked(MouseEvent e) {
+                if (JOptionPane.showConfirmDialog(AdminDashboardView.this, "Apakah Anda yakin ingin keluar?", "Konfirmasi Keluar", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) System.exit(0);
             }
+            @Override public void mouseEntered(MouseEvent e) { labelKeluar.setForeground(WARNA_AKSEN_HOVER); }
+            @Override public void mouseExited(MouseEvent e) { labelKeluar.setForeground(WARNA_AKSEN_BIRU); }
         });
-
-        panelSamping.add(labelAdmin);
-        panelSamping.add(labelKeluar);
-        panelSamping.add(Box.createRigidArea(new Dimension(0, 20)));
+        footerPanel.add(labelKeluar);
+        panelSamping.add(footerPanel);
         
         return panelSamping;
     }
 
-    /**
-     * Helper untuk membuat satu item menu navigasi yang interaktif dan menerapkan lazy loading.
-     * @param parent Panel induk tempat item ini akan ditambahkan.
-     * @param text Teks yang akan ditampilkan.
-     * @param cardName Nama unik untuk CardLayout.
-     */
     private void tambahItemNavigasi(JPanel parent, String text, String cardName) {
-        JPanel itemNav = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 0));
-        itemNav.setBackground(PANEL_SAMPING_LATAR);
-        itemNav.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        // ... (kode tambahItemNavigasi tetap sama dari jawaban sebelumnya)
+        JPanel itemNav = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 12));
+        itemNav.setBackground(WARNA_PANEL_SAMPING);
+        itemNav.setMaximumSize(new Dimension(Integer.MAX_VALUE, 55));
         itemNav.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        itemNav.setBorder(new EmptyBorder(0,15,0,0));
 
-        JLabel iconLabel = new JLabel("●");
-        iconLabel.setForeground(Color.WHITE);
-        iconLabel.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 16));
-
-        JLabel textLabel = new JLabel(text);
-        textLabel.setForeground(Color.WHITE);
-        textLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-
-        itemNav.add(iconLabel);
-        itemNav.add(textLabel);
+        String iconText = text.substring(0, text.indexOf(" ") + 1);
+        String menuText = text.substring(text.indexOf(" ") + 1);
+        JLabel iconLabel = new JLabel(iconText); 
+        iconLabel.setForeground(WARNA_TEKS_UTAMA);
+        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
+        JLabel textLabel = new JLabel(menuText);
+        textLabel.setForeground(WARNA_TEKS_UTAMA);
+        textLabel.setFont(new Font("Segoe UI Semibold", Font.PLAIN, 15));
+        itemNav.add(iconLabel); itemNav.add(textLabel);
         
         itemNav.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) { itemNav.setBackground(WARNA_AKSEN); }
-            @Override
-            public void mouseExited(MouseEvent e) { itemNav.setBackground(PANEL_SAMPING_LATAR); }
-            
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (!panelCache.containsKey(cardName)) {
-                    System.out.println("Membuat panel baru untuk: " + cardName);
+            @Override public void mouseEntered(MouseEvent e) { itemNav.setBackground(WARNA_AKSEN_HOVER.darker().darker()); }
+            @Override public void mouseExited(MouseEvent e) { itemNav.setBackground(WARNA_PANEL_SAMPING); }
+            @Override public void mouseClicked(MouseEvent e) {
+                if (cardName.equals("DASBOR")) {
+                    panelKontenUtama.removeAll();
+                    panelCache.clear();
+                    JPanel panelBerandaDasbor = buatPanelBerandaDasbor();
+                    panelKontenUtama.add(panelBerandaDasbor, "DASBOR");
+                    panelCache.put("DASBOR", panelBerandaDasbor);
+                    cardLayout.show(panelKontenUtama, "DASBOR");
+                } else if (!panelCache.containsKey(cardName)) {
                     JPanel newPanel;
                     switch (cardName) {
-                        case "PERJALANAN":
-                            newPanel = new KelolaPerjalananView();
-                            break;
-                        case "RESERVASI":
-                            newPanel = new KelolaReservasiView();
-                            break;
-                        case "PENGGUNA": // <-- TAMBAHKAN CASE INI
-                            newPanel = new KelolaPenggunaView();
-                            break;
-                        case "LAPORAN":
-                            newPanel = buatPanelPlaceholder("Manajemen Laporan");
-                            break;
-                        default:
-                            newPanel = buatPanelPlaceholder("Segera Hadir");
-                            break;
+                        case "PERJALANAN": newPanel = new KelolaPerjalananView(); break;
+                        case "RESERVASI": newPanel = new KelolaReservasiView(); break;
+                        case "PENGGUNA": newPanel = new KelolaPenggunaView(); break;
+                        case "LAPORAN": newPanel = new KelolaLaporanView(); break;
+                        default: newPanel = buatPanelPlaceholder("Segera Hadir: " + cardName); break;
                     }
                     panelKontenUtama.add(newPanel, cardName);
                     panelCache.put(cardName, newPanel);
@@ -171,76 +194,172 @@ public class AdminDashboardView extends JFrame {
                 cardLayout.show(panelKontenUtama, cardName);
             }
         });
-        
         parent.add(itemNav);
     }
     
     /**
-     * Membuat panel beranda dasbor yang menampilkan kartu-kartu statistik.
-     * @return JPanel yang sudah jadi.
+     * Membuat panel beranda dasbor dengan TATA LETAK BARU:
+     * Kartu statistik ringkas di atas, grafik di bawah.
      */
     private JPanel buatPanelBerandaDasbor() {
-        JPanel panel = new JPanel(new BorderLayout(10, 20));
-        panel.setBorder(new EmptyBorder(20, 25, 20, 25));
-        panel.setOpaque(false);
-        
-        JLabel judul = new JLabel("Gambaran Umum Dasbor");
-        judul.setFont(new Font("Segoe UI", Font.BOLD, 32));
-        judul.setForeground(Color.WHITE);
-        panel.add(judul, BorderLayout.NORTH);
+        JPanel panelInduk = new JPanel(new BorderLayout(15, 20)); // Jarak vertikal antar bagian
+        panelInduk.setBorder(new EmptyBorder(20, 25, 20, 25));
+        panelInduk.setOpaque(false);
 
-        JPanel panelStatistik = new JPanel(new GridLayout(1, 4, 20, 0));
-        panelStatistik.setOpaque(false);
-        panelStatistik.add(buatKartuStatistik("Total Pendapatan", "Rp 25.4Jt", "Grafik Naik", new Color(0, 184, 148)));
-        panelStatistik.add(buatKartuStatistik("Pemesanan", "3,241", "+15% dari minggu lalu", new Color(108, 92, 231)));
-        panelStatistik.add(buatKartuStatistik("Perjalanan Aktif", "124", "5 perjalanan mulai hari ini", new Color(0, 206, 201)));
-        panelStatistik.add(buatKartuStatistik("Pengguna Baru", "512", "Bergabung bulan ini", new Color(253, 203, 110)));
-        panel.add(panelStatistik, BorderLayout.CENTER);
+        JLabel judulHalaman = new JLabel("Gambaran Umum Dasbor");
+        judulHalaman.setFont(new Font("Segoe UI Light", Font.PLAIN, 36));
+        judulHalaman.setForeground(WARNA_TEKS_UTAMA);
+        judulHalaman.setBorder(new EmptyBorder(0, 0, 15, 0));
+        panelInduk.add(judulHalaman, BorderLayout.NORTH);
+
+        // --- BAGIAN ATAS: KARTU STATISTIK RINGKAS ---
+        JPanel panelKartuStatistik = new JPanel(new GridLayout(1, 4, 15, 15)); // Jarak antar kartu
+        panelKartuStatistik.setOpaque(false);
+
+        BigDecimal totalPendapatan = reservasiController.getTotalPendapatanLunas();
+        if (totalPendapatan == null) totalPendapatan = BigDecimal.ZERO;
+        int totalPemesanan = reservasiController.getTotalReservasi();
+        int pemesananPending = reservasiController.getTotalReservasiByStatus("pending");
+        int totalPengguna = userController.getTotalPengguna(); // Jika Anda ingin menambahkannya kembali
+        // int perjalananAktif = perjalananController.getTotalPaketPerjalananAktif(); // Jika ingin
+
+        NumberFormat formatMataUang = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
+        formatMataUang.setMaximumFractionDigits(0);
+
+        panelKartuStatistik.add(buatKartuStatistikRingkas("💰 Pendapatan", formatMataUang.format(totalPendapatan), new Color(26, 188, 156)));
+        panelKartuStatistik.add(buatKartuStatistikRingkas("🛒 Pemesanan", String.valueOf(totalPemesanan), new Color(52, 152, 219)));
+        panelKartuStatistik.add(buatKartuStatistikRingkas("⏳ Pending", String.valueOf(pemesananPending), new Color(243, 156, 18)));
+        panelKartuStatistik.add(buatKartuStatistikRingkas("👤 Pengguna", String.valueOf(totalPengguna), new Color(155, 89, 182)));
         
-        return panel;
+        panelInduk.add(panelKartuStatistik, BorderLayout.CENTER);
+
+        // --- BAGIAN BAWAH: GRAFIK (DIPERKECIL) ---
+        JPanel panelGrafikKontainer = new JPanel(new GridLayout(1, 2, 20, 0));
+        panelGrafikKontainer.setOpaque(false);
+        panelGrafikKontainer.setBorder(new EmptyBorder(20, 0, 0, 0)); // Jarak atas dari kartu statistik
+
+        // Grafik 1: Penjualan per Paket (Bar Chart)
+        DefaultCategoryDataset datasetPenjualanPaket = new DefaultCategoryDataset();
+        List<Object[]> dataPenjualanPaket = reservasiController.getLaporanPenjualanPerPaket();
+        int jumlahPaketDitampilkan = 0;
+        if (dataPenjualanPaket != null && !dataPenjualanPaket.isEmpty()) {
+            for (Object[] item : dataPenjualanPaket) {
+                if (jumlahPaketDitampilkan >= 5) break; // Batasi jumlah paket di grafik agar tidak terlalu ramai
+                String namaPaket = (String) item[0];
+                BigDecimal pendapatanPaket = (BigDecimal) item[2];
+                if (pendapatanPaket == null) pendapatanPaket = BigDecimal.ZERO;
+                datasetPenjualanPaket.addValue(pendapatanPaket, "Pendapatan (Rp)", namaPaket.length() > 15 ? namaPaket.substring(0,15)+"..." : namaPaket); // Potong nama paket jika terlalu panjang
+                jumlahPaketDitampilkan++;
+            }
+        } else {
+            datasetPenjualanPaket.addValue(0, "Pendapatan (Rp)", "Belum Ada Data");
+        }
+        JFreeChart barChartPenjualan = ChartFactory.createBarChart("Top 5 Pendapatan per Paket", "Paket", "Rp", datasetPenjualanPaket, PlotOrientation.VERTICAL, false, true, false);
+        kustomisasiGrafik(barChartPenjualan, true);
+        ChartPanel chartPanelPenjualan = new ChartPanel(barChartPenjualan);
+        chartPanelPenjualan.setPreferredSize(new Dimension(400, 280)); // Atur ukuran grafik
+        chartPanelPenjualan.setBackground(WARNA_GRAFIK_LATAR_PANEL);
+        chartPanelPenjualan.setBorder(BorderFactory.createLineBorder(WARNA_PANEL_SAMPING,1));
+        panelGrafikKontainer.add(chartPanelPenjualan);
+
+        // Grafik 2: Komposisi Status Reservasi (Pie Chart)
+        DefaultPieDataset<String> datasetStatusReservasi = new DefaultPieDataset<>();
+        Map<String, Integer> dataStatus = reservasiController.getJumlahReservasiPerStatus();
+        if (dataStatus != null && !dataStatus.isEmpty()) {
+            for (Map.Entry<String, Integer> entry : dataStatus.entrySet()) {
+                datasetStatusReservasi.setValue(entry.getKey() + " (" + entry.getValue() + ")", entry.getValue());
+            }
+        } else {
+             datasetStatusReservasi.setValue("Belum Ada Data", 1);
+        }
+        JFreeChart pieChartStatus = ChartFactory.createPieChart("Status Reservasi", datasetStatusReservasi, true, true, false);
+        kustomisasiGrafik(pieChartStatus, false);
+        ChartPanel chartPanelStatus = new ChartPanel(pieChartStatus);
+        chartPanelStatus.setPreferredSize(new Dimension(400, 280)); // Atur ukuran grafik
+        chartPanelStatus.setBackground(WARNA_GRAFIK_LATAR_PANEL);
+        chartPanelStatus.setBorder(BorderFactory.createLineBorder(WARNA_PANEL_SAMPING,1));
+        panelGrafikKontainer.add(chartPanelStatus);
+
+        panelInduk.add(panelGrafikKontainer, BorderLayout.SOUTH);
+        
+        return panelInduk;
     }
     
     /**
-     * Helper untuk membuat satu kotak statistik.
+     * Helper untuk membuat KARTU STATISTIK RINGKAS (versi lebih kecil).
      */
-    private JPanel buatKartuStatistik(String judul, String nilai, String subteks, Color aksen) {
-        JPanel kartu = new JPanel();
-        kartu.setLayout(new BoxLayout(kartu, BoxLayout.Y_AXIS));
-        kartu.setBackground(PANEL_SAMPING_LATAR);
+    private JPanel buatKartuStatistikRingkas(String judul, String nilai, Color aksen) {
+        JPanel kartu = new JPanel(new BorderLayout(5,2));
+        kartu.setBackground(WARNA_KARTU_LATAR);
         kartu.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(5, 0, 0, 0, aksen),
-            new EmptyBorder(15, 20, 15, 20)
+            new MatteBorder(0, 0, 4, 0, aksen), // Aksen bawah
+            new EmptyBorder(10, 15, 10, 15)
         ));
 
-        JLabel labelJudul = new JLabel(judul.toUpperCase());
-        labelJudul.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        labelJudul.setForeground(Color.LIGHT_GRAY);
-        kartu.add(labelJudul);
-        kartu.add(Box.createRigidArea(new Dimension(0, 5)));
+        String ikonJudul = judul.substring(0, judul.indexOf(" ") + 1);
+        String teksJudul = judul.substring(judul.indexOf(" ") + 1);
+
+        JLabel labelTeksJudul = new JLabel(teksJudul.toUpperCase());
+        labelTeksJudul.setFont(new Font("Segoe UI Semibold", Font.BOLD, 11)); // Font judul lebih kecil
+        labelTeksJudul.setForeground(WARNA_TEKS_SEKUNDER);
+        labelTeksJudul.setHorizontalAlignment(SwingConstants.LEFT);
+        kartu.add(labelTeksJudul, BorderLayout.NORTH);
 
         JLabel labelNilai = new JLabel(nilai);
-        labelNilai.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        labelNilai.setForeground(Color.WHITE);
-        kartu.add(labelNilai);
-        kartu.add(Box.createVerticalGlue());
-
-        JLabel labelSubteks = new JLabel(subteks);
-        labelSubteks.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        labelSubteks.setForeground(aksen);
-        kartu.add(labelSubteks);
+        labelNilai.setFont(new Font("Segoe UI Black", Font.BOLD, 20)); // Font nilai lebih kecil
+        labelNilai.setForeground(WARNA_TEKS_UTAMA);
+        labelNilai.setHorizontalAlignment(SwingConstants.LEFT);
+        kartu.add(labelNilai, BorderLayout.CENTER);
         
         return kartu;
     }
     
-    /**
-     * Membuat panel placeholder untuk fitur yang belum diimplementasikan.
-     */
-    private JPanel buatPanelPlaceholder(String judul) {
+    private void kustomisasiGrafik(JFreeChart chart, boolean isBarChart) {
+        chart.setBackgroundPaint(WARNA_GRAFIK_LATAR_PANEL);
+        chart.getTitle().setPaint(WARNA_TEKS_UTAMA);
+        chart.getTitle().setFont(new Font("Segoe UI Semibold", Font.BOLD, 14)); // Font judul grafik
+
+        if (chart.getLegend() != null) {
+            chart.getLegend().setBackgroundPaint(WARNA_GRAFIK_LATAR_PANEL);
+            chart.getLegend().setItemPaint(WARNA_TEKS_SEKUNDER);
+            chart.getLegend().setItemFont(new Font("Segoe UI", Font.PLAIN, 10));
+        }
+
+        if (isBarChart) {
+            CategoryPlot plot = chart.getCategoryPlot();
+            plot.setBackgroundPaint(WARNA_PLOT_GRAFIK);
+            plot.setDomainGridlinePaint(WARNA_PANEL_SAMPING);
+            plot.setRangeGridlinePaint(WARNA_PANEL_SAMPING);
+            plot.getDomainAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 9));
+            plot.getDomainAxis().setTickLabelPaint(WARNA_TEKS_SEKUNDER);
+            plot.getDomainAxis().setLabelPaint(WARNA_TEKS_UTAMA);
+            plot.getRangeAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 10));
+            plot.getRangeAxis().setTickLabelPaint(WARNA_TEKS_SEKUNDER);
+            plot.getRangeAxis().setLabelPaint(WARNA_TEKS_UTAMA);
+            BarRenderer renderer = (BarRenderer) plot.getRenderer();
+            renderer.setSeriesPaint(0, WARNA_AKSEN_BIRU);
+            renderer.setDrawBarOutline(false);
+            renderer.setShadowVisible(false);
+        } else { // PieChart
+            PiePlot<?> plot = (PiePlot<?>) chart.getPlot();
+            plot.setBackgroundPaint(WARNA_PLOT_GRAFIK);
+            plot.setLabelPaint(WARNA_TEKS_UTAMA);
+            plot.setNoDataMessage("Tidak ada data");
+            plot.setNoDataMessagePaint(WARNA_TEKS_SEKUNDER);
+            plot.setLabelBackgroundPaint(null);
+            plot.setLabelOutlinePaint(null);
+            plot.setLabelShadowPaint(null);
+            plot.setShadowPaint(null);
+            plot.setLabelFont(new Font("Segoe UI", Font.PLAIN, 10));
+        }
+    }
+    
+    private JPanel buatPanelPlaceholder(String judulTeks) {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setOpaque(false);
-        JLabel label = new JLabel(judul);
-        label.setFont(new Font("Segoe UI", Font.BOLD, 36));
-        label.setForeground(Color.WHITE);
+        JLabel label = new JLabel(judulTeks);
+        label.setFont(new Font("Segoe UI Light", Font.PLAIN, 36));
+        label.setForeground(WARNA_TEKS_UTAMA);
         panel.add(label);
         return panel;
     }
