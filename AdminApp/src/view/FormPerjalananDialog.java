@@ -32,9 +32,10 @@ public class FormPerjalananDialog extends JDialog {
     private JButton btnPilihGambar;
     private JLabel lblNamaFileGambar;
 
-    // Atribut untuk data
+    // Atribut untuk data dan logic
     private PerjalananController controller;
     private File fileGambarDipilih;
+    private PaketPerjalanan paketToEdit;
 
     /**
      * Constructor untuk membuat dialog form.
@@ -44,6 +45,7 @@ public class FormPerjalananDialog extends JDialog {
     public FormPerjalananDialog(Frame owner, PaketPerjalanan paket) {
         super(owner, "Formulir Paket Perjalanan", true);
         
+        this.paketToEdit = paket;
         this.controller = new PerjalananController();
 
         // Pengaturan dasar JDialog
@@ -55,16 +57,12 @@ public class FormPerjalananDialog extends JDialog {
         JPanel panelForm = new JPanel(new GridBagLayout());
         panelForm.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         
-        // Inisialisasi semua komponen
+        // Inisialisasi, pengaturan layout, dan pengisian data komponen
         inisialisasiKomponen();
-
-        // Mengisi dropdown kota dari database
         muatDataKota();
-
-        // Mengatur layout komponen pada panel
         aturLayoutKomponen(panelForm);
 
-        // Menambahkan panel form ke bagian tengah dialog
+        // Menambahkan panel form ke dialog
         add(panelForm, BorderLayout.CENTER);
 
         // Panel untuk tombol Simpan
@@ -73,8 +71,15 @@ public class FormPerjalananDialog extends JDialog {
         panelTombol.add(btnSimpan);
         add(panelTombol, BorderLayout.SOUTH);
 
-        // Menambahkan action listener untuk tombol
+        // Menambahkan action listener untuk tombol-tombol
         aturActionListeners();
+
+        // Jika ini adalah mode "Ubah", isi form dengan data yang ada
+        if (paketToEdit != null) {
+            setTitle("Ubah Paket Perjalanan");
+            btnSimpan.setText("Perbarui");
+            isiDataForm();
+        }
     }
 
     /**
@@ -123,39 +128,33 @@ public class FormPerjalananDialog extends JDialog {
         gbc.gridx = 0; panelForm.add(new JLabel("Kota Tujuan:"), gbc);
         gbc.gridx = 1; panelForm.add(cmbKota, gbc);
         
-        // Baris 2: Tanggal Mulai
+        // Baris-baris selanjutnya
         gbc.gridy++;
         gbc.gridx = 0; panelForm.add(new JLabel("Tanggal Mulai:"), gbc);
         gbc.gridx = 1; panelForm.add(txtTanggalMulai, gbc);
         
-        // Baris 3: Tanggal Akhir
         gbc.gridy++;
         gbc.gridx = 0; panelForm.add(new JLabel("Tanggal Akhir:"), gbc);
         gbc.gridx = 1; panelForm.add(txtTanggalAkhir, gbc);
         
-        // Baris 4: Harga
         gbc.gridy++;
         gbc.gridx = 0; panelForm.add(new JLabel("Harga (Rp):"), gbc);
         gbc.gridx = 1; panelForm.add(txtHarga, gbc);
         
-        // Baris 5: Kuota
         gbc.gridy++;
         gbc.gridx = 0; panelForm.add(new JLabel("Kuota:"), gbc);
         gbc.gridx = 1; panelForm.add(txtKuota, gbc);
         
-        // Baris 6: Status
         gbc.gridy++;
         gbc.gridx = 0; panelForm.add(new JLabel("Status:"), gbc);
         gbc.gridx = 1; panelForm.add(cmbStatus, gbc);
         
-        // Baris 7: Deskripsi
         gbc.gridy++;
-        gbc.anchor = GridBagConstraints.NORTHWEST; // Agar label "Deskripsi" rata atas
+        gbc.anchor = GridBagConstraints.NORTHWEST;
         gbc.gridx = 0; panelForm.add(new JLabel("Deskripsi:"), gbc);
-        gbc.anchor = GridBagConstraints.WEST; // Kembalikan ke default
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 1; panelForm.add(new JScrollPane(txtDeskripsi), gbc);
         
-        // Baris 8: Gambar Paket
         gbc.gridy++;
         gbc.gridx = 0; panelForm.add(new JLabel("Gambar Paket:"), gbc);
         JPanel panelGambar = new JPanel(new BorderLayout(5, 0));
@@ -171,47 +170,66 @@ public class FormPerjalananDialog extends JDialog {
         btnPilihGambar.addActionListener(e -> pilihGambar());
         btnSimpan.addActionListener(e -> simpanData());
     }
+    
+    /**
+     * Jika dalam mode Ubah, metode ini mengisi semua field form dengan data dari objek paket.
+     */
+    private void isiDataForm() {
+        txtNamaPaket.setText(paketToEdit.getNamaPaket());
+        txtTanggalMulai.setText(paketToEdit.getTanggalMulai().toString());
+        txtTanggalAkhir.setText(paketToEdit.getTanggalAkhir().toString());
+        txtKuota.setText(String.valueOf(paketToEdit.getKuota()));
+        txtHarga.setText(paketToEdit.getHarga().toPlainString());
+        txtDeskripsi.setText(paketToEdit.getDeskripsi());
+        cmbStatus.setSelectedItem(paketToEdit.getStatus());
+
+        for (int i = 0; i < cmbKota.getItemCount(); i++) {
+            if (cmbKota.getItemAt(i).getId() == paketToEdit.getKotaId()) {
+                cmbKota.setSelectedIndex(i);
+                break;
+            }
+        }
+
+        if (paketToEdit.getGambar() != null && !paketToEdit.getGambar().isEmpty()) {
+            lblNamaFileGambar.setText(paketToEdit.getGambar());
+        }
+    }
 
     /**
      * Membuka JFileChooser untuk memilih file gambar.
      */
     private void pilihGambar() {
         JFileChooser chooser = new JFileChooser();
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(
-            "Gambar (JPG, PNG, GIF)", "jpg", "png", "gif");
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Gambar (JPG, PNG, GIF)", "jpg", "png", "gif");
         chooser.setFileFilter(filter);
-        int returnVal = chooser.showOpenDialog(this);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             fileGambarDipilih = chooser.getSelectedFile();
             lblNamaFileGambar.setText(fileGambarDipilih.getName());
         }
     }
 
     /**
-     * Menyalin file gambar yang dipilih ke folder tujuan di dalam proyek.
-     * @param file File sumber yang akan disalin.
+     * Menyalin file gambar yang dipilih ke folder tujuan dan mengganti spasi di nama filenya.
      * @return String nama file baru yang telah disalin, atau null jika gagal.
      */
-    private String simpanGambarKeFolder(File file) {
-        if (file == null) return null;
+    private String simpanGambarKeFolder() {
+        if (fileGambarDipilih == null) return null;
 
         Path folderTujuan = Paths.get("images/paket_perjalanan");
         if (!Files.exists(folderTujuan)) {
-            try {
-                Files.createDirectories(folderTujuan);
-            } catch (IOException e) {
+            try { Files.createDirectories(folderTujuan); } catch (IOException e) {
                 e.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Gagal membuat direktori gambar.", "Kesalahan File", JOptionPane.ERROR_MESSAGE);
                 return null;
             }
         }
 
-        String namaFileAsli = file.getName();
+        String namaFileAsli = fileGambarDipilih.getName().replace(" ", "_");
         String namaFileBaru = System.currentTimeMillis() + "_" + namaFileAsli;
         Path fileTujuan = folderTujuan.resolve(namaFileBaru);
 
         try {
-            Files.copy(file.toPath(), fileTujuan, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(fileGambarDipilih.toPath(), fileTujuan, StandardCopyOption.REPLACE_EXISTING);
             return namaFileBaru;
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -222,11 +240,28 @@ public class FormPerjalananDialog extends JDialog {
 
     /**
      * Mengumpulkan semua data dari form, memvalidasi, dan menyimpannya ke database.
+     * Menangani logika untuk mode Tambah dan Ubah.
      */
     private void simpanData() {
         try {
-            String namaFileGambar = simpanGambarKeFolder(fileGambarDipilih);
+            String namaFileGambar = (paketToEdit != null) ? paketToEdit.getGambar() : null;
 
+            // Jika ada file gambar BARU yang dipilih
+            if (fileGambarDipilih != null) {
+                String namaFileLama = namaFileGambar;
+                namaFileGambar = simpanGambarKeFolder();
+                if (namaFileGambar == null) return; // Proses simpan gambar gagal
+                
+                // Hapus gambar lama jika ada (hanya dalam mode Ubah)
+                if (namaFileLama != null && !namaFileLama.isEmpty()) {
+                    File fileLama = new File("images/paket_perjalanan/" + namaFileLama);
+                    if (fileLama.exists()) {
+                        fileLama.delete();
+                    }
+                }
+            }
+
+            // Siapkan objek PaketPerjalanan dengan data dari form
             PaketPerjalanan paket = new PaketPerjalanan();
             paket.setNamaPaket(txtNamaPaket.getText());
             paket.setKotaId(((Kota) cmbKota.getSelectedItem()).getId());
@@ -236,19 +271,26 @@ public class FormPerjalananDialog extends JDialog {
             paket.setKuota(Integer.parseInt(txtKuota.getText()));
             paket.setStatus((String) cmbStatus.getSelectedItem());
             paket.setDeskripsi(txtDeskripsi.getText());
-            if (namaFileGambar != null) {
-                paket.setGambar(namaFileGambar);
+            paket.setGambar(namaFileGambar);
+
+            boolean sukses;
+            if (paketToEdit == null) {
+                // Mode Tambah: Panggil controller untuk menambah data baru
+                sukses = controller.addPaketPerjalanan(paket);
+            } else {
+                // Mode Ubah: Set ID dan panggil controller untuk memperbarui data
+                paket.setId(paketToEdit.getId());
+                sukses = controller.updatePaketPerjalanan(paket);
             }
 
-            boolean sukses = controller.addPaketPerjalanan(paket);
             if (sukses) {
-                JOptionPane.showMessageDialog(this, "Data paket perjalanan berhasil disimpan!");
-                dispose(); // Menutup dialog setelah berhasil
+                JOptionPane.showMessageDialog(this, "Data berhasil disimpan!");
+                dispose(); // Tutup dialog setelah berhasil
             } else {
                 JOptionPane.showMessageDialog(this, "Gagal menyimpan data ke basis data.", "Kesalahan", JOptionPane.ERROR_MESSAGE);
             }
         } catch (IllegalArgumentException ex) {
-            JOptionPane.showMessageDialog(this, "Input tidak valid. Periksa format tanggal (yyyy-mm-dd) atau angka.\nError: " + ex.getMessage(), "Input Tidak Valid", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Input tidak valid. Periksa format tanggal (yyyy-mm-dd) atau angka.", "Input Tidak Valid", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Terjadi kesalahan yang tidak terduga: " + ex.getMessage(), "Kesalahan", JOptionPane.ERROR_MESSAGE);
         }

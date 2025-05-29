@@ -8,6 +8,8 @@ import config.DatabaseConnection;
 import model.Kota;
 import model.PaketPerjalanan;
 
+import javax.swing.JOptionPane;
+import java.io.File;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +22,6 @@ public class PerjalananController {
      */
     public List<PaketPerjalanan> getAllPaketPerjalanan() {
         List<PaketPerjalanan> daftarPaket = new ArrayList<>();
-        // Query dengan JOIN untuk mendapatkan nama kota agar bisa ditampilkan
         String query = "SELECT pp.*, k.nama_kota FROM paket_perjalanan pp JOIN kota k ON pp.kota_id = k.id ORDER BY pp.id";
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
@@ -35,16 +36,16 @@ public class PerjalananController {
                 paket.setHarga(rs.getBigDecimal("harga"));
                 paket.setKuota(rs.getInt("kuota"));
                 paket.setStatus(rs.getString("status"));
-                // Deskripsi bisa diambil jika diperlukan
-                // paket.setDeskripsi(rs.getString("deskripsi"));
                 daftarPaket.add(paket);
             }
         } catch (SQLException e) {
+            // TAMPILKAN POPUP JIKA ADA ERROR SQL
+            JOptionPane.showMessageDialog(null, "Gagal mengambil data perjalanan: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
-            // Di aplikasi nyata, ini seharusnya menampilkan pesan error ke pengguna
         }
         return daftarPaket;
     }
+
 
     /**
      * Mengambil semua data kota untuk mengisi JComboBox (dropdown) di form.
@@ -93,6 +94,91 @@ public class PerjalananController {
             e.printStackTrace();
             return false;
         }
+    }
+    
+    /**
+     * Mengambil satu data PaketPerjalanan berdasarkan ID-nya.
+     * Diperlukan saat akan mengisi form untuk mode 'Ubah'.
+     */
+    public PaketPerjalanan getPaketById(int id) {
+        PaketPerjalanan paket = null;
+        String query = "SELECT * FROM paket_perjalanan WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    paket = new PaketPerjalanan();
+                    paket.setId(rs.getInt("id"));
+                    paket.setKotaId(rs.getInt("kota_id"));
+                    paket.setNamaPaket(rs.getString("nama_paket"));
+                    paket.setTanggalMulai(rs.getDate("tanggal_mulai"));
+                    paket.setTanggalAkhir(rs.getDate("tanggal_akhir"));
+                    paket.setKuota(rs.getInt("kuota"));
+                    paket.setHarga(rs.getBigDecimal("harga"));
+                    paket.setDeskripsi(rs.getString("deskripsi"));
+                    paket.setStatus(rs.getString("status"));
+                    paket.setGambar(rs.getString("gambar"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return paket;
+    }
+
+    /**
+     * Memperbarui data paket perjalanan yang ada di database.
+     */
+    public boolean updatePaketPerjalanan(PaketPerjalanan paket) {
+        String query = "UPDATE paket_perjalanan SET kota_id=?, nama_paket=?, tanggal_mulai=?, tanggal_akhir=?, kuota=?, harga=?, deskripsi=?, status=?, gambar=? WHERE id=?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, paket.getKotaId());
+            stmt.setString(2, paket.getNamaPaket());
+            stmt.setDate(3, paket.getTanggalMulai());
+            stmt.setDate(4, paket.getTanggalAkhir());
+            stmt.setInt(5, paket.getKuota());
+            stmt.setBigDecimal(6, paket.getHarga());
+            stmt.setString(7, paket.getDeskripsi());
+            stmt.setString(8, paket.getStatus());
+            stmt.setString(9, paket.getGambar());
+            stmt.setInt(10, paket.getId()); // WHERE clause
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Menghapus data paket perjalanan dari database berdasarkan ID.
+     */
+    public boolean deletePaketPerjalanan(int id) {
+        // 1. Dapatkan nama file gambar sebelum dihapus dari DB
+        PaketPerjalanan paket = getPaketById(id);
+        if (paket == null) return false; // Data tidak ditemukan
+
+        // 2. Hapus data dari database
+        String query = "DELETE FROM paket_perjalanan WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, id);
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected > 0) {
+                // 3. Jika berhasil, hapus file gambar dari folder
+                if (paket.getGambar() != null && !paket.getGambar().isEmpty()) {
+                    File fileGambar = new File("images/paket_perjalanan/" + paket.getGambar());
+                    if (fileGambar.exists()) {
+                        fileGambar.delete();
+                    }
+                }
+                return true;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     // NANTI KITA TAMBAHKAN FUNGSI UBAH DAN HAPUS DI SINI
