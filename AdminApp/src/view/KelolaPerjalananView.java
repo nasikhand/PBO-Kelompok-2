@@ -26,6 +26,7 @@ public class KelolaPerjalananView extends JPanel {
     private PerjalananController controller;
     private JTextField txtPencarian; 
     private TableRowSorter<DefaultTableModel> sorter; 
+    private JButton btnKelolaRincian;
 
     public KelolaPerjalananView() {
         this.controller = new PerjalananController();
@@ -88,12 +89,13 @@ public class KelolaPerjalananView extends JPanel {
         JButton btnCekGambar = new JButton("Cek Status Gambar");
         btnCekGambar.setBackground(new Color(255, 193, 7)); // Warna kuning
         btnCekGambar.setForeground(Color.BLACK);
-        // ^^^ AKHIR DARI TOMBOL BARU ^^^
+        btnKelolaRincian = new JButton("Kelola Rincian Destinasi"); 
         
         panelTombol.add(btnTambah);
         panelTombol.add(btnUbah);
         panelTombol.add(btnHapus);
-        panelTombol.add(btnCekGambar); // Tambahkan tombol ke panel
+        panelTombol.add(btnCekGambar);
+        panelTombol.add(btnKelolaRincian);
         add(panelTombol, BorderLayout.SOUTH);
 
         muatData();
@@ -103,6 +105,7 @@ public class KelolaPerjalananView extends JPanel {
         btnUbah.addActionListener(e -> ubahDataTerpilih());
         btnHapus.addActionListener(e -> hapusDataTerpilih());
         btnCekGambar.addActionListener(e -> cekStatusGambarTerpilih());
+         btnKelolaRincian.addActionListener(e -> bukaDialogKelolaRincian());
         
         // Listener untuk kolom pencarian
         txtPencarian.getDocument().addDocumentListener(new DocumentListener() {
@@ -250,6 +253,28 @@ public class KelolaPerjalananView extends JPanel {
             } else {
                 JOptionPane.showMessageDialog(this, "Gagal menghapus data.", "Kesalahan", JOptionPane.ERROR_MESSAGE);
             }
+        }
+    }
+    
+    private void bukaDialogKelolaRincian() {
+        int barisTerpilih = tabel.getSelectedRow();
+        if (barisTerpilih == -1) {
+            JOptionPane.showMessageDialog(this, "Silakan pilih paket perjalanan terlebih dahulu.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        int idPaket = (int) modelTabel.getValueAt(barisTerpilih, 0);
+        // Ambil objek PaketPerjalanan lengkap, karena dialog mungkin butuh nama paket, dll.
+        PaketPerjalanan paketTerpilih = controller.getPaketById(idPaket); 
+        // (Pastikan getPaketById mengembalikan objek PaketPerjalanan lengkap)
+
+        if (paketTerpilih != null) {
+            RincianPaketDialog dialog = new RincianPaketDialog(
+                (Frame) SwingUtilities.getWindowAncestor(this), paketTerpilih
+            );
+            dialog.setVisible(true);
+            // Tidak perlu muatData() di sini karena dialog rincian tidak mengubah tabel utama
+        } else {
+            JOptionPane.showMessageDialog(this, "Gagal memuat data paket perjalanan.", "Kesalahan", JOptionPane.ERROR_MESSAGE);
         }
     }
 }
