@@ -8,6 +8,7 @@ import model.Admin;
 import controller.ReservasiController;
 import controller.UserController;
 import controller.PerjalananController;
+import view.KelolaPembayaranView;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -110,6 +111,7 @@ public class AdminDashboardView extends JFrame {
         tambahItemNavigasi(panelSamping, "📋 Kelola Reservasi", "RESERVASI");
         tambahItemNavigasi(panelSamping, "👥 Kelola Pengguna", "PENGGUNA");
         tambahItemNavigasi(panelSamping, "📈 Kelola Laporan", "LAPORAN");
+        tambahItemNavigasi(panelSamping, "💳 Kelola Pembayaran", "PEMBAYARAN"); 
 
         panelSamping.add(Box.createVerticalGlue());
 
@@ -186,6 +188,7 @@ public class AdminDashboardView extends JFrame {
                         case "RESERVASI": newPanel = new KelolaReservasiView(); break;
                         case "PENGGUNA": newPanel = new KelolaPenggunaView(); break;
                         case "LAPORAN": newPanel = new KelolaLaporanView(); break;
+                        case "PEMBAYARAN": newPanel = new KelolaPembayaranView(); break;
                         default: newPanel = buatPanelPlaceholder("Segera Hadir: " + cardName); break;
                     }
                     panelKontenUtama.add(newPanel, cardName);

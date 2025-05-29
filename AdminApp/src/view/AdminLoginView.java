@@ -35,7 +35,7 @@ public class AdminLoginView extends JFrame {
 
         try {
             // Pastikan logo.png ada di src/resources/
-            ImageIcon logoIcon = new ImageIcon(getClass().getResource("/resources/logo.png"));
+            ImageIcon logoIcon = new ImageIcon(getClass().getResource("/resources/logo1.png"));
             Image image = logoIcon.getImage().getScaledInstance(130, 130, Image.SCALE_SMOOTH);
             JLabel logoLabel = new JLabel(new ImageIcon(image));
             gbc.insets = new Insets(10, 10, 20, 10); // Margin bawah logo
