@@ -3,6 +3,8 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package controller;
+import model.RincianPaketPerjalanan; 
+import model.Destinasi; 
 
 import config.DatabaseConnection;
 import model.Kota;
@@ -221,5 +223,141 @@ public class PerjalananController {
             e.printStackTrace();
         }
         return laporan;
+    }
+    
+    /**
+     * Mengambil semua rincian destinasi untuk satu paket perjalanan.
+     */
+    public List<RincianPaketPerjalanan> getRincianByPaketId(int paketId) {
+        List<RincianPaketPerjalanan> daftarRincian = new ArrayList<>();
+        String query = "SELECT rpp.id, rpp.paket_perjalanan_id, rpp.destinasi_id, " +
+                       "rpp.urutan_kunjungan, rpp.durasi_jam, d.nama_destinasi " +
+                       "FROM rincian_paket_perjalanan rpp " +
+                       "JOIN destinasi d ON rpp.destinasi_id = d.id " +
+                       "WHERE rpp.paket_perjalanan_id = ? " +
+                       "ORDER BY rpp.urutan_kunjungan ASC, rpp.id ASC";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            if (conn == null) return daftarRincian;
+            stmt.setInt(1, paketId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    RincianPaketPerjalanan rincian = new RincianPaketPerjalanan();
+                    rincian.setId(rs.getInt("id"));
+                    rincian.setPaketPerjalananId(rs.getInt("paket_perjalanan_id"));
+                    rincian.setDestinasiId(rs.getInt("destinasi_id"));
+                    rincian.setNamaDestinasi(rs.getString("nama_destinasi"));
+                    // Cek null untuk Integer
+                    int urutan = rs.getInt("urutan_kunjungan");
+                    rincian.setUrutanKunjungan(rs.wasNull() ? null : urutan);
+                    int durasi = rs.getInt("durasi_jam");
+                    rincian.setDurasiJam(rs.wasNull() ? null : durasi);
+                    daftarRincian.add(rincian);
+                }
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Gagal mengambil rincian paket: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+        return daftarRincian;
+    }
+
+    /**
+     * Menambah destinasi baru ke dalam rincian paket perjalanan.
+     */
+    public boolean addRincianPaket(RincianPaketPerjalanan rincian) {
+        String query = "INSERT INTO rincian_paket_perjalanan (paket_perjalanan_id, destinasi_id, urutan_kunjungan, durasi_jam) VALUES (?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            if (conn == null) return false;
+            stmt.setInt(1, rincian.getPaketPerjalananId());
+            stmt.setInt(2, rincian.getDestinasiId());
+            // Handle Integer yang mungkin null
+            if (rincian.getUrutanKunjungan() != null) {
+                stmt.setInt(3, rincian.getUrutanKunjungan());
+            } else {
+                stmt.setNull(3, Types.INTEGER);
+            }
+            if (rincian.getDurasiJam() != null) {
+                stmt.setInt(4, rincian.getDurasiJam());
+            } else {
+                stmt.setNull(4, Types.INTEGER);
+            }
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Gagal menambah rincian destinasi ke paket: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Memperbarui data rincian destinasi dalam paket perjalanan.
+     */
+    public boolean updateRincianPaket(RincianPaketPerjalanan rincian) {
+        String query = "UPDATE rincian_paket_perjalanan SET destinasi_id = ?, urutan_kunjungan = ?, durasi_jam = ? WHERE id = ? AND paket_perjalanan_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            if (conn == null) return false;
+            stmt.setInt(1, rincian.getDestinasiId());
+            if (rincian.getUrutanKunjungan() != null) {
+                stmt.setInt(2, rincian.getUrutanKunjungan());
+            } else {
+                stmt.setNull(2, Types.INTEGER);
+            }
+            if (rincian.getDurasiJam() != null) {
+                stmt.setInt(3, rincian.getDurasiJam());
+            } else {
+                stmt.setNull(3, Types.INTEGER);
+            }
+            stmt.setInt(4, rincian.getId());
+            stmt.setInt(5, rincian.getPaketPerjalananId());
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Gagal memperbarui rincian destinasi: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Menghapus destinasi dari rincian paket perjalanan.
+     */
+    public boolean deleteRincianPaket(int idRincian) {
+        String query = "DELETE FROM rincian_paket_perjalanan WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            if (conn == null) return false;
+            stmt.setInt(1, idRincian);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Gagal menghapus rincian destinasi: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Mengambil semua data destinasi untuk JComboBox.
+     * (Jika DestinasiController sudah ada, lebih baik panggil dari sana)
+     */
+    public List<Destinasi> getAllDestinasiForComboBox() {
+        List<Destinasi> daftarDestinasi = new ArrayList<>();
+        String query = "SELECT id, nama_destinasi FROM destinasi ORDER BY nama_destinasi";
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+            if (conn == null) return daftarDestinasi;
+            while (rs.next()) {
+                Destinasi dest = new Destinasi();
+                dest.setId(rs.getInt("id"));
+                dest.setNamaDestinasi(rs.getString("nama_destinasi"));
+                daftarDestinasi.add(dest);
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Gagal mengambil daftar destinasi: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+        return daftarDestinasi;
     }
 }

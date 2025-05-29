@@ -110,6 +110,8 @@ public class AdminDashboardView extends JFrame {
         tambahItemNavigasi(panelSamping, "✈️ Kelola Perjalanan", "PERJALANAN");
         tambahItemNavigasi(panelSamping, "📋 Kelola Reservasi", "RESERVASI");
         tambahItemNavigasi(panelSamping, "👥 Kelola Pengguna", "PENGGUNA");
+        tambahItemNavigasi(panelSamping, "🏛️ Kelola Kota", "KOTA");
+        tambahItemNavigasi(panelSamping, "🏞️ Kelola Destinasi", "DESTINASI");
         tambahItemNavigasi(panelSamping, "📈 Kelola Laporan", "LAPORAN");
         tambahItemNavigasi(panelSamping, "💳 Kelola Pembayaran", "PEMBAYARAN"); 
 
@@ -187,6 +189,8 @@ public class AdminDashboardView extends JFrame {
                         case "PERJALANAN": newPanel = new KelolaPerjalananView(); break;
                         case "RESERVASI": newPanel = new KelolaReservasiView(); break;
                         case "PENGGUNA": newPanel = new KelolaPenggunaView(); break;
+                        case "KOTA": newPanel = new KelolaKotaView(); break;
+                        case "DESTINASI": newPanel = new KelolaDestinasiView(); break;
                         case "LAPORAN": newPanel = new KelolaLaporanView(); break;
                         case "PEMBAYARAN": newPanel = new KelolaPembayaranView(); break;
                         default: newPanel = buatPanelPlaceholder("Segera Hadir: " + cardName); break;

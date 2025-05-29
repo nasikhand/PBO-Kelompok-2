@@ -17,9 +17,8 @@ public class Kota {
     public String getProvinsi() { return provinsi; }
     public void setProvinsi(String provinsi) { this.provinsi = provinsi; }
 
-    // Override toString() agar tampil nama kota di JComboBox
     @Override
     public String toString() {
-        return namaKota;
+        return namaKota; // Penting untuk JComboBox
     }
 }
