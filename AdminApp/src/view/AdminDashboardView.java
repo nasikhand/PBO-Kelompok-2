@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package view;
+import view.KelolaPenggunaView;
 
 import model.Admin;
 import javax.swing.*;
@@ -144,7 +145,6 @@ public class AdminDashboardView extends JFrame {
             
             @Override
             public void mouseClicked(MouseEvent e) {
-                // Logika LAZY LOADING: Buat panel hanya saat pertama kali diklik
                 if (!panelCache.containsKey(cardName)) {
                     System.out.println("Membuat panel baru untuk: " + cardName);
                     JPanel newPanel;
@@ -155,9 +155,8 @@ public class AdminDashboardView extends JFrame {
                         case "RESERVASI":
                             newPanel = new KelolaReservasiView();
                             break;
-                        // Tambahkan case lain di sini untuk menu selanjutnya
-                        case "PENGGUNA":
-                            newPanel = buatPanelPlaceholder("Manajemen Pengguna");
+                        case "PENGGUNA": // <-- TAMBAHKAN CASE INI
+                            newPanel = new KelolaPenggunaView();
                             break;
                         case "LAPORAN":
                             newPanel = buatPanelPlaceholder("Manajemen Laporan");

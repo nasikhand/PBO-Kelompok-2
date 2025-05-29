@@ -9,8 +9,11 @@ import model.PaketPerjalanan;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent; 
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.io.File;
 import java.text.NumberFormat;
@@ -21,17 +24,29 @@ public class KelolaPerjalananView extends JPanel {
     private JTable tabel;
     private DefaultTableModel modelTabel;
     private PerjalananController controller;
+    private JTextField txtPencarian; 
+    private TableRowSorter<DefaultTableModel> sorter; 
 
     public KelolaPerjalananView() {
         this.controller = new PerjalananController();
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(20, 25, 20, 25));
         setOpaque(false);
+        
+         // Panel Atas: Judul dan Kolom Pencarian
+        JPanel panelAtas = new JPanel(new BorderLayout(10,5));
+        panelAtas.setOpaque(false);
 
         JLabel judul = new JLabel("Manajemen Paket Perjalanan");
         judul.setFont(new Font("Segoe UI", Font.BOLD, 28));
         judul.setForeground(Color.WHITE);
         add(judul, BorderLayout.NORTH);
+        
+        txtPencarian = new JTextField();
+        txtPencarian.putClientProperty("JTextField.placeholderText", "Cari berdasarkan Nama Paket, Kota, atau Status...");
+        panelAtas.add(txtPencarian, BorderLayout.SOUTH);
+        
+        add(panelAtas, BorderLayout.NORTH);
 
         JScrollPane scrollPane = new JScrollPane();
         tabel = new JTable();
@@ -50,6 +65,10 @@ public class KelolaPerjalananView extends JPanel {
             }
         };
         tabel.setModel(modelTabel);
+        
+        // Inisialisasi TableRowSorter
+        sorter = new TableRowSorter<>(modelTabel);
+        tabel.setRowSorter(sorter);
         
         tabel.setRowHeight(80);
         TableColumn imageColumn = tabel.getColumn("Gambar");
@@ -79,10 +98,22 @@ public class KelolaPerjalananView extends JPanel {
 
         muatData();
 
+        // Action Listeners
         btnTambah.addActionListener(e -> bukaDialogForm(null));
         btnUbah.addActionListener(e -> ubahDataTerpilih());
         btnHapus.addActionListener(e -> hapusDataTerpilih());
-        btnCekGambar.addActionListener(e -> cekStatusGambarTerpilih()); // Tambahkan action listener
+        btnCekGambar.addActionListener(e -> cekStatusGambarTerpilih());
+        
+        // Listener untuk kolom pencarian
+        txtPencarian.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) { cariData(); }
+            @Override
+            public void removeUpdate(DocumentEvent e) { cariData(); }
+            @Override
+            public void changedUpdate(DocumentEvent e) { cariData(); }
+        });
+
     }
 
     private void muatData() {
@@ -161,6 +192,17 @@ public class KelolaPerjalananView extends JPanel {
         JScrollPane scrollPane = new JScrollPane(textArea);
         scrollPane.setPreferredSize(new Dimension(600, 250));
         JOptionPane.showMessageDialog(this, scrollPane, "Laporan Status Gambar", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    private void cariData() {
+        String teks = txtPencarian.getText();
+        if (teks.trim().length() == 0) {
+            sorter.setRowFilter(null);
+        } else {
+            // Filter berdasarkan beberapa kolom (indeks kolom dimulai dari 0)
+            // Indeks kolom: 2 (Nama Paket), 3 (Kota Tujuan), 8 (Status)
+            sorter.setRowFilter(RowFilter.regexFilter("(?i)" + teks, 2, 3, 8));
+        }
     }
 
     // ... (metode bukaDialogForm, ubahDataTerpilih, hapusDataTerpilih tidak berubah)

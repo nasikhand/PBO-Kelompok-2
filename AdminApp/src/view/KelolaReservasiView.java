@@ -9,7 +9,10 @@ import model.Reservasi;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent; 
+import javax.swing.event.DocumentListener; 
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.util.List;
 
@@ -17,19 +20,31 @@ public class KelolaReservasiView extends JPanel {
     private JTable tabel;
     private DefaultTableModel modelTabel;
     private ReservasiController controller;
-    private List<Reservasi> daftarReservasiCache; // Cache untuk data reservasi
+    private List<Reservasi> daftarReservasiCache;
+    private JTextField txtPencarian; // <-- Kolom pencarian
+    private TableRowSorter<DefaultTableModel> sorter;
 
     public KelolaReservasiView() {
         this.controller = new ReservasiController();
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(20, 25, 20, 25));
         setOpaque(false);
+        
+        // Panel Atas: Judul dan Kolom Pencarian
+        JPanel panelAtas = new JPanel(new BorderLayout(10,5));
+        panelAtas.setOpaque(false);
 
         JLabel judul = new JLabel("Manajemen Reservasi");
         judul.setFont(new Font("Segoe UI", Font.BOLD, 28));
         judul.setForeground(Color.WHITE);
         add(judul, BorderLayout.NORTH);
-
+        
+        txtPencarian = new JTextField();
+        txtPencarian.putClientProperty("JTextField.placeholderText", "Cari berdasarkan Kode, Nama Trip, Jenis, atau Status...");
+        panelAtas.add(txtPencarian, BorderLayout.SOUTH);
+        
+        add(panelAtas, BorderLayout.NORTH);
+        
         JScrollPane scrollPane = new JScrollPane();
         tabel = new JTable();
         modelTabel = new DefaultTableModel(
@@ -42,6 +57,11 @@ public class KelolaReservasiView extends JPanel {
             }
         };
         tabel.setModel(modelTabel);
+        
+        // Inisialisasi TableRowSorter
+        sorter = new TableRowSorter<>(modelTabel);
+        tabel.setRowSorter(sorter);
+        
         tabel.getColumnModel().getColumn(0).setMinWidth(0);
         tabel.getColumnModel().getColumn(0).setMaxWidth(0);
         tabel.getColumnModel().getColumn(0).setWidth(0);
@@ -64,8 +84,19 @@ public class KelolaReservasiView extends JPanel {
 
         // Action Listeners
         btnKonfirmasi.addActionListener(e -> ubahStatus("dibayar"));
-        btnBatalkan.addActionListener(e -> ubahStatus("dibatalkan"));
-        btnLihatDetail.addActionListener(e -> lihatDetail()); // <-- Aktifkan tombol ini
+        btnBatalkan.addActionListener(e -> ubahStatus("dibatalkan")); // Anda bisa membuat status "dibatalkan" di ENUM database
+        btnLihatDetail.addActionListener(e -> lihatDetail());// <-- Aktifkan tombol ini
+        
+        // Listener untuk kolom pencarian
+        txtPencarian.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) { cariData(); }
+            @Override
+            public void removeUpdate(DocumentEvent e) { cariData(); }
+            @Override
+            public void changedUpdate(DocumentEvent e) { cariData(); }
+        });
+        
     }
 
     private void muatData() {
@@ -131,5 +162,15 @@ public class KelolaReservasiView extends JPanel {
             (Frame) SwingUtilities.getWindowAncestor(this), reservasiTerpilih
         );
         dialog.setVisible(true);
+    }
+    
+    private void cariData() {
+        String teks = txtPencarian.getText();
+        if (teks.trim().length() == 0) {
+            sorter.setRowFilter(null);
+        } else {
+            // Filter berdasarkan Kode (1), Nama Trip (2), Jenis (3), Status (5)
+            sorter.setRowFilter(RowFilter.regexFilter("(?i)" + teks, 1, 2, 3, 5));
+        }
     }
 }
