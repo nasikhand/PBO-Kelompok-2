@@ -2,7 +2,6 @@ package managementtrevel;
 
 import java.awt.*;
 import javax.swing.*;
-import managementtrevel.HomeUser.HomeScreen;
 import managementtrevel.LoginAndRegist.LoginPanel;
 import managementtrevel.LoginAndRegist.RegistrasiPanel;
 import model.UserModel;
@@ -65,19 +64,25 @@ public class AuthFrame extends JFrame {
     public void onLoginSuccess(UserModel user) {
         boolean wasMaximized = (this.getExtendedState() & JFrame.MAXIMIZED_BOTH) == JFrame.MAXIMIZED_BOTH;
         
-        // MainApplicationFrame mainApp = new MainApplicationFrame(user);
-        // if (wasMaximized) {
-        //     mainApp.setExtendedState(JFrame.MAXIMIZED_BOTH);
-        // }
-        // mainApp.setVisible(true);
-
-        HomeScreen homeScreen = new HomeScreen();
-        
-        if (wasMaximized) {
-            homeScreen.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        MainAppFrame mainApp;
+        if (user != null) {
+            mainApp = new MainAppFrame(user); // Jika MainAppFrame punya konstruktor dengan UserModel
+        } else {
+            mainApp = new MainAppFrame(); // Jika menggunakan konstruktor default
         }
 
-        homeScreen.setVisible(true);
+        if (wasMaximized) {
+            mainApp.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        }
+        mainApp.setVisible(true);
+
+        // HomeScreen homeScreen = new HomeScreen();
+        
+        // if (wasMaximized) {
+        //     homeScreen.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        // }
+
+        // homeScreen.setVisible(true);
 
         this.dispose(); 
     }
