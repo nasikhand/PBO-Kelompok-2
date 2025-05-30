@@ -1,65 +1,55 @@
-package managementtrevel; // Pastikan package sesuai
+package managementtrevel;
 
 import javax.swing.*;
 import java.awt.*;
-// import java.awt.event.ActionEvent; // Tidak lagi dibutuhkan jika topNav dihapus
-// import java.awt.event.ActionListener; // Tidak lagi dibutuhkan jika topNav dihapus
-import managementtrevel.HomeUser.PanelBeranda; // Impor PanelBeranda
-import Asset.SidebarPanel; // Impor SidebarPanel
-import model.UserModel; 
+import managementtrevel.HomeUser.PanelBeranda;
+import managementtrevel.HomeUser.PanelUserProfil; // Impor PanelUserProfil yang sudah diubah
+import Asset.SidebarPanel;
+import model.UserModel;
 
 public class MainAppFrame extends JFrame {
 
-    private JPanel mainPanelContainer; 
+    private JPanel mainPanelContainer;
     private CardLayout cardLayout;
-    private UserModel currentUser; 
-    private SidebarPanel sidebarPanel; 
+    private UserModel currentUser;
+    private SidebarPanel sidebarPanel;
 
     // Konstanta untuk nama panel
     public static final String PANEL_BERANDA = "PanelBeranda";
     public static final String PANEL_DESTINASI = "PanelDestinasi";
     public static final String PANEL_PEMESANAN = "PanelPemesanan";
     public static final String PANEL_PROFIL = "PanelProfil"; // Ini bisa jadi profil umum
-    public static final String PANEL_USER_PROFILE = "PanelUserProfile"; // Ini untuk UserProfile dari Sidebar
+    public static final String PANEL_USER_PROFILE = "PanelUserProfile"; // Ini untuk PanelUserProfil dari Sidebar
 
     public MainAppFrame(UserModel user) {
-        this(); 
+        this(); // Panggil konstruktor tanpa argumen untuk inisialisasi dasar
         this.currentUser = user;
-        // Jika SidebarPanel atau panel lain perlu info user, teruskan di sini
-        // Contoh: sidebarPanel.updateUserInfo(user); // Perlu metode ini di SidebarPanel
-        // Atau jika PanelProfil (yang di CardLayout) perlu user:
-        // Component profilCard = getPanelByName(PANEL_PROFIL);
-        // if (profilCard instanceof PanelProfil) { // Asumsikan PanelProfil adalah kelas Anda
-        //     ((PanelProfil) profilCard).setUserModel(user);
-        // }
+        // Setelah komponen diinisialisasi, set data user ke PanelUserProfil
         Component userProfilCard = getPanelByName(PANEL_USER_PROFILE);
-        // if (userProfilCard instanceof managementtrevel.HomeUser.UserProfile) { // Ganti dengan path kelas UserProfile Anda jika berbeda
-        //     ((managementtrevel.HomeUser.UserProfile) userProfilCard).setUserModel(user); // Asumsikan ada metode setUserModel
-        // }
-
-
+        if (userProfilCard instanceof PanelUserProfil) { // Menggunakan PanelUserProfil
+            ((PanelUserProfil) userProfilCard).setProfileData(); // Panggil metode untuk memuat data user
+        }
+        // Anda juga bisa meneruskan user ke sidebar jika dibutuhkan
+        // sidebarPanel.updateUserInfo(user); // Jika ada metode ini di SidebarPanel
     }
 
     public MainAppFrame() {
         setTitle("Travel App - Utama");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1024, 700); 
+        setSize(1024, 700);
         setMinimumSize(new Dimension(850, 600));
         setLocationRelativeTo(null);
 
         // --- Inisialisasi Sidebar ---
-        sidebarPanel = new SidebarPanel(this); 
+        sidebarPanel = new SidebarPanel(this);
 
         // --- Inisialisasi CardLayout dan Panel Konten Utama ---
         cardLayout = new CardLayout();
         mainPanelContainer = new JPanel(cardLayout);
-        // Gunakan warna dari AppTheme jika tersedia, atau default
-        // mainPanelContainer.setBackground(Asset.AppTheme.PANEL_BACKGROUND); 
         mainPanelContainer.setBackground(Color.decode("#F0F0F0"));
 
-
-        // 1. Panel Beranda 
-        PanelBeranda panelBeranda = new PanelBeranda(); 
+        // 1. Panel Beranda
+        PanelBeranda panelBeranda = new PanelBeranda();
         mainPanelContainer.add(panelBeranda, PANEL_BERANDA);
 
         // 2. Panel Destinasi (Placeholder)
@@ -70,79 +60,21 @@ public class MainAppFrame extends JFrame {
         JPanel panelPemesananPlaceholder = createPlaceholderPanel("Halaman Pemesanan", Color.GREEN);
         mainPanelContainer.add(panelPemesananPlaceholder, PANEL_PEMESANAN);
 
-        // 4. Panel Profil (Placeholder untuk PANEL_PROFIL jika berbeda dari UserProfile)
+        // 4. Panel Profil (Placeholder untuk PANEL_PROFIL jika berbeda dari PanelUserProfil)
         JPanel panelProfilUmumPlaceholder = createPlaceholderPanel("Halaman Pengaturan Akun (Umum)", Color.MAGENTA);
         mainPanelContainer.add(panelProfilUmumPlaceholder, PANEL_PROFIL);
 
-        // 5. Panel UserProfile (dari Sidebar)
-        // Pastikan Anda memiliki kelas UserProfile yang merupakan JPanel
-        // dan tambahkan di sini. Untuk sekarang, saya gunakan placeholder.
-        // Jika UserProfile Anda sudah merupakan JPanel:
-        // managementtrevel.HomeUser.UserProfile panelUserProfile = new managementtrevel.HomeUser.UserProfile();
-        // mainPanelContainer.add(panelUserProfile, PANEL_USER_PROFILE);
-        JPanel panelUserProfilePlaceholder = createPlaceholderPanel("Halaman Profil Pengguna (dari Sidebar)", Color.CYAN);
-        mainPanelContainer.add(panelUserProfilePlaceholder, PANEL_USER_PROFILE);
-
-
-        // --- HAPUS Komponen Navigasi Atas ---
-        /* JPanel topNavigationPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
-        topNavigationPanel.setBackground(Color.decode("#333333")); 
-
-        JButton homeButtonTopNav = createNavButtonTop("Beranda", PANEL_BERANDA, true);
-        JButton destinationsButtonTopNav = createNavButtonTop("Destinasi", PANEL_DESTINASI, true);
-        JButton bookingsButtonTopNav = createNavButtonTop("Pemesanan", PANEL_PEMESANAN, true);
-        JButton profileButtonTopNav = createNavButtonTop("Profil", PANEL_PROFIL, true);
-        
-        JButton logoutButtonTopNav = new JButton("Logout");
-        styleNavButton(logoutButtonTopNav, true); 
-        logoutButtonTopNav.addActionListener(e -> performLogout());
-
-        topNavigationPanel.add(homeButtonTopNav);
-        topNavigationPanel.add(destinationsButtonTopNav);
-        topNavigationPanel.add(bookingsButtonTopNav);
-        topNavigationPanel.add(profileButtonTopNav);
-        topNavigationPanel.add(Box.createHorizontalStrut(30)); 
-        topNavigationPanel.add(logoutButtonTopNav);
-        */
+        // 5. Panel UserProfile (dari Sidebar) - Menggunakan kelas PanelUserProfil yang sudah diubah
+        PanelUserProfil panelUserProfil = new PanelUserProfil(this); // Teruskan referensi MainAppFrame
+        mainPanelContainer.add(panelUserProfil, PANEL_USER_PROFILE);
 
         // --- Tata Letak Utama Frame ---
-        // Menggunakan BorderLayout: Sidebar di KIRI, Konten di TENGAH
         add(sidebarPanel, BorderLayout.WEST);
-        // add(topNavigationPanel, BorderLayout.NORTH); // BARIS INI DIHAPUS
         add(mainPanelContainer, BorderLayout.CENTER);
 
-        showPanel(PANEL_BERANDA); 
+        showPanel(PANEL_BERANDA); // Tampilkan panel beranda saat aplikasi dimulai
     }
 
-    // Metode createNavButtonTop dan styleNavButton(button, isTopNav) tidak lagi diperlukan
-    // jika topNavigationPanel dihapus sepenuhnya.
-    /*
-    private JButton createNavButtonTop(String text, String panelName, boolean isTopNav) {
-        JButton button = new JButton(text);
-        styleNavButton(button, isTopNav);
-        button.addActionListener(e -> showPanel(panelName));
-        return button;
-    }
-    
-    private void styleNavButton(JButton button, boolean isTopNav) {
-        button.setForeground(Color.WHITE);
-        button.setBackground(Color.decode("#555555"));
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(Color.decode("#777777"));
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(Color.decode("#555555"));
-            }
-        });
-    }
-    */
-    
     private JPanel createPlaceholderPanel(String text, Color color) {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBackground(color);
@@ -152,48 +84,62 @@ public class MainAppFrame extends JFrame {
         return panel;
     }
 
+    /**
+     * Menampilkan panel tertentu di mainPanelContainer.
+     * @param panelName Nama panel yang akan ditampilkan.
+     */
     public void showPanel(String panelName) {
         cardLayout.show(mainPanelContainer, panelName);
         System.out.println("Menampilkan panel: " + panelName);
         // Jika Anda ingin sidebar collapse saat panel berubah (opsional)
-        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) { 
-           sidebarPanel.collapsePublic(); 
+        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) {
+           sidebarPanel.collapsePublic();
+        }
+        // Jika panel yang ditampilkan adalah PanelUserProfil, panggil setProfileData untuk refresh
+        if (panelName.equals(PANEL_USER_PROFILE)) {
+            Component userProfilCard = getPanelByName(PANEL_USER_PROFILE);
+            if (userProfilCard instanceof PanelUserProfil) { // Menggunakan PanelUserProfil
+                ((PanelUserProfil) userProfilCard).setProfileData();
+            }
         }
     }
-    
-    // Metode untuk mendapatkan panel berdasarkan nama jika perlu interaksi
-    public Component getPanelByName(String panelName) { // Mengembalikan Component agar lebih fleksibel
+
+    /**
+     * Metode untuk mendapatkan panel berdasarkan nama jika perlu interaksi.
+     * @param panelName Nama panel yang dicari.
+     * @return Komponen panel atau null jika tidak ditemukan.
+     */
+    public Component getPanelByName(String panelName) {
         for (Component comp : mainPanelContainer.getComponents()) {
-            // CardLayout menyimpan komponen dengan nama constraint-nya.
-            // Kita perlu cara untuk mencocokkan komponen dengan nama yang kita berikan saat add().
-            // Sayangnya, CardLayout tidak menyediakan cara mudah untuk mendapatkan nama dari komponen.
-            // Salah satu cara adalah dengan memeriksa instanceof jika nama panel unik per kelas.
             if (comp instanceof PanelBeranda && panelName.equals(PANEL_BERANDA)) return comp;
-            // if (comp instanceof PanelDestinasi && panelName.equals(PANEL_DESTINASI)) return comp; // Ganti dengan kelas PanelDestinasi Anda
+            if (comp instanceof PanelUserProfil && panelName.equals(PANEL_USER_PROFILE)) return comp; // Menggunakan PanelUserProfil
+            // Tambahkan pengecekan untuk kelas panel Anda yang lain di sini
+            // Contoh:
+            // if (comp instanceof PanelDestinasi && panelName.equals(PANEL_DESTINASI)) return comp;
             // if (comp instanceof PanelPemesanan && panelName.equals(PANEL_PEMESANAN)) return comp;
-            // if (comp instanceof PanelProfilUmum && panelName.equals(PANEL_PROFIL)) return comp; // Jika ada kelas PanelProfilUmum
-            if (comp instanceof managementtrevel.HomeUser.UserProfile && panelName.equals(PANEL_USER_PROFILE)) return comp; // Ganti dengan path kelas UserProfile Anda
+            // if (comp instanceof UbahPasswordPanel && panelName.equals(PANEL_UBAH_PASSWORD)) return comp;
+            // if (comp instanceof OrderHistoryPanel && panelName.equals(PANEL_RIWAYAT_PESANAN)) return comp;
+            // if (comp instanceof UserOrderPanel && panelName.equals(PANEL_PESANAN_SAYA)) return comp;
 
             // Untuk placeholder, kita tidak bisa cek instanceof dengan mudah kecuali mereka kelas unik.
             // Jika Anda menggunakan placeholder dan perlu mengambilnya, Anda mungkin perlu
             // menyimpan referensinya dalam Map saat menambahkannya.
         }
         System.err.println("Peringatan: Panel dengan nama '" + panelName + "' tidak ditemukan atau tidak dapat dicocokkan tipenya.");
-        return null; 
+        return null;
     }
 
-
+    /**
+     * Melakukan proses logout dan kembali ke AuthFrame.
+     */
     public void performLogout() {
         int confirm = JOptionPane.showConfirmDialog(this,
                 "Apakah Anda yakin ingin logout?", "Konfirmasi Logout",
                 JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (confirm == JOptionPane.YES_OPTION) {
-            this.dispose();
+            this.dispose(); // Tutup MainAppFrame
             // Pastikan path ke AuthFrame benar
-            // Jika AuthFrame ada di package managementtrevel
-             new AuthFrame().setVisible(true); 
-            // Jika AuthFrame ada di package managementtrevel.LoginAndRegist
-            // new managementtrevel.LoginAndRegist.AuthFrame().setVisible(true); 
+            new managementtrevel.AuthFrame().setVisible(true); // Kembali ke AuthFrame
             System.out.println("Logout berhasil. Kembali ke AuthFrame.");
         }
     }
@@ -201,10 +147,11 @@ public class MainAppFrame extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             // Untuk testing, Anda bisa buat dummy user jika diperlukan oleh konstruktor
-            // UserModel dummyUser = new UserModel(); 
-            // dummyUser.setNamaLengkap("Pengguna Uji");
-            // MainAppFrame mainAppFrame = new MainAppFrame(dummyUser);
-            MainAppFrame mainAppFrame = new MainAppFrame();
+            // UserModel dummyUser = new UserModel(1, "Test User", "test@example.com", "123456789", "Alamat Test");
+            // Session.currentUser = dummyUser; // Set dummy user ke session untuk testing PanelUserProfil
+            // Session.setLoggedIn(true);
+
+            MainAppFrame mainAppFrame = new MainAppFrame(); // Atau new MainAppFrame(dummyUser);
             mainAppFrame.setVisible(true);
         });
     }
