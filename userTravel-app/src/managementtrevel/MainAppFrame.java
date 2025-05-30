@@ -1,11 +1,20 @@
 package managementtrevel;
 
-import javax.swing.*;
-import java.awt.*;
-import managementtrevel.HomeUser.PanelBeranda;
-import managementtrevel.HomeUser.PanelUserProfil; // Impor PanelUserProfil yang sudah diubah
+import Asset.AppTheme; 
 import Asset.SidebarPanel;
-import model.UserModel;
+import java.awt.*; // Untuk meneruskan data list
+import java.util.List; // Untuk data default jika null
+import javax.swing.*;
+import managementtrevel.CustomTripBuilder.PanelAccommodationStep;
+import managementtrevel.CustomTripBuilder.PanelActivityStep; 
+import managementtrevel.CustomTripBuilder.PanelDateStep; // Pastikan AppTheme dapat diakses
+import managementtrevel.CustomTripBuilder.PanelDestinationStep;
+import managementtrevel.CustomTripBuilder.PanelFinalStep;
+import managementtrevel.CustomTripBuilder.PanelTransportStep;
+import managementtrevel.HomeUser.PanelBeranda;
+import managementtrevel.HomeUser.PanelUserProfil;
+import model.UserModel; 
+
 
 public class MainAppFrame extends JFrame {
 
@@ -16,29 +25,39 @@ public class MainAppFrame extends JFrame {
 
     // Konstanta untuk nama panel
     public static final String PANEL_BERANDA = "PanelBeranda";
-    public static final String PANEL_DESTINASI = "PanelDestinasi";
-    public static final String PANEL_PEMESANAN = "PanelPemesanan";
-    public static final String PANEL_PROFIL = "PanelProfil"; // Ini bisa jadi profil umum
-    public static final String PANEL_USER_PROFILE = "PanelUserProfile"; // Ini untuk PanelUserProfil dari Sidebar
+    public static final String PANEL_USER_PROFILE = "PanelUserProfile";
+    // Tambahkan konstanta untuk panel placeholder lainnya jika masih digunakan
+    public static final String PANEL_DESTINASI_PLACEHOLDER = "PanelDestinasiPlaceholder";
+    public static final String PANEL_PEMESANAN_PLACEHOLDER = "PanelPemesananPlaceholder";
+    public static final String PANEL_PROFIL_UMUM_PLACEHOLDER = "PanelProfilUmumPlaceholder";
+
+
+    // Konstanta untuk panel Custom Trip Builder
+    public static final String PANEL_DESTINATION_STEP = "PanelDestinationStep";
+    public static final String PANEL_DATE_STEP = "PanelDateStep";
+    public static final String PANEL_TRANSPORT_STEP = "PanelTransportStep";
+    public static final String PANEL_ACCOMMODATION_STEP = "PanelAccommodationStep";
+    public static final String PANEL_ACTIVITY_STEP = "PanelActivityStep"; 
+    public static final String PANEL_FINAL_STEP = "PanelFinalStep";
+
 
     public MainAppFrame(UserModel user) {
         this(); // Panggil konstruktor tanpa argumen untuk inisialisasi dasar
         this.currentUser = user;
-        // Setelah komponen diinisialisasi, set data user ke PanelUserProfil
+        // Setelah komponen diinisialisasi, set data user ke PanelUserProfil jika ada
         Component userProfilCard = getPanelByName(PANEL_USER_PROFILE);
-        if (userProfilCard instanceof PanelUserProfil) { // Menggunakan PanelUserProfil
-            ((PanelUserProfil) userProfilCard).setProfileData(); // Panggil metode untuk memuat data user
+        if (userProfilCard instanceof PanelUserProfil) { 
+            ((PanelUserProfil) userProfilCard).setProfileData(); 
         }
-        // Anda juga bisa meneruskan user ke sidebar jika dibutuhkan
-        // sidebarPanel.updateUserInfo(user); // Jika ada metode ini di SidebarPanel
     }
 
     public MainAppFrame() {
-        setTitle("Travel App - Utama");
+        setTitle("Travel App"); 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1024, 700);
-        setMinimumSize(new Dimension(850, 600));
+        setSize(1200, 768); 
+        setMinimumSize(new Dimension(1000, 700));
         setLocationRelativeTo(null);
+        applyGlobalThemeSettings(); 
 
         // --- Inisialisasi Sidebar ---
         sidebarPanel = new SidebarPanel(this);
@@ -46,112 +65,212 @@ public class MainAppFrame extends JFrame {
         // --- Inisialisasi CardLayout dan Panel Konten Utama ---
         cardLayout = new CardLayout();
         mainPanelContainer = new JPanel(cardLayout);
-        mainPanelContainer.setBackground(Color.decode("#F0F0F0"));
+        mainPanelContainer.setBackground(AppTheme.PANEL_BACKGROUND); 
 
         // 1. Panel Beranda
-        PanelBeranda panelBeranda = new PanelBeranda();
+        // Menggunakan konstruktor yang menerima MainAppFrame
+        PanelBeranda panelBeranda = new PanelBeranda(this); 
+        panelBeranda.setName(PANEL_BERANDA); 
         mainPanelContainer.add(panelBeranda, PANEL_BERANDA);
 
-        // 2. Panel Destinasi (Placeholder)
-        JPanel panelDestinasiPlaceholder = createPlaceholderPanel("Halaman Destinasi", Color.ORANGE);
-        mainPanelContainer.add(panelDestinasiPlaceholder, PANEL_DESTINASI);
-
-        // 3. Panel Pemesanan (Placeholder)
-        JPanel panelPemesananPlaceholder = createPlaceholderPanel("Halaman Pemesanan", Color.GREEN);
-        mainPanelContainer.add(panelPemesananPlaceholder, PANEL_PEMESANAN);
-
-        // 4. Panel Profil (Placeholder untuk PANEL_PROFIL jika berbeda dari PanelUserProfil)
-        JPanel panelProfilUmumPlaceholder = createPlaceholderPanel("Halaman Pengaturan Akun (Umum)", Color.MAGENTA);
-        mainPanelContainer.add(panelProfilUmumPlaceholder, PANEL_PROFIL);
-
-        // 5. Panel UserProfile (dari Sidebar) - Menggunakan kelas PanelUserProfil yang sudah diubah
-        PanelUserProfil panelUserProfil = new PanelUserProfil(this); // Teruskan referensi MainAppFrame
+        // 2. Panel UserProfile (dari Sidebar)
+        PanelUserProfil panelUserProfil = new PanelUserProfil(this);
+        panelUserProfil.setName(PANEL_USER_PROFILE); 
         mainPanelContainer.add(panelUserProfil, PANEL_USER_PROFILE);
+        
+        // 3. Panel DestinationStep (Langkah pertama Custom Trip)
+        PanelDestinationStep panelDestinationStep = new PanelDestinationStep(this);
+        panelDestinationStep.setName(PANEL_DESTINATION_STEP); 
+        mainPanelContainer.add(panelDestinationStep, PANEL_DESTINATION_STEP);
+
+        // Panel-panel langkah berikutnya (Date, Transport, Acco, Activity, Final)
+        // akan dibuat on-demand oleh metode showPanel() karena memerlukan data.
+
+        // Placeholder panels (jika masih diperlukan untuk menu lain)
+        JPanel panelDestinasiPlaceholder = createPlaceholderPanel("Halaman Destinasi (Placeholder)", AppTheme.PRIMARY_BLUE_LIGHT);
+        panelDestinasiPlaceholder.setName(PANEL_DESTINASI_PLACEHOLDER); 
+        mainPanelContainer.add(panelDestinasiPlaceholder, PANEL_DESTINASI_PLACEHOLDER);
+        JPanel panelPemesananPlaceholder = createPlaceholderPanel("Halaman Pemesanan (Placeholder)", AppTheme.ACCENT_ORANGE);
+        panelPemesananPlaceholder.setName(PANEL_PEMESANAN_PLACEHOLDER); 
+        mainPanelContainer.add(panelPemesananPlaceholder, PANEL_PEMESANAN_PLACEHOLDER);
+
 
         // --- Tata Letak Utama Frame ---
         add(sidebarPanel, BorderLayout.WEST);
         add(mainPanelContainer, BorderLayout.CENTER);
 
-        showPanel(PANEL_BERANDA); // Tampilkan panel beranda saat aplikasi dimulai
+        showPanel(PANEL_BERANDA); 
     }
+    
+    private void applyGlobalThemeSettings() {
+        try {
+            String lookAndFeel = UIManager.getSystemLookAndFeelClassName();
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Windows".equals(info.getName())) { 
+                    lookAndFeel = info.getClassName();
+                    break;
+                }
+            }
+            UIManager.setLookAndFeel(lookAndFeel);
+        } catch (Exception ex) {
+            System.err.println("Gagal menerapkan Look and Feel: " + ex.getMessage());
+        }
+    }
+
 
     private JPanel createPlaceholderPanel(String text, Color color) {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBackground(color);
         JLabel label = new JLabel(text);
-        label.setFont(new Font("Arial", Font.BOLD, 24));
+        label.setFont(AppTheme.FONT_TITLE_LARGE); 
+        label.setForeground(AppTheme.TEXT_WHITE); 
         panel.add(label);
         return panel;
     }
 
-    /**
-     * Menampilkan panel tertentu di mainPanelContainer.
-     * @param panelName Nama panel yang akan ditampilkan.
-     */
     public void showPanel(String panelName) {
+        if (panelName.equals(PANEL_USER_PROFILE)) {
+            Component userProfilCard = getPanelByName(PANEL_USER_PROFILE);
+            if (userProfilCard instanceof PanelUserProfil) {
+                ((PanelUserProfil) userProfilCard).setProfileData(); 
+            }
+        }
+        
+        if (panelName.equals(PANEL_DESTINATION_STEP)) {
+            Component existingPanel = getPanelByName(panelName);
+            if(!(existingPanel instanceof PanelDestinationStep)){ 
+                removePanelIfExists(panelName); 
+                PanelDestinationStep panelDestination = new PanelDestinationStep(this);
+                panelDestination.setName(panelName); 
+                mainPanelContainer.add(panelDestination, panelName);
+            }
+        }
+
         cardLayout.show(mainPanelContainer, panelName);
         System.out.println("Menampilkan panel: " + panelName);
-        // Jika Anda ingin sidebar collapse saat panel berubah (opsional)
         if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) {
            sidebarPanel.collapsePublic();
         }
-        // Jika panel yang ditampilkan adalah PanelUserProfil, panggil setProfileData untuk refresh
-        if (panelName.equals(PANEL_USER_PROFILE)) {
-            Component userProfilCard = getPanelByName(PANEL_USER_PROFILE);
-            if (userProfilCard instanceof PanelUserProfil) { // Menggunakan PanelUserProfil
-                ((PanelUserProfil) userProfilCard).setProfileData();
+    }
+
+    // --- Overload showPanel untuk Custom Trip Builder Steps ---
+
+    public void showPanel(String panelName, List<String> destinations) {
+        if (panelName.equals(PANEL_DATE_STEP)) {
+            removePanelIfExists(panelName); 
+            PanelDateStep panel = new PanelDateStep(this, destinations);
+            panel.setName(panelName);
+            mainPanelContainer.add(panel, panelName);
+            cardLayout.show(mainPanelContainer, panelName);
+            System.out.println("Menampilkan panel: " + panelName + " dengan destinasi.");
+        } else if (panelName.equals(PANEL_DESTINATION_STEP)) { 
+             showPanel(panelName); 
+        } else {
+            showPanel(panelName); 
+        }
+        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
+    }
+
+    public void showPanel(String panelName, List<String> destinations, String startDate, String endDate) {
+        if (panelName.equals(PANEL_TRANSPORT_STEP)) {
+            removePanelIfExists(panelName);
+            PanelTransportStep panel = new PanelTransportStep(this, destinations, startDate, endDate);
+            panel.setName(panelName);
+            mainPanelContainer.add(panel, panelName);
+            cardLayout.show(mainPanelContainer, panelName);
+            System.out.println("Menampilkan panel: " + panelName + " dengan tanggal.");
+        } else {
+            showPanel(panelName);
+        }
+        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
+    }
+
+    public void showPanel(String panelName, List<String> destinations, String startDate, String endDate, 
+                          String transportMode, String transportDetails) {
+        if (panelName.equals(PANEL_ACCOMMODATION_STEP)) {
+            removePanelIfExists(panelName);
+            PanelAccommodationStep panel = new PanelAccommodationStep(this, destinations, startDate, endDate, transportMode, transportDetails);
+            panel.setName(panelName);
+            mainPanelContainer.add(panel, panelName);
+            cardLayout.show(mainPanelContainer, panelName);
+            System.out.println("Menampilkan panel: " + panelName + " dengan transport.");
+        } else {
+            showPanel(panelName);
+        }
+        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
+    }
+    
+    public void showPanel(String panelName, List<String> destinations, String startDate, String endDate, 
+                          String transportMode, String transportDetails, String accommodationName, 
+                          String roomType, String accommodationNotes) {
+        if (panelName.equals(PANEL_ACTIVITY_STEP)) {
+            removePanelIfExists(panelName);
+            PanelActivityStep panel = new PanelActivityStep(this, destinations, startDate, endDate, transportMode, transportDetails, accommodationName, roomType, accommodationNotes);
+            panel.setName(panelName);
+            mainPanelContainer.add(panel, panelName);
+            cardLayout.show(mainPanelContainer, panelName);
+            System.out.println("Menampilkan panel: " + panelName + " dengan akomodasi.");
+        } else {
+            showPanel(panelName); 
+        }
+        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
+    }
+ 
+    public void showPanel(String panelName, List<String> destinations, String startDate, String endDate, 
+                          String transportMode, String transportDetails, String accommodationName, 
+                          String roomType, String accommodationNotes, List<String> activities) {
+        if (panelName.equals(PANEL_FINAL_STEP)) {
+            removePanelIfExists(panelName);
+            PanelFinalStep panel = new PanelFinalStep(this, destinations, startDate, endDate, transportMode, transportDetails, accommodationName, roomType, accommodationNotes, activities);
+            panel.setName(panelName);
+            mainPanelContainer.add(panel, panelName);
+            cardLayout.show(mainPanelContainer, panelName);
+            System.out.println("Menampilkan panel: " + panelName + " dengan semua data.");
+        } else {
+            showPanel(panelName);
+        }
+        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
+    }
+    
+    private void removePanelIfExists(String panelName){
+        Component[] components = mainPanelContainer.getComponents();
+        for(Component comp : components){
+            if(comp.getName() != null && comp.getName().equals(panelName)){
+                mainPanelContainer.remove(comp);
+                System.out.println("Menghapus instance lama dari panel: " + panelName);
+                break; 
             }
         }
     }
 
-    /**
-     * Metode untuk mendapatkan panel berdasarkan nama jika perlu interaksi.
-     * @param panelName Nama panel yang dicari.
-     * @return Komponen panel atau null jika tidak ditemukan.
-     */
+
     public Component getPanelByName(String panelName) {
         for (Component comp : mainPanelContainer.getComponents()) {
-            if (comp instanceof PanelBeranda && panelName.equals(PANEL_BERANDA)) return comp;
-            if (comp instanceof PanelUserProfil && panelName.equals(PANEL_USER_PROFILE)) return comp; // Menggunakan PanelUserProfil
-            // Tambahkan pengecekan untuk kelas panel Anda yang lain di sini
-            // Contoh:
-            // if (comp instanceof PanelDestinasi && panelName.equals(PANEL_DESTINASI)) return comp;
-            // if (comp instanceof PanelPemesanan && panelName.equals(PANEL_PEMESANAN)) return comp;
-            // if (comp instanceof UbahPasswordPanel && panelName.equals(PANEL_UBAH_PASSWORD)) return comp;
-            // if (comp instanceof OrderHistoryPanel && panelName.equals(PANEL_RIWAYAT_PESANAN)) return comp;
-            // if (comp instanceof UserOrderPanel && panelName.equals(PANEL_PESANAN_SAYA)) return comp;
-
-            // Untuk placeholder, kita tidak bisa cek instanceof dengan mudah kecuali mereka kelas unik.
-            // Jika Anda menggunakan placeholder dan perlu mengambilnya, Anda mungkin perlu
-            // menyimpan referensinya dalam Map saat menambahkannya.
+            if (comp.getName() != null && comp.getName().equals(panelName)) {
+                return comp;
+            }
         }
-        System.err.println("Peringatan: Panel dengan nama '" + panelName + "' tidak ditemukan atau tidak dapat dicocokkan tipenya.");
         return null;
     }
 
-    /**
-     * Melakukan proses logout dan kembali ke AuthFrame.
-     */
     public void performLogout() {
         int confirm = JOptionPane.showConfirmDialog(this,
                 "Apakah Anda yakin ingin logout?", "Konfirmasi Logout",
                 JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (confirm == JOptionPane.YES_OPTION) {
-            this.dispose(); // Tutup MainAppFrame
-            // Pastikan path ke AuthFrame benar
-            new managementtrevel.AuthFrame().setVisible(true); // Kembali ke AuthFrame
+            this.dispose(); 
+            new managementtrevel.AuthFrame().setVisible(true); 
             System.out.println("Logout berhasil. Kembali ke AuthFrame.");
         }
+    }
+    
+    public UserModel getCurrentUser() {
+        return currentUser;
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            // Untuk testing, Anda bisa buat dummy user jika diperlukan oleh konstruktor
-            // UserModel dummyUser = new UserModel(1, "Test User", "test@example.com", "123456789", "Alamat Test");
-            // Session.currentUser = dummyUser; // Set dummy user ke session untuk testing PanelUserProfil
-            // Session.setLoggedIn(true);
-
-            MainAppFrame mainAppFrame = new MainAppFrame(); // Atau new MainAppFrame(dummyUser);
+            MainAppFrame mainAppFrame = new MainAppFrame();
             mainAppFrame.setVisible(true);
         });
     }

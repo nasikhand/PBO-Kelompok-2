@@ -87,7 +87,7 @@ public class UserModel {
     }
 
     public String getNomorTelepon() {
-        return nomorTelepon;
+        return this.nomorTelepon;
     }
 
     public void setNomorTelepon(String nomorTelepon) {

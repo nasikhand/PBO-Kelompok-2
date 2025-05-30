@@ -6,12 +6,13 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.BorderFactory; // Untuk border
-import javax.swing.UIDefaults; // Untuk placeholder JComboBox
-import javax.swing.UIManager; // Untuk placeholder JComboBox
+// import javax.swing.UIDefaults; // Tidak digunakan secara eksplisit di sini
+// import javax.swing.UIManager; // Tidak digunakan secara eksplisit di sini
 import javax.swing.plaf.basic.BasicComboBoxRenderer; // Untuk placeholder JComboBox
 
 
-import managementtrevel.CustomTripBuilder.DestinationStep;
+// import managementtrevel.CustomTripBuilder.DestinationStep; // Tidak lagi membuka JFrame baru
+import managementtrevel.MainAppFrame; // Impor MainAppFrame
 import managementtrevel.SearchResultScreen.SearchResult;
 import managementtrevel.TripDetailScreen.TripDetail;
 import model.Session;
@@ -32,10 +33,7 @@ import java.util.Date;
 import java.awt.Image;
 import java.io.File;
 
-import java.awt.Dimension; // Untuk setPreferredSize jika perlu
-import javax.swing.SwingUtilities;
-
-import java.awt.Dimension;
+import java.awt.Dimension; 
 import java.awt.GridBagLayout;
 import javax.swing.JLabel;
 import java.awt.Color;
@@ -52,6 +50,8 @@ import javax.swing.SwingConstants;
 
 
 public class PanelBeranda extends JPanel {
+
+    private MainAppFrame mainAppFrame; // Tambahkan referensi ke MainAppFrame
 
     private List<DestinasiModel> daftarDestinasi;
     private Date tanggalDipilih;
@@ -214,9 +214,17 @@ public class PanelBeranda extends JPanel {
         return new KotaDAO().getNamaKotaById(kotaId);
     }
 
-    public PanelBeranda() {
+    // Konstruktor utama yang harus digunakan, menerima MainAppFrame
+    public PanelBeranda(MainAppFrame mainAppFrame) {
+        if (mainAppFrame == null) {
+            // Ini seharusnya tidak terjadi jika PanelBeranda selalu dibuat dengan benar
+            // Pertimbangkan untuk throw IllegalArgumentException jika mainAppFrame krusial
+            System.err.println("PERINGATAN: PanelBeranda diinisialisasi tanpa MainAppFrame! Navigasi Custom Trip mungkin tidak berfungsi.");
+        }
+        this.mainAppFrame = mainAppFrame; 
         initComponents(); 
-        applyAppTheme(); // Panggil metode untuk menerapkan tema
+        applyAppTheme(); 
+        setupActionListeners(); 
 
         if (Session.currentUser != null) {
             labelNama.setText("Selamat Datang, " + Session.currentUser.getNamaLengkap());
@@ -229,15 +237,14 @@ public class PanelBeranda extends JPanel {
         this.daftarDestinasi = controller.getDaftarDestinasi();
 
         destinasi.removeAllItems();
-        destinasi.addItem(PLACEHOLDER_DESTINASI); // Placeholder
+        destinasi.addItem(PLACEHOLDER_DESTINASI); 
         if (this.daftarDestinasi != null) {
             for (DestinasiModel dest : daftarDestinasi) {
                 destinasi.addItem(dest.getNamaDestinasi());
             }
         }
-        // Atur renderer untuk placeholder ComboBox
         destinasi.setRenderer(new PlaceholderComboBoxRenderer(PLACEHOLDER_DESTINASI));
-        destinasi.setSelectedIndex(0); // Pilih placeholder
+        destinasi.setSelectedIndex(0); 
 
 
         pilih_travelers.removeAllItems();
@@ -255,7 +262,6 @@ public class PanelBeranda extends JPanel {
             if ("date".equals(evt.getPropertyName())) {
                 tanggalDipilih = jDateChooserCalendar.getDate();
                 System.out.println("Tanggal dipilih: " + tanggalDipilih);
-                 // Hapus border fokus jika tanggal dipilih
                 jDateChooserCalendar.setBorder(AppTheme.createDefaultInputBorder());
             }
         });
@@ -271,29 +277,39 @@ public class PanelBeranda extends JPanel {
             }
         });
     }
+    
+    // Konstruktor default dibuat private untuk mendorong penggunaan konstruktor dengan MainAppFrame.
+    // Ini akan menyebabkan error kompilasi jika PanelBeranda coba dibuat tanpa MainAppFrame,
+    // yang membantu menemukan masalah lebih awal.
+    private PanelBeranda() {
+        // Panggil konstruktor utama dengan null, tetapi ini seharusnya tidak digunakan secara langsung.
+        // Jika Anda benar-benar perlu konstruktor tanpa parameter untuk kasus tertentu (misalnya, desain di NetBeans),
+        // Anda bisa membuatnya public lagi, tetapi sadari risikonya.
+        this(null); 
+        System.err.println("PERINGATAN: Konstruktor default PanelBeranda dipanggil. mainAppFrame akan null.");
+    }
+
 
     private void applyAppTheme() {
-        // Latar belakang utama panel
+        // ... (kode applyAppTheme Anda yang sudah ada) ...
         this.setBackground(AppTheme.PANEL_BACKGROUND);
         if (jPanel3 != null) jPanel3.setBackground(AppTheme.PANEL_BACKGROUND);
-        if (jPanel4 != null) jPanel4.setBackground(AppTheme.PANEL_BACKGROUND); // Panel Cari Cepat
-        if (jPanel7 != null) jPanel7.setBackground(AppTheme.PANEL_BACKGROUND); // Panel dalam scrollpane
+        if (jPanel4 != null) jPanel4.setBackground(AppTheme.PANEL_BACKGROUND); 
+        if (jPanel7 != null) jPanel7.setBackground(AppTheme.PANEL_BACKGROUND); 
         
-        // Latar belakang untuk "kartu" atau section
-        Color cardBackgroundColor = Color.WHITE; // Atau AppTheme.BACKGROUND_LIGHT_GRAY jika ingin sama
-        if (jPanel5 != null) jPanel5.setBackground(cardBackgroundColor); // Perjalanan Sebelumnya
-        if (jPanel1 != null) jPanel1.setBackground(cardBackgroundColor); // Detail dalam Perjalanan Sebelumnya
-        if (jPanel2 != null) jPanel2.setBackground(cardBackgroundColor); // Penawaran Spesial
-        if (jPanel8 != null) jPanel8.setBackground(cardBackgroundColor); // Detail dalam Penawaran Spesial
-        if (jPanel9 != null) jPanel9.setBackground(cardBackgroundColor); // Detail dalam Penawaran Spesial
+        Color cardBackgroundColor = Color.WHITE; 
+        if (jPanel5 != null) jPanel5.setBackground(cardBackgroundColor); 
+        if (jPanel1 != null) jPanel1.setBackground(cardBackgroundColor); 
+        if (jPanel2 != null) jPanel2.setBackground(cardBackgroundColor); 
+        if (jPanel8 != null) jPanel8.setBackground(cardBackgroundColor); 
+        if (jPanel9 != null) jPanel9.setBackground(cardBackgroundColor); 
         if (popular_destination1 != null) popular_destination1.setBackground(cardBackgroundColor);
         if (popular_destination4 != null) popular_destination4.setBackground(cardBackgroundColor);
         if (popular_destination5 != null) popular_destination5.setBackground(cardBackgroundColor);
 
-        // Border untuk "kartu"
         javax.swing.border.Border cardBorder = BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(AppTheme.BORDER_COLOR, 1),
-            BorderFactory.createEmptyBorder(10, 10, 10, 10) // Padding dalam kartu
+            BorderFactory.createEmptyBorder(10, 10, 10, 10) 
         );
         if (jPanel5 != null) jPanel5.setBorder(cardBorder);
         if (jPanel2 != null) jPanel2.setBorder(cardBorder);
@@ -301,44 +317,39 @@ public class PanelBeranda extends JPanel {
         if (popular_destination4 != null) popular_destination4.setBorder(cardBorder);
         if (popular_destination5 != null) popular_destination5.setBorder(cardBorder);
 
-
-        // Label Nama Pengguna
         if (labelNama != null) {
             labelNama.setFont(AppTheme.FONT_TITLE_MEDIUM);
             labelNama.setForeground(AppTheme.PRIMARY_BLUE_DARK);
-            labelNama.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5)); // Padding
+            labelNama.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5)); 
         }
 
-        // Judul Section
-        if (jLabel1 != null) { // Cari Cepat
+        if (jLabel1 != null) { 
             jLabel1.setFont(AppTheme.FONT_SUBTITLE);
             jLabel1.setForeground(AppTheme.TEXT_DARK);
         }
-        if (jLabel2 != null) { // Perjalanan Sebelumnya
+        if (jLabel2 != null) { 
             jLabel2.setFont(AppTheme.FONT_SUBTITLE);
             jLabel2.setForeground(AppTheme.TEXT_DARK);
         }
-         if (jLabel8 != null) { // Penawaran Spesial
+         if (jLabel8 != null) { 
             jLabel8.setFont(AppTheme.FONT_SUBTITLE);
             jLabel8.setForeground(AppTheme.TEXT_DARK);
         }
-        if (jLabel4 != null) { // Destinasi Populer
+        if (jLabel4 != null) { 
             jLabel4.setFont(AppTheme.FONT_SUBTITLE);
             jLabel4.setForeground(AppTheme.TEXT_DARK);
         }
 
-        // Input Fields (ComboBox, DateChooser)
         if (destinasi != null) styleComboBox(destinasi);
         if (pilih_travelers != null) styleComboBox(pilih_travelers);
         if (jDateChooserCalendar != null) {
             jDateChooserCalendar.setFont(AppTheme.FONT_TEXT_FIELD);
-            jDateChooserCalendar.getCalendarButton().setFont(AppTheme.FONT_BUTTON); // Tombol kalender
+            jDateChooserCalendar.getCalendarButton().setFont(AppTheme.FONT_BUTTON); 
             jDateChooserCalendar.getCalendarButton().setBackground(AppTheme.PRIMARY_BLUE_LIGHT);
             jDateChooserCalendar.getCalendarButton().setForeground(AppTheme.TEXT_WHITE);
             jDateChooserCalendar.getCalendarButton().setFocusPainted(false);
             jDateChooserCalendar.getCalendarButton().setBorder(BorderFactory.createEmptyBorder(5,8,5,8));
 
-            // Styling untuk text field di JDateChooser
             com.toedter.calendar.JTextFieldDateEditor editor = (com.toedter.calendar.JTextFieldDateEditor) jDateChooserCalendar.getDateEditor();
             editor.setFont(AppTheme.FONT_TEXT_FIELD);
             editor.setBackground(AppTheme.INPUT_BACKGROUND);
@@ -356,39 +367,34 @@ public class PanelBeranda extends JPanel {
             });
         }
         
-        // Buttons
         if (tombolCari != null) stylePrimaryButton(tombolCari);
-        if (btn_CustomTrip != null) styleSecondaryButton(btn_CustomTrip); // Atau Primary jika dianggap aksi utama juga
+        if (btn_CustomTrip != null) styleSecondaryButton(btn_CustomTrip); 
 
-        // Tombol dalam kartu (Detail, Booking Cepat)
-        if (btn_detail1 != null) styleLinkButton(btn_detail1); // Gaya link untuk detail
-        if (jButton13 != null) styleSecondaryButton(jButton13); // Booking Cepat sebagai secondary
+        if (btn_detail1 != null) styleLinkButton(btn_detail1); 
+        if (jButton13 != null) styleSecondaryButton(jButton13); 
         if (btn_detail4 != null) styleLinkButton(btn_detail4);
         if (jButton14 != null) styleSecondaryButton(jButton14);
         if (btn_detail5 != null) styleLinkButton(btn_detail5);
         if (jButton16 != null) styleSecondaryButton(jButton16);
         
-        // Tombol di Penawaran Spesial (Pesan Sekarang)
         if (jButton1 != null) stylePrimaryButton(jButton1);
         if (jButton4 != null) stylePrimaryButton(jButton4);
 
-
-        // Label Teks dalam Kartu (Destinasi Populer, Perjalanan Sebelumnya, Penawaran)
         JLabel[] cardTextLabels = {
-            jLabel20, jLabel21, jLabel22, // Populer 1
-            jLabel31, jLabel32, jLabel33, // Populer 2
-            jLabel34, jLabel35, jLabel36, // Populer 3
-            jLabel26, jLabel27, jLabel28, // Perjalanan Sebelumnya
-            jLabel3, jLabel29,             // Penawaran 1
-            jLabel9, jLabel30              // Penawaran 2
+            jLabel20, jLabel21, jLabel22, 
+            jLabel31, jLabel32, jLabel33, 
+            jLabel34, jLabel35, jLabel36, 
+            jLabel26, jLabel27, jLabel28, 
+            jLabel3, jLabel29,            
+            jLabel9, jLabel30             
         };
         for (JLabel label : cardTextLabels) {
             if (label != null) {
                 label.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
                 label.setForeground(AppTheme.TEXT_SECONDARY_DARK);
                 if (label.getText().toLowerCase().contains("harga")) {
-                    label.setFont(AppTheme.FONT_PRIMARY_BOLD); // Harga dibuat bold
-                    label.setForeground(AppTheme.ACCENT_ORANGE); // Harga dengan warna aksen
+                    label.setFont(AppTheme.FONT_PRIMARY_BOLD); 
+                    label.setForeground(AppTheme.ACCENT_ORANGE); 
                 }
                  if (label.getText().toLowerCase().contains("rating")) {
                     label.setFont(AppTheme.FONT_PRIMARY_MEDIUM);
@@ -396,21 +402,19 @@ public class PanelBeranda extends JPanel {
             }
         }
 
-        // Placeholder Gambar
         JLabel[] imageLabels = {jLabel10, jLabel11, jLabel12, jLabel13};
         for (JLabel imgLabel : imageLabels) {
             if (imgLabel != null) {
                 imgLabel.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER_COLOR));
                 imgLabel.setHorizontalAlignment(SwingConstants.CENTER);
-                setPlaceholderImage(imgLabel, "FOTO"); // Set default placeholder
+                setPlaceholderImage(imgLabel, "FOTO"); 
             }
         }
         
-        // ScrollPane
         if (jScrollPane2 != null) {
             jScrollPane2.setBackground(AppTheme.PANEL_BACKGROUND);
             jScrollPane2.getViewport().setBackground(AppTheme.PANEL_BACKGROUND);
-            jScrollPane2.setBorder(BorderFactory.createEmptyBorder()); // Hapus border default scrollpane
+            jScrollPane2.setBorder(BorderFactory.createEmptyBorder()); 
         }
     }
 
@@ -419,7 +423,6 @@ public class PanelBeranda extends JPanel {
         comboBox.setBackground(AppTheme.INPUT_BACKGROUND);
         comboBox.setForeground(AppTheme.INPUT_TEXT);
         comboBox.setBorder(AppTheme.createDefaultInputBorder());
-        // Tambahkan focus listener untuk mengubah border
         comboBox.addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
@@ -437,11 +440,10 @@ public class PanelBeranda extends JPanel {
         button.setBackground(AppTheme.BUTTON_PRIMARY_BACKGROUND);
         button.setForeground(AppTheme.BUTTON_PRIMARY_TEXT);
         button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15)); // Padding
-        button.setOpaque(true); // Agar background terlihat
-        button.setBorderPainted(false); // Matikan border default jika menggunakan padding sebagai border
+        button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15)); 
+        button.setOpaque(true); 
+        button.setBorderPainted(false); 
         
-        // Hover effect
         Color originalBg = AppTheme.BUTTON_PRIMARY_BACKGROUND;
         Color hoverBg = originalBg.darker();
         button.addMouseListener(new MouseAdapter() {
@@ -482,15 +484,15 @@ public class PanelBeranda extends JPanel {
     private void styleLinkButton(JButton button) {
         button.setFont(AppTheme.FONT_LINK_BUTTON);
         button.setForeground(AppTheme.BUTTON_LINK_FOREGROUND);
-        button.setBackground(Color.WHITE); // Atau TRANSPARENT jika didukung
-        button.setOpaque(false); // Agar background panel tembus jika diinginkan
-        button.setContentAreaFilled(false); // Tidak mengisi area tombol
-        button.setBorderPainted(false); // Tidak ada border
+        button.setBackground(Color.WHITE); 
+        button.setOpaque(false); 
+        button.setContentAreaFilled(false); 
+        button.setBorderPainted(false); 
         button.setFocusPainted(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         Color originalFg = AppTheme.BUTTON_LINK_FOREGROUND;
-        Color hoverFg = AppTheme.ACCENT_ORANGE; // Warna aksen saat hover
+        Color hoverFg = AppTheme.ACCENT_ORANGE; 
         button.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -501,6 +503,22 @@ public class PanelBeranda extends JPanel {
                 button.setForeground(originalFg);
             }
         });
+    }
+
+    private void setupActionListeners(){
+        // Event listener untuk tombol-tombol yang sudah ada
+        tombolCari.addActionListener(this::tombolCariActionPerformed);
+        btn_CustomTrip.addActionListener(this::btn_CustomTripActionPerformed); // Listener baru
+        destinasi.addActionListener(this::destinasiActionPerformed);
+        pilih_travelers.addActionListener(this::pilih_travelersActionPerformed);
+        jButton1.addActionListener(this::jButton1ActionPerformed); // Penawaran 1
+        jButton4.addActionListener(this::jButton4ActionPerformed); // Penawaran 2
+        btn_detail1.addActionListener(this::btn_detail1ActionPerformed);
+        jButton13.addActionListener(this::jButton13ActionPerformed); // Booking Cepat 1
+        btn_detail4.addActionListener(this::btn_detail4ActionPerformed);
+        jButton14.addActionListener(this::jButton14ActionPerformed); // Booking Cepat 2
+        btn_detail5.addActionListener(this::btn_detail5ActionPerformed);
+        jButton16.addActionListener(this::jButton16ActionPerformed); // Booking Cepat 3
     }
 
 
@@ -518,20 +536,20 @@ public class PanelBeranda extends JPanel {
                                                       boolean cellHasFocus) {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (value == null || value.toString().equals(placeholder)) {
-                if (index == -1) { // Hanya untuk item yang terpilih (bukan di dropdown list)
+                if (index == -1) { 
                     setText(placeholder);
                     setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
-                } else { // Untuk item di dropdown list
-                    setText("  " + placeholder); // Beri sedikit indentasi
+                } else { 
+                    setText("  " + placeholder); 
                     setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
                 }
             } else {
-                setText("  " + value.toString()); // Beri sedikit indentasi untuk item non-placeholder juga
+                setText("  " + value.toString()); 
                 setForeground(isSelected ? list.getSelectionForeground() : AppTheme.INPUT_TEXT);
                 setBackground(isSelected ? list.getSelectionBackground() : AppTheme.INPUT_BACKGROUND);
             }
             
-            if (!isSelected) { // Pastikan background default untuk item yang tidak dipilih
+            if (!isSelected) { 
                  setBackground(AppTheme.INPUT_BACKGROUND);
             }
             setFont(AppTheme.FONT_TEXT_FIELD);
@@ -606,39 +624,18 @@ public class PanelBeranda extends JPanel {
         jLabel1.setText("Cari Cepat");
 
         pilih_travelers.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Travelers", "1 Orang", "2 Orang", "3 Orang", "4 Orang", "5 Orang" }));
-        pilih_travelers.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusGained(java.awt.event.FocusEvent evt) {
-                pilih_travelersFocusGained(evt);
-            }
-        });
-        pilih_travelers.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pilih_travelersActionPerformed(evt);
-            }
-        });
+        // Listener dipindahkan ke setupActionListeners
 
         tombolCari.setFont(new java.awt.Font("Helvetica Neue", 1, 13)); // NOI18N
         tombolCari.setText("Cari");
-        tombolCari.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                tombolCariActionPerformed(evt);
-            }
-        });
+        // Listener dipindahkan ke setupActionListeners
 
         btn_CustomTrip.setFont(new java.awt.Font("Helvetica Neue", 1, 13)); // NOI18N
         btn_CustomTrip.setText("Custom Trip");
-        btn_CustomTrip.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_CustomTripActionPerformed(evt);
-            }
-        });
+        // Listener dipindahkan ke setupActionListeners
 
         destinasi.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        destinasi.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                destinasiActionPerformed(evt);
-            }
-        });
+        // Listener dipindahkan ke setupActionListeners
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
@@ -758,7 +755,7 @@ public class PanelBeranda extends JPanel {
         jPanel8.setBackground(new java.awt.Color(204, 204, 204));
 
         jButton1.setText("Pesan Sekarang");
-        jButton1.addActionListener(evt -> jButton1ActionPerformed(evt));
+        // Listener dipindahkan ke setupActionListeners
 
         jLabel3.setText("Diskon 10% untuk destinasi");
 
@@ -794,7 +791,7 @@ public class PanelBeranda extends JPanel {
         jPanel9.setBackground(new java.awt.Color(204, 204, 204));
 
         jButton4.setText("Pesan Sekarang");
-        jButton4.addActionListener(evt -> jButton4ActionPerformed(evt));
+        // Listener dipindahkan ke setupActionListeners
 
         jLabel9.setText("Diskon 15% untuk destinasi");
 
@@ -860,10 +857,10 @@ public class PanelBeranda extends JPanel {
         popular_destination1.setPreferredSize(new java.awt.Dimension(200, 112)); // Adjusted preferred width
 
         btn_detail1.setText("Detail");
-        btn_detail1.addActionListener(evt -> btn_detail1ActionPerformed(evt));
+        // Listener dipindahkan ke setupActionListeners
 
         jButton13.setText("Booking Cepat");
-        jButton13.addActionListener(evt -> jButton13ActionPerformed(evt));
+        // Listener dipindahkan ke setupActionListeners
 
         jLabel20.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel20.setText("Nama Kota - ... hari - ... orang ");
@@ -922,10 +919,10 @@ public class PanelBeranda extends JPanel {
         popular_destination4.setPreferredSize(new java.awt.Dimension(200, 112));
 
         btn_detail4.setText("Detail");
-        btn_detail4.addActionListener(evt -> btn_detail4ActionPerformed(evt));
+        // Listener dipindahkan ke setupActionListeners
 
         jButton14.setText("Booking Cepat");
-        jButton14.addActionListener(evt -> jButton14ActionPerformed(evt));
+        // Listener dipindahkan ke setupActionListeners
 
         jLabel31.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel31.setText("Nama Kota - ... hari - ... orang ");
@@ -984,10 +981,10 @@ public class PanelBeranda extends JPanel {
         popular_destination5.setPreferredSize(new java.awt.Dimension(200, 112));
 
         btn_detail5.setText("Detail");
-        btn_detail5.addActionListener(evt -> btn_detail5ActionPerformed(evt));
+        // Listener dipindahkan ke setupActionListeners
 
         jButton16.setText("Booking Cepat");
-        jButton16.addActionListener(evt -> jButton16ActionPerformed(evt));
+        // Listener dipindahkan ke setupActionListeners
 
         jLabel34.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel34.setText("Nama Kota - ... hari - ... orang ");
@@ -1170,6 +1167,7 @@ public class PanelBeranda extends JPanel {
 
             SearchResult hasil = new SearchResult(destinasiTerpilih, tanggalStr, travelers);
             hasil.setVisible(true);
+             // Jangan dispose MainAppFrame di sini, biarkan SearchResult yang mengatur dirinya sendiri
         }
     }                                          
 
@@ -1184,7 +1182,15 @@ public class PanelBeranda extends JPanel {
     }                                        
 
     private void btn_CustomTripActionPerformed(java.awt.event.ActionEvent evt) {                                               
-        new DestinationStep().setVisible(true); 
+        // Mengubah navigasi untuk menggunakan MainAppFrame
+        if (mainAppFrame != null) {
+            mainAppFrame.showPanel(MainAppFrame.PANEL_DESTINATION_STEP);
+        } else {
+            // Fallback jika mainAppFrame null (misalnya saat testing PanelBeranda terpisah)
+            // Ini seharusnya tidak terjadi dalam alur aplikasi normal
+            System.err.println("MainAppFrame reference is null in PanelBeranda. Cannot navigate to Custom Trip.");
+            // new DestinationStep().setVisible(true); // Kode lama, jangan digunakan
+        }
     }                                              
 
     private void destinasiActionPerformed(java.awt.event.ActionEvent evt) {                                          
@@ -1206,10 +1212,12 @@ public class PanelBeranda extends JPanel {
         // Ambil data paket terkait jika perlu, lalu kirim ke TripDetail
         // Untuk sekarang, hanya buka TripDetail kosong
         new TripDetail().setVisible(true); 
+         // Jangan dispose MainAppFrame di sini
     }                                           
 
     private void btn_detail4ActionPerformed(java.awt.event.ActionEvent evt) {                                            
         new TripDetail().setVisible(true); 
+         // Jangan dispose MainAppFrame di sini
     }                                           
 
     private void jButton14ActionPerformed(java.awt.event.ActionEvent evt) {                                          
@@ -1218,6 +1226,7 @@ public class PanelBeranda extends JPanel {
 
     private void btn_detail5ActionPerformed(java.awt.event.ActionEvent evt) {                                            
         new TripDetail().setVisible(true); 
+         // Jangan dispose MainAppFrame di sini
     }                                           
 
     private void jButton16ActionPerformed(java.awt.event.ActionEvent evt) {                                          
