@@ -4,6 +4,7 @@
  */
 package view;
 
+import config.ImageUtil;
 import controller.DestinasiController;
 import controller.KotaController; // <-- Import KotaController
 import model.Destinasi;
@@ -202,13 +203,16 @@ public class KelolaDestinasiView extends JPanel {
                 File imgFile = new File(imagePath);
                 if (imgFile.exists()) {
                     ImageIcon originalIcon = new ImageIcon(imagePath);
-                    Image resizedImage = originalIcon.getImage().getScaledInstance(80, 50, Image.SCALE_SMOOTH);
-                    gambar = new ImageIcon(resizedImage);
+                    // Menggunakan ImageUtil untuk resizing berkualitas tinggi
+                    gambar = config.ImageUtil.resizeImage(originalIcon, 80, 50);
                 }
             }
             modelTabelDestinasi.addRow(new Object[]{
-                dest.getId(), gambar, dest.getNamaDestinasi(),
-                dest.getNamaKota(), formatMataUang.format(dest.getHarga())
+                dest.getId(), 
+                gambar, 
+                dest.getNamaDestinasi(),
+                dest.getNamaKota(), 
+                formatMataUang.format(dest.getHarga())
             });
         }
     }

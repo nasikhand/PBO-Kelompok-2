@@ -254,4 +254,9 @@ public class KelolaReservasiView extends JPanel {
             sorter.setRowFilter(RowFilter.regexFilter("(?i)" + teks, 1, 2, 3, 5));
         }
     }
+    public void terapkanFilterStatusEksternal(String status) {
+        cmbFilterStatus.setSelectedItem(status);
+        halamanSaatIni = 1;
+        muatDataDenganPaginasi();
+    }
 }

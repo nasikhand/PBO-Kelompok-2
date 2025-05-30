@@ -34,11 +34,12 @@ public class AdminLoginView extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         try {
-            // Pastikan logo.png ada di src/resources/
             ImageIcon logoIcon = new ImageIcon(getClass().getResource("/resources/logo1.png"));
-            Image image = logoIcon.getImage().getScaledInstance(130, 130, Image.SCALE_SMOOTH);
-            JLabel logoLabel = new JLabel(new ImageIcon(image));
-            gbc.insets = new Insets(10, 10, 20, 10); // Margin bawah logo
+            // Kode lama: Image image = logoIcon.getImage().getScaledInstance(130, 130, Image.SCALE_SMOOTH);
+            // Kode baru:
+            ImageIcon resizedIcon = config.ImageUtil.resizeImage(logoIcon, 130, 130);
+            JLabel logoLabel = new JLabel(resizedIcon);
+            gbc.insets = new Insets(10, 10, 20, 10);
             mainPanel.add(logoLabel, gbc);
         } catch (Exception e) {
             JLabel logoErrorLabel = new JLabel("Logo tidak ditemukan");
