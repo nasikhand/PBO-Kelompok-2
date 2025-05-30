@@ -31,10 +31,10 @@ import java.util.List;
 import java.util.Date;
 import java.awt.Image;
 import java.io.File;
-<<<<<<< HEAD
+
 import java.awt.Dimension; // Untuk setPreferredSize jika perlu
 import javax.swing.SwingUtilities;
-=======
+
 import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import javax.swing.JLabel;
@@ -49,7 +49,6 @@ import java.awt.event.MouseEvent;   // Untuk hover effect
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.SwingConstants;
->>>>>>> 2d86fa6403fb5379932c31ede5f865afd2bebb91
 
 
 public class PanelBeranda extends JPanel {
