@@ -6,21 +6,26 @@ package view;
 
 import controller.KotaController;
 import model.Kota;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
 public class KelolaKotaView extends JPanel {
-    private JTable tabelKota;
-    private DefaultTableModel modelTabelKota;
+    private JTable tabel;
+    private DefaultTableModel modelTabel;
     private KotaController controller;
+    private JTextField txtPencarian;
 
-    private JTextField txtNamaKota, txtProvinsi;
-    private JButton btnTambah, btnSimpan, btnHapus, btnBatal;
-    private Kota kotaToEdit = null; // Untuk mode edit
+    private JButton btnSebelumnya, btnBerikutnya;
+    private JLabel lblInfoHalaman;
+    private int halamanSaatIni = 1;
+    private final int DATA_PER_HALAMAN = 15;
+    private int totalHalaman = 1;
+    private int totalData = 0;
 
     public KelolaKotaView() {
         this.controller = new KotaController();
@@ -28,194 +33,119 @@ public class KelolaKotaView extends JPanel {
         setBorder(new EmptyBorder(20, 25, 20, 25));
         setOpaque(false);
 
-        // Judul Panel
+        JPanel panelAtas = new JPanel(new BorderLayout(10, 5));
+        panelAtas.setOpaque(false);
         JLabel judul = new JLabel("Manajemen Data Kota");
         judul.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        judul.setForeground(Color.WHITE); // Sesuaikan dengan tema
-        add(judul, BorderLayout.NORTH);
+        judul.setForeground(Color.WHITE);
+        txtPencarian = new JTextField();
+        txtPencarian.putClientProperty("JTextField.placeholderText", "Cari berdasarkan Nama Kota atau Provinsi...");
+        panelAtas.add(judul, BorderLayout.NORTH);
+        panelAtas.add(txtPencarian, BorderLayout.CENTER);
+        add(panelAtas, BorderLayout.NORTH);
 
-        // Panel Form Input
-        JPanel panelForm = new JPanel(new GridBagLayout());
-        panelForm.setOpaque(false);
-        panelForm.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(Color.GRAY), "Form Data Kota",
-                javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-                javax.swing.border.TitledBorder.DEFAULT_POSITION,
-                new Font("Segoe UI", Font.BOLD, 14), Color.WHITE
-        ));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-
-        txtNamaKota = new JTextField(20);
-        txtProvinsi = new JTextField(20);
-
-        gbc.gridx = 0; gbc.gridy = 0; panelForm.add(new JLabel("Nama Kota:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 0; panelForm.add(txtNamaKota, gbc);
-        gbc.gridx = 0; gbc.gridy = 1; panelForm.add(new JLabel("Provinsi:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 1; panelForm.add(txtProvinsi, gbc);
-
-        // Tombol Form
-        JPanel panelTombolForm = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        panelTombolForm.setOpaque(false);
-        btnTambah = new JButton("Tambah Baru");
-        btnSimpan = new JButton("Simpan");
-        btnBatal = new JButton("Batal");
-        panelTombolForm.add(btnTambah);
-        panelTombolForm.add(btnSimpan);
-        panelTombolForm.add(btnBatal);
-        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2; panelForm.add(panelTombolForm, gbc);
-        
-        add(panelForm, BorderLayout.CENTER);
-
-
-        // Tabel Kota
-        modelTabelKota = new DefaultTableModel(new Object[]{"ID", "Nama Kota", "Provinsi"}, 0) {
+        JScrollPane scrollPane = new JScrollPane();
+        tabel = new JTable();
+        modelTabel = new DefaultTableModel(new Object[][]{}, new String[]{"ID", "Nama Kota", "Provinsi"}) {
             @Override public boolean isCellEditable(int row, int column) { return false; }
         };
-        tabelKota = new JTable(modelTabelKota);
-        // Sembunyikan kolom ID
-        tabelKota.getColumnModel().getColumn(0).setMinWidth(0);
-        tabelKota.getColumnModel().getColumn(0).setMaxWidth(0);
-        tabelKota.getColumnModel().getColumn(0).setWidth(0);
+        tabel.setModel(modelTabel);
+        tabel.getColumnModel().getColumn(0).setMaxWidth(50);
+        scrollPane.setViewportView(tabel);
+        add(scrollPane, BorderLayout.CENTER);
 
-        JScrollPane scrollPaneTabel = new JScrollPane(tabelKota);
-        scrollPaneTabel.setPreferredSize(new Dimension(getWidth(), 250)); // Atur tinggi tabel
-        add(scrollPaneTabel, BorderLayout.SOUTH);
-        
-        // Tombol Hapus di bawah tabel (opsional, bisa juga terintegrasi dengan pemilihan tabel)
-        JPanel panelAksiTabel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        panelAksiTabel.setOpaque(false);
-        btnHapus = new JButton("Hapus Kota Terpilih");
-        panelAksiTabel.add(btnHapus);
-        // Tambahkan panel aksi tabel di bawah scroll pane jika diperlukan, atau di atas
-        // Untuk konsistensi, bisa kita letakkan bersama tombol form atau sebagai konteks menu di tabel
+        JPanel panelTombolAksi = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelTombolAksi.setOpaque(false);
+        JButton btnTambah = new JButton("Tambah Kota");
+        JButton btnUbah = new JButton("Ubah Kota");
+        JButton btnHapus = new JButton("Hapus Kota");
+        panelTombolAksi.add(btnTambah);
+        panelTombolAksi.add(btnUbah);
+        panelTombolAksi.add(btnHapus);
 
-        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2; panelForm.add(panelAksiTabel, gbc);
+        JPanel panelPaginasi = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        panelPaginasi.setOpaque(false);
+        btnSebelumnya = new JButton("« Seb");
+        lblInfoHalaman = new JLabel("Hal 1 dari 1");
+        lblInfoHalaman.setForeground(Color.WHITE);
+        btnBerikutnya = new JButton("Ber »");
+        panelPaginasi.add(btnSebelumnya);
+        panelPaginasi.add(lblInfoHalaman);
+        panelPaginasi.add(btnBerikutnya);
 
+        JPanel panelBawah = new JPanel(new BorderLayout());
+        panelBawah.setOpaque(false);
+        panelBawah.add(panelTombolAksi, BorderLayout.WEST);
+        panelBawah.add(panelPaginasi, BorderLayout.EAST);
+        add(panelBawah, BorderLayout.SOUTH);
 
-        // Action Listeners
-        btnTambah.addActionListener(e -> modeTambah());
-        btnSimpan.addActionListener(e -> simpanDataKota());
-        btnBatal.addActionListener(e -> bersihkanForm());
-        btnHapus.addActionListener(e -> hapusDataKota());
+        muatDataDenganPaginasi();
 
-        tabelKota.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting() && tabelKota.getSelectedRow() != -1) {
-                isiFormDariTabel();
-            }
+        btnTambah.addActionListener(e -> bukaFormDialog(null));
+        btnUbah.addActionListener(e -> ubahDataTerpilih());
+        btnHapus.addActionListener(e -> hapusDataTerpilih());
+        txtPencarian.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { halamanSaatIni = 1; muatDataDenganPaginasi(); }
+            public void removeUpdate(DocumentEvent e) { halamanSaatIni = 1; muatDataDenganPaginasi(); }
+            public void changedUpdate(DocumentEvent e) { halamanSaatIni = 1; muatDataDenganPaginasi(); }
         });
-
-        muatDataKota();
-        bersihkanForm(); // Set form ke kondisi awal
+        btnSebelumnya.addActionListener(e -> { if (halamanSaatIni > 1) { halamanSaatIni--; muatDataDenganPaginasi(); } });
+        btnBerikutnya.addActionListener(e -> { if (halamanSaatIni < totalHalaman) { halamanSaatIni++; muatDataDenganPaginasi(); } });
     }
 
-    private void muatDataKota() {
-        modelTabelKota.setRowCount(0); // Kosongkan tabel
-        List<Kota> daftarKota = controller.getAllKota();
+    private void muatDataDenganPaginasi() {
+        String filterText = txtPencarian.getText().trim();
+        totalData = controller.getTotalKotaCount(filterText);
+        totalHalaman = (int) Math.ceil((double) totalData / DATA_PER_HALAMAN);
+        if (totalHalaman == 0) totalHalaman = 1;
+        if (halamanSaatIni > totalHalaman) halamanSaatIni = totalHalaman;
+        if (halamanSaatIni < 1) halamanSaatIni = 1;
+
+        List<Kota> daftarKota = controller.getKotaWithPagination(halamanSaatIni, DATA_PER_HALAMAN, filterText);
+        modelTabel.setRowCount(0);
         for (Kota kota : daftarKota) {
-            modelTabelKota.addRow(new Object[]{kota.getId(), kota.getNamaKota(), kota.getProvinsi()});
+            modelTabel.addRow(new Object[]{kota.getId(), kota.getNamaKota(), kota.getProvinsi()});
         }
+        lblInfoHalaman.setText("Hal " + halamanSaatIni + " dari " + totalHalaman + " (" + totalData + " data)");
+        btnSebelumnya.setEnabled(halamanSaatIni > 1);
+        btnBerikutnya.setEnabled(halamanSaatIni < totalHalaman);
     }
 
-    private void modeTambah() {
-        kotaToEdit = null;
-        txtNamaKota.setText("");
-        txtProvinsi.setText("");
-        txtNamaKota.requestFocus();
-        btnTambah.setEnabled(false);
-        btnSimpan.setText("Simpan Baru");
+    private void bukaFormDialog(Kota kota) {
+        FormKotaDialog dialog = new FormKotaDialog((Frame) SwingUtilities.getWindowAncestor(this), kota);
+        dialog.setVisible(true);
+        muatDataDenganPaginasi();
     }
 
-    private void bersihkanForm() {
-        kotaToEdit = null;
-        txtNamaKota.setText("");
-        txtProvinsi.setText("");
-        tabelKota.clearSelection();
-        btnTambah.setEnabled(true);
-        btnSimpan.setText("Simpan Perubahan");
-    }
-
-    private void isiFormDariTabel() {
-        int barisTerpilih = tabelKota.getSelectedRow();
-        if (barisTerpilih != -1) {
-            int id = (int) modelTabelKota.getValueAt(barisTerpilih, 0);
-            String nama = (String) modelTabelKota.getValueAt(barisTerpilih, 1);
-            String provinsi = (String) modelTabelKota.getValueAt(barisTerpilih, 2);
-
-            kotaToEdit = new Kota();
-            kotaToEdit.setId(id);
-            kotaToEdit.setNamaKota(nama);
-            kotaToEdit.setProvinsi(provinsi);
-
-            txtNamaKota.setText(nama);
-            txtProvinsi.setText(provinsi);
-            btnTambah.setEnabled(true);
-            btnSimpan.setText("Simpan Perubahan");
-        }
-    }
-
-    private void simpanDataKota() {
-        String nama = txtNamaKota.getText().trim();
-        String provinsi = txtProvinsi.getText().trim();
-
-        if (nama.isEmpty() || provinsi.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Nama kota dan provinsi tidak boleh kosong.", "Input Tidak Valid", JOptionPane.WARNING_MESSAGE);
+    private void ubahDataTerpilih() {
+        int barisTerpilih = tabel.getSelectedRow();
+        if (barisTerpilih == -1) {
+            JOptionPane.showMessageDialog(this, "Silakan pilih kota yang ingin diubah.", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
         }
-
-        Kota kota = new Kota();
-        kota.setNamaKota(nama);
-        kota.setProvinsi(provinsi);
-
-        boolean sukses;
-        if (kotaToEdit == null) { // Mode Tambah
-            sukses = controller.addKota(kota);
-        } else { // Mode Ubah
-            kota.setId(kotaToEdit.getId());
-            sukses = controller.updateKota(kota);
-        }
-
-        if (sukses) {
-            muatDataKota();
-            bersihkanForm();
-            JOptionPane.showMessageDialog(this, "Data kota berhasil disimpan.", "Sukses", JOptionPane.INFORMATION_MESSAGE);
-        } else {
-            // Pesan error sudah ditampilkan oleh controller
+        int idKota = (int) modelTabel.getValueAt(barisTerpilih, 0);
+        Kota kota = controller.getKotaById(idKota);
+        if (kota != null) {
+            bukaFormDialog(kota);
         }
     }
 
-    private void hapusDataKota() {
-        int barisTerpilih = tabelKota.getSelectedRow();
-        if (barisTerpilih == -1 && kotaToEdit == null) {
-            JOptionPane.showMessageDialog(this, "Silakan pilih kota yang ingin dihapus dari tabel.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+    private void hapusDataTerpilih() {
+        int barisTerpilih = tabel.getSelectedRow();
+        if (barisTerpilih == -1) {
+            JOptionPane.showMessageDialog(this, "Silakan pilih kota yang ingin dihapus.", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        
-        int idKota;
-        String namaKota;
-
-        if (kotaToEdit != null && tabelKota.getSelectedRow() == -1) { // Hapus dari form setelah dipilih
-            idKota = kotaToEdit.getId();
-            namaKota = kotaToEdit.getNamaKota();
-        } else if (barisTerpilih != -1) { // Hapus dari seleksi tabel langsung
-            idKota = (int) modelTabelKota.getValueAt(barisTerpilih, 0);
-            namaKota = (String) modelTabelKota.getValueAt(barisTerpilih, 1);
-        } else {
-            return; // Seharusnya tidak terjadi
-        }
-
-
-        int konfirmasi = JOptionPane.showConfirmDialog(this,
-            "Apakah Anda yakin ingin menghapus kota '" + namaKota + "'?\nMenghapus kota dapat mempengaruhi data destinasi terkait.",
-            "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-
+        int idKota = (int) modelTabel.getValueAt(barisTerpilih, 0);
+        String namaKota = (String) modelTabel.getValueAt(barisTerpilih, 1);
+        int konfirmasi = JOptionPane.showConfirmDialog(this, "Yakin ingin menghapus kota '" + namaKota + "'?", "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (konfirmasi == JOptionPane.YES_OPTION) {
-            boolean sukses = controller.deleteKota(idKota);
-            if (sukses) {
-                muatDataKota();
-                bersihkanForm();
-                JOptionPane.showMessageDialog(this, "Kota berhasil dihapus.", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+            if (controller.deleteKota(idKota)) {
+                JOptionPane.showMessageDialog(this, "Kota berhasil dihapus.");
+                if (modelTabel.getRowCount() == 1 && halamanSaatIni > 1) {
+                    halamanSaatIni--;
+                }
+                muatDataDenganPaginasi();
             }
         }
     }

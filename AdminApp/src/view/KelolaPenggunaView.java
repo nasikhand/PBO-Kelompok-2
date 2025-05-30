@@ -22,26 +22,31 @@ public class KelolaPenggunaView extends JPanel {
     private UserController controller;
     private JTextField txtPencarian; // <-- Kolom pencarian
     private TableRowSorter<DefaultTableModel> sorter;
+    
+    // Komponen Paginasi
+    private JButton btnSebelumnya, btnBerikutnya;
+    private JLabel lblInfoHalaman;
+    private int halamanSaatIni = 1;
+    private final int DATA_PER_HALAMAN = 15;
+    private int totalHalaman = 1;
+    private int totalData = 0;
+
 
     public KelolaPenggunaView() {
         this.controller = new UserController();
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(20, 25, 20, 25));
-        setOpaque(false); // Sesuaikan dengan tema dasbor
-        
-        // Panel Atas: Judul dan Kolom Pencarian
-        JPanel panelAtas = new JPanel(new BorderLayout(10,5));
-        panelAtas.setOpaque(false);
+        setOpaque(false);
 
+        JPanel panelAtas = new JPanel(new BorderLayout(10, 5));
+        panelAtas.setOpaque(false);
         JLabel judul = new JLabel("Manajemen Data Pengguna");
         judul.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        judul.setForeground(Color.WHITE); // Sesuaikan warna font
-        add(judul, BorderLayout.NORTH);
-        
+        judul.setForeground(Color.WHITE);
         txtPencarian = new JTextField();
-        txtPencarian.putClientProperty("JTextField.placeholderText", "Cari berdasarkan Nama, Email, atau No. Telepon...");
-        panelAtas.add(txtPencarian, BorderLayout.SOUTH);
-        
+        txtPencarian.putClientProperty("JTextField.placeholderText", "Cari berdasarkan Nama atau Email...");
+        panelAtas.add(judul, BorderLayout.NORTH);
+        panelAtas.add(txtPencarian, BorderLayout.CENTER);
         add(panelAtas, BorderLayout.NORTH);
 
         JScrollPane scrollPane = new JScrollPane();
@@ -50,64 +55,70 @@ public class KelolaPenggunaView extends JPanel {
             new Object[][]{},
             new String[]{"ID", "Nama Lengkap", "Email", "No. Telepon", "Alamat", "Tanggal Daftar"}
         ) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // Sel tabel tidak bisa diedit langsung
-            }
+            @Override public boolean isCellEditable(int row, int column) { return false; }
         };
         tabel.setModel(modelTabel);
-        
-        // Inisialisasi TableRowSorter
-        sorter = new TableRowSorter<>(modelTabel);
-        tabel.setRowSorter(sorter);
-        // Sembunyikan kolom ID jika tidak ingin ditampilkan
         tabel.getColumnModel().getColumn(0).setMinWidth(0);
         tabel.getColumnModel().getColumn(0).setMaxWidth(0);
         tabel.getColumnModel().getColumn(0).setWidth(0);
-
         scrollPane.setViewportView(tabel);
         add(scrollPane, BorderLayout.CENTER);
 
-        JPanel panelTombol = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        panelTombol.setOpaque(false);
+        JPanel panelTombolAksi = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelTombolAksi.setOpaque(false);
         JButton btnUbah = new JButton("Ubah Data Pengguna");
         JButton btnHapus = new JButton("Hapus Pengguna");
-        
-        panelTombol.add(btnUbah);
-        panelTombol.add(btnHapus);
-        add(panelTombol, BorderLayout.SOUTH);
+        panelTombolAksi.add(btnUbah);
+        panelTombolAksi.add(btnHapus);
 
-        muatData();
+        JPanel panelPaginasi = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        panelPaginasi.setOpaque(false);
+        btnSebelumnya = new JButton("« Seb");
+        lblInfoHalaman = new JLabel("Hal 1 dari 1");
+        lblInfoHalaman.setForeground(Color.WHITE);
+        btnBerikutnya = new JButton("Ber »");
+        panelPaginasi.add(btnSebelumnya);
+        panelPaginasi.add(lblInfoHalaman);
+        panelPaginasi.add(btnBerikutnya);
 
-        // Action Listeners
+        JPanel panelBawah = new JPanel(new BorderLayout());
+        panelBawah.setOpaque(false);
+        panelBawah.add(panelTombolAksi, BorderLayout.WEST);
+        panelBawah.add(panelPaginasi, BorderLayout.EAST);
+        add(panelBawah, BorderLayout.SOUTH);
+
+        muatDataDenganPaginasi();
+
         btnUbah.addActionListener(e -> ubahDataTerpilih());
         btnHapus.addActionListener(e -> hapusDataTerpilih());
-        
-        // Listener untuk kolom pencarian
         txtPencarian.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) { cariData(); }
-            @Override
-            public void removeUpdate(DocumentEvent e) { cariData(); }
-            @Override
-            public void changedUpdate(DocumentEvent e) { cariData(); }
+            public void insertUpdate(DocumentEvent e) { halamanSaatIni = 1; muatDataDenganPaginasi(); }
+            public void removeUpdate(DocumentEvent e) { halamanSaatIni = 1; muatDataDenganPaginasi(); }
+            public void changedUpdate(DocumentEvent e) { halamanSaatIni = 1; muatDataDenganPaginasi(); }
         });
+        btnSebelumnya.addActionListener(e -> { if (halamanSaatIni > 1) { halamanSaatIni--; muatDataDenganPaginasi(); } });
+        btnBerikutnya.addActionListener(e -> { if (halamanSaatIni < totalHalaman) { halamanSaatIni++; muatDataDenganPaginasi(); } });
     }
 
-    private void muatData() {
-        modelTabel.setRowCount(0);
-        List<User> daftarUser = controller.getAllUsers();
+    private void muatDataDenganPaginasi() {
+        String filterText = txtPencarian.getText().trim();
+        totalData = controller.getTotalUserCount(filterText);
+        totalHalaman = (int) Math.ceil((double) totalData / DATA_PER_HALAMAN);
+        if (totalHalaman == 0) totalHalaman = 1;
+        if (halamanSaatIni > totalHalaman) halamanSaatIni = totalHalaman;
+        if (halamanSaatIni < 1) halamanSaatIni = 1;
 
+        List<User> daftarUser = controller.getUsersWithPagination(halamanSaatIni, DATA_PER_HALAMAN, filterText);
+        modelTabel.setRowCount(0);
         for (User user : daftarUser) {
             modelTabel.addRow(new Object[]{
-                user.getId(),
-                user.getNamaLengkap(),
-                user.getEmail(),
-                user.getNoTelepon(),
-                user.getAlamat(),
-                user.getCreatedAt() // Menampilkan tanggal pendaftaran
+                user.getId(), user.getNamaLengkap(), user.getEmail(),
+                user.getNoTelepon(), user.getAlamat(), user.getCreatedAt()
             });
         }
+        lblInfoHalaman.setText("Hal " + halamanSaatIni + " dari " + totalHalaman + " (" + totalData + " data)");
+        btnSebelumnya.setEnabled(halamanSaatIni > 1);
+        btnBerikutnya.setEnabled(halamanSaatIni < totalHalaman);
     }
 
     private void ubahDataTerpilih() {
@@ -118,16 +129,10 @@ public class KelolaPenggunaView extends JPanel {
         }
         int idUser = (int) modelTabel.getValueAt(barisTerpilih, 0);
         User user = controller.getUserById(idUser);
-
         if (user != null) {
-            // Kita akan buat dialog form terpisah untuk ubah data pengguna
-            FormPenggunaDialog dialog = new FormPenggunaDialog(
-                (Frame) SwingUtilities.getWindowAncestor(this), user
-            );
+            FormPenggunaDialog dialog = new FormPenggunaDialog((Frame) SwingUtilities.getWindowAncestor(this), user);
             dialog.setVisible(true);
-            muatData(); // Muat ulang data setelah dialog ditutup
-        } else {
-            JOptionPane.showMessageDialog(this, "Data pengguna tidak ditemukan.", "Kesalahan", JOptionPane.ERROR_MESSAGE);
+            muatDataDenganPaginasi();
         }
     }
 
@@ -139,29 +144,15 @@ public class KelolaPenggunaView extends JPanel {
         }
         int idUser = (int) modelTabel.getValueAt(barisTerpilih, 0);
         String namaUser = (String) modelTabel.getValueAt(barisTerpilih, 1);
-
-        int konfirmasi = JOptionPane.showConfirmDialog(this,
-            "Apakah Anda yakin ingin menghapus pengguna '" + namaUser + "'?\nMenghapus pengguna juga dapat menghapus data terkait lainnya.",
-            "Konfirmasi Hapus Pengguna", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-
+        int konfirmasi = JOptionPane.showConfirmDialog(this, "Yakin ingin menghapus pengguna '" + namaUser + "'?", "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (konfirmasi == JOptionPane.YES_OPTION) {
-            boolean sukses = controller.deleteUser(idUser);
-            if (sukses) {
+            if (controller.deleteUser(idUser)) {
                 JOptionPane.showMessageDialog(this, "Pengguna berhasil dihapus.");
-                muatData(); // Muat ulang data
-            } else {
-                // Pesan error sudah ditampilkan oleh controller
+                if (modelTabel.getRowCount() == 1 && halamanSaatIni > 1) {
+                    halamanSaatIni--;
+                }
+                muatDataDenganPaginasi();
             }
-        }
-    }
-    
-    private void cariData() {
-        String teks = txtPencarian.getText();
-        if (teks.trim().length() == 0) {
-            sorter.setRowFilter(null);
-        } else {
-            // Filter berdasarkan Nama (1), Email (2), No. Telepon (3)
-            sorter.setRowFilter(RowFilter.regexFilter("(?i)" + teks, 1, 2, 3));
         }
     }
     

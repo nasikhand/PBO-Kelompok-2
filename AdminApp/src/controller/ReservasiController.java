@@ -21,6 +21,116 @@ import java.util.List;
 import java.util.Map;
 
 public class ReservasiController {
+    
+    /**
+     * Menghitung total jumlah reservasi dengan filter (opsional).
+     */
+    public int getTotalReservasiCount(String filterKode, String filterStatus) {
+        StringBuilder queryBuilder = new StringBuilder("SELECT COUNT(*) FROM reservasi r ");
+        // Kita mungkin perlu JOIN jika filter melibatkan nama trip, dll.
+        // Untuk contoh ini, filter sederhana berdasarkan kode dan status di tabel reservasi saja.
+        List<Object> params = new ArrayList<>();
+        boolean inWhereClause = false;
+
+        if (filterKode != null && !filterKode.isEmpty()) {
+            queryBuilder.append(inWhereClause ? "AND " : "WHERE ");
+            queryBuilder.append("r.kode_reservasi LIKE ? ");
+            params.add("%" + filterKode + "%");
+            inWhereClause = true;
+        }
+        if (filterStatus != null && !filterStatus.isEmpty() && !"Semua".equalsIgnoreCase(filterStatus)) {
+            queryBuilder.append(inWhereClause ? "AND " : "WHERE ");
+            queryBuilder.append("r.status = ? ");
+            params.add(filterStatus);
+            inWhereClause = true;
+        }
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(queryBuilder.toString())) {
+            
+            if (conn == null) return 0;
+
+            for (int i = 0; i < params.size(); i++) {
+                stmt.setObject(i + 1, params.get(i));
+            }
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Gagal menghitung total reservasi: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    /**
+     * Mengambil data reservasi dengan paginasi dan filter.
+     */
+    public List<Reservasi> getReservasiWithPagination(int halaman, int dataPerHalaman, String filterKode, String filterStatus) {
+        List<Reservasi> daftarReservasi = new ArrayList<>();
+        StringBuilder queryBuilder = new StringBuilder(
+            "SELECT r.id, r.kode_reservasi, r.tanggal_reservasi, r.status, r.trip_type, r.trip_id, " +
+            "CASE " +
+            "    WHEN r.trip_type = 'paket_perjalanan' THEN pp.nama_paket " +
+            "    WHEN r.trip_type = 'custom_trip' THEN ct.nama_trip " +
+            "END AS nama_trip " +
+            "FROM reservasi r " +
+            "LEFT JOIN paket_perjalanan pp ON r.trip_id = pp.id AND r.trip_type = 'paket_perjalanan' " +
+            "LEFT JOIN custom_trip ct ON r.trip_id = ct.id AND r.trip_type = 'custom_trip' "
+        );
+        
+        List<Object> params = new ArrayList<>();
+        boolean inWhereClause = false;
+
+        if (filterKode != null && !filterKode.isEmpty()) {
+            queryBuilder.append(inWhereClause ? "AND " : "WHERE ");
+            queryBuilder.append("r.kode_reservasi LIKE ? ");
+            params.add("%" + filterKode + "%");
+            inWhereClause = true;
+        }
+        if (filterStatus != null && !filterStatus.isEmpty() && !"Semua".equalsIgnoreCase(filterStatus)) {
+            queryBuilder.append(inWhereClause ? "AND " : "WHERE ");
+            queryBuilder.append("r.status = ? ");
+            params.add(filterStatus);
+            // inWhereClause = true; // Tidak perlu jika ini kondisi terakhir sebelum ORDER BY
+        }
+        
+        queryBuilder.append("ORDER BY r.tanggal_reservasi DESC, r.id DESC LIMIT ? OFFSET ?");
+        params.add(dataPerHalaman);
+        params.add((halaman - 1) * dataPerHalaman);
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(queryBuilder.toString())) {
+
+            if (conn == null) return daftarReservasi;
+            
+            int paramIndex = 1;
+            for (Object param : params) {
+                stmt.setObject(paramIndex++, param);
+            }
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Reservasi reservasi = new Reservasi();
+                    reservasi.setId(rs.getInt("id"));
+                    reservasi.setKodeReservasi(rs.getString("kode_reservasi"));
+                    reservasi.setTanggalReservasi(rs.getDate("tanggal_reservasi"));
+                    reservasi.setStatus(rs.getString("status"));
+                    reservasi.setTripType(rs.getString("trip_type"));
+                    reservasi.setTripId(rs.getInt("trip_id"));
+                    reservasi.setNamaTrip(rs.getString("nama_trip"));
+                    daftarReservasi.add(reservasi);
+                }
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Gagal mengambil data reservasi (paginasi): " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+        return daftarReservasi;
+    }
 
     public List<Reservasi> getAllReservasi() {
         List<Reservasi> daftarReservasi = new ArrayList<>();
