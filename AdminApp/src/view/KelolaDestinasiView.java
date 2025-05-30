@@ -191,31 +191,24 @@ public class KelolaDestinasiView extends JPanel {
     }
 
     private void muatDataDestinasiKeTabel() {
-        modelTabelDestinasi.setRowCount(0);
-        List<Destinasi> daftarDestinasi = controller.getAllDestinasi();
-        NumberFormat formatMataUang = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
-        formatMataUang.setMaximumFractionDigits(0);
+    modelTabelDestinasi.setRowCount(0);
+    List<Destinasi> daftarDestinasi = controller.getAllDestinasi();
+    NumberFormat formatMataUang = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
+    formatMataUang.setMaximumFractionDigits(0);
 
-        for (Destinasi dest : daftarDestinasi) {
-            ImageIcon gambar = null;
-            if (dest.getGambar() != null && !dest.getGambar().isEmpty()) {
-                String imagePath = DIR_GAMBAR_DESTINASI + "/" + dest.getGambar();
-                File imgFile = new File(imagePath);
-                if (imgFile.exists()) {
-                    ImageIcon originalIcon = new ImageIcon(imagePath);
-                    // Menggunakan ImageUtil untuk resizing berkualitas tinggi
-                    gambar = config.ImageUtil.resizeImage(originalIcon, 80, 50);
-                }
-            }
-            modelTabelDestinasi.addRow(new Object[]{
-                dest.getId(), 
-                gambar, 
-                dest.getNamaDestinasi(),
-                dest.getNamaKota(), 
-                formatMataUang.format(dest.getHarga())
-            });
-        }
+    for (Destinasi dest : daftarDestinasi) {
+        String imagePath = DIR_GAMBAR_DESTINASI + "/" + dest.getGambar();
+        ImageIcon gambar = ImageUtil.loadAndResizeFromFile(imagePath, 80, 50);
+
+        modelTabelDestinasi.addRow(new Object[]{
+            dest.getId(), 
+            gambar, // Langsung gunakan hasil dari ImageUtil
+            dest.getNamaDestinasi(),
+            dest.getNamaKota(), 
+            formatMataUang.format(dest.getHarga())
+        });
     }
+}
 
     private void modeTambah() {
         destinasiToEdit = null;

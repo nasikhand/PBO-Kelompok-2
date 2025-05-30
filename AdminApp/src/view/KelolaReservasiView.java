@@ -4,18 +4,18 @@
  */
 package view;
 
+import config.PdfGenerator;
+import controller.PerjalananController;
 import controller.ReservasiController;
+import model.PaketPerjalanan;
 import model.Reservasi;
+import model.RincianPaketPerjalanan;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.DocumentEvent; 
-import javax.swing.event.DocumentListener; 
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.util.ArrayList; // Diperlukan untuk RowFilter
+import java.io.File;
 import java.util.List;
 
 public class KelolaReservasiView extends JPanel {
@@ -23,9 +23,8 @@ public class KelolaReservasiView extends JPanel {
     private DefaultTableModel modelTabel;
     private ReservasiController controller;
     private List<Reservasi> daftarReservasiCache;
-    private JTextField txtPencarian; // <-- Kolom pencarian
-    private TableRowSorter<DefaultTableModel> sorter;
-        // Komponen Paginasi dan Pencarian
+
+    // Komponen Paginasi dan Pencarian
     private JTextField txtPencarianKode;
     private JComboBox<String> cmbFilterStatus;
     private JButton btnSebelumnya, btnBerikutnya, btnFilter;
@@ -41,7 +40,6 @@ public class KelolaReservasiView extends JPanel {
         setBorder(new EmptyBorder(20, 25, 20, 25));
         setOpaque(false);
 
-        // Panel Atas: Judul, Filter, dan Kolom Pencarian
         JPanel panelAtas = new JPanel(new BorderLayout(10, 10));
         panelAtas.setOpaque(false);
 
@@ -54,7 +52,7 @@ public class KelolaReservasiView extends JPanel {
         panelFilterPencarian.setOpaque(false);
         
         panelFilterPencarian.add(new JLabel("Filter Status:"));
-        cmbFilterStatus = new JComboBox<>(new String[]{"Semua", "pending", "dipesan", "dibayar", "selesai", "dibatalkan"}); // Tambah opsi "dibatalkan" jika ada
+        cmbFilterStatus = new JComboBox<>(new String[]{"Semua", "pending", "dipesan", "dibayar", "selesai", "dibatalkan"});
         panelFilterPencarian.add(cmbFilterStatus);
 
         panelFilterPencarian.add(new JLabel("   Cari Kode:"));
@@ -62,12 +60,11 @@ public class KelolaReservasiView extends JPanel {
         txtPencarianKode.putClientProperty("JTextField.placeholderText", "Kode Reservasi...");
         panelFilterPencarian.add(txtPencarianKode);
         
-        btnFilter = new JButton("Terapkan"); // Tombol untuk menerapkan filter & pencarian
+        btnFilter = new JButton("Terapkan");
         panelFilterPencarian.add(btnFilter);
 
         panelAtas.add(panelFilterPencarian, BorderLayout.CENTER);
         add(panelAtas, BorderLayout.NORTH);
-
 
         JScrollPane scrollPane = new JScrollPane();
         tabel = new JTable();
@@ -79,28 +76,22 @@ public class KelolaReservasiView extends JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         tabel.setModel(modelTabel);
-        // Sorter client-side tidak lagi digunakan jika paginasi server-side
-        // sorter = new TableRowSorter<>(modelTabel);
-        // tabel.setRowSorter(sorter);
         
         tabel.getColumnModel().getColumn(0).setMinWidth(0);
         tabel.getColumnModel().getColumn(0).setMaxWidth(0);
-        tabel.getColumnModel().getColumn(0).setWidth(0);
 
         scrollPane.setViewportView(tabel);
         add(scrollPane, BorderLayout.CENTER);
 
-        // Panel Tombol Aksi
         JPanel panelTombolAksi = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panelTombolAksi.setOpaque(false);
-        JButton btnKonfirmasi = new JButton("Konfirmasi Pembayaran");
         JButton btnBatalkan = new JButton("Batalkan Reservasi");
         JButton btnLihatDetail = new JButton("Lihat Detail Penumpang");
-        panelTombolAksi.add(btnKonfirmasi);
-        panelTombolAksi.add(btnBatalkan);
+        JButton btnCetakItinerary = new JButton("Cetak Itinerary (PDF)"); // <-- TOMBOL BARU
         panelTombolAksi.add(btnLihatDetail);
+        panelTombolAksi.add(btnCetakItinerary); // <-- PENAMBAHAN TOMBOL BARU
+        panelTombolAksi.add(btnBatalkan);
 
-        // Panel Paginasi
         JPanel panelPaginasi = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         panelPaginasi.setOpaque(false);
         btnSebelumnya = new JButton("« Seb");
@@ -119,14 +110,10 @@ public class KelolaReservasiView extends JPanel {
 
         muatDataDenganPaginasi();
 
-        // Action Listeners
         btnFilter.addActionListener(e -> {
-            halamanSaatIni = 1; // Selalu reset ke halaman 1 saat filter baru diterapkan
+            halamanSaatIni = 1;
             muatDataDenganPaginasi();
         });
-        // Untuk pencarian real-time, Anda bisa menambahkan DocumentListener ke txtPencarianKode
-        // dan memanggil muatDataDenganPaginasi() di sana juga.
-        // Untuk saat ini, pencarian hanya aktif saat tombol "Terapkan" diklik.
 
         btnSebelumnya.addActionListener(e -> {
             if (halamanSaatIni > 1) {
@@ -141,16 +128,22 @@ public class KelolaReservasiView extends JPanel {
             }
         });
         
-        btnKonfirmasi.addActionListener(e -> ubahStatus("dibayar"));
         btnBatalkan.addActionListener(e -> ubahStatus("dibatalkan"));
         btnLihatDetail.addActionListener(e -> lihatDetail());
+        btnCetakItinerary.addActionListener(e -> cetakItineraryTerpilih()); // <-- ACTION LISTENER BARU
     }
     
+    public void terapkanFilterStatusEksternal(String status) {
+        cmbFilterStatus.setSelectedItem(status);
+        halamanSaatIni = 1;
+        muatDataDenganPaginasi();
+    }
+
     private void muatDataDenganPaginasi() {
         String filterKode = txtPencarianKode.getText().trim();
         String filterStatus = (String) cmbFilterStatus.getSelectedItem();
         if ("Semua".equalsIgnoreCase(filterStatus)) {
-            filterStatus = ""; // Kirim string kosong jika "Semua" untuk tidak memfilter status
+            filterStatus = ""; 
         }
 
         totalData = controller.getTotalReservasiCount(filterKode, filterStatus);
@@ -178,24 +171,6 @@ public class KelolaReservasiView extends JPanel {
         btnBerikutnya.setEnabled(halamanSaatIni < totalHalaman);
     }
 
-
-
-    private void muatData() {
-        modelTabel.setRowCount(0);
-        this.daftarReservasiCache = controller.getAllReservasi();
-
-        for (Reservasi reservasi : daftarReservasiCache) {
-            modelTabel.addRow(new Object[]{
-                reservasi.getId(),
-                reservasi.getKodeReservasi(),
-                reservasi.getNamaTrip(),
-                reservasi.getTripType(),
-                reservasi.getTanggalReservasi(),
-                reservasi.getStatus()
-            });
-        }
-    }
-
     private void ubahStatus(String status) {
         int barisTerpilih = tabel.getSelectedRow();
         if (barisTerpilih == -1) {
@@ -217,17 +192,13 @@ public class KelolaReservasiView extends JPanel {
             "Konfirmasi Perubahan Status", JOptionPane.YES_NO_OPTION);
 
         if (konfirmasi == JOptionPane.YES_OPTION) {
-            boolean sukses = controller.updateStatusReservasi(idReservasi, status);
-            if (sukses) {
+            if (controller.updateStatusReservasi(idReservasi, status)) {
                 JOptionPane.showMessageDialog(this, "Status reservasi berhasil diperbarui.");
-                muatData();
-            } else {
-                JOptionPane.showMessageDialog(this, "Gagal memperbarui status.", "Kesalahan", JOptionPane.ERROR_MESSAGE);
+                muatDataDenganPaginasi();
             }
         }
     }
     
-    // vvv METODE BARU UNTUK MELIHAT DETAIL vvv
     private void lihatDetail() {
         int barisTerpilih = tabel.getSelectedRow();
         if (barisTerpilih == -1) {
@@ -235,28 +206,46 @@ public class KelolaReservasiView extends JPanel {
             return;
         }
         
-        // Dapatkan objek Reservasi dari cache berdasarkan baris yang dipilih
         Reservasi reservasiTerpilih = daftarReservasiCache.get(barisTerpilih);
-
-        // Tampilkan dialog detail
-        DetailReservasiDialog dialog = new DetailReservasiDialog(
-            (Frame) SwingUtilities.getWindowAncestor(this), reservasiTerpilih
-        );
+        DetailReservasiDialog dialog = new DetailReservasiDialog((Frame) SwingUtilities.getWindowAncestor(this), reservasiTerpilih);
         dialog.setVisible(true);
     }
     
-    private void cariData() {
-        String teks = txtPencarian.getText();
-        if (teks.trim().length() == 0) {
-            sorter.setRowFilter(null);
-        } else {
-            // Filter berdasarkan Kode (1), Nama Trip (2), Jenis (3), Status (5)
-            sorter.setRowFilter(RowFilter.regexFilter("(?i)" + teks, 1, 2, 3, 5));
+    // <<< METODE BARU UNTUK MENCETAK PDF >>>
+    private void cetakItineraryTerpilih() {
+        int barisTerpilih = tabel.getSelectedRow();
+        if (barisTerpilih == -1) {
+            JOptionPane.showMessageDialog(this, "Silakan pilih reservasi yang ingin dicetak.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            return;
         }
-    }
-    public void terapkanFilterStatusEksternal(String status) {
-        cmbFilterStatus.setSelectedItem(status);
-        halamanSaatIni = 1;
-        muatDataDenganPaginasi();
+
+        Reservasi reservasi = daftarReservasiCache.get(barisTerpilih);
+
+        // Untuk saat ini, kita hanya aktifkan untuk paket perjalanan
+        if (!"paket_perjalanan".equalsIgnoreCase(reservasi.getTripType())) {
+            JOptionPane.showMessageDialog(this, "Fitur ini baru tersedia untuk 'Paket Perjalanan'.", "Informasi", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        // Ambil data paket dan rinciannya dari controller yang sesuai
+        PerjalananController perjalananController = new PerjalananController();
+        PaketPerjalanan paket = perjalananController.getPaketById(reservasi.getTripId());
+        List<RincianPaketPerjalanan> daftarRincian = perjalananController.getRincianByPaketId(reservasi.getTripId());
+
+        if (paket == null || daftarRincian.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Data lengkap atau rincian destinasi untuk paket ini tidak ditemukan.", "Data Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Buka dialog untuk memilih lokasi penyimpanan file
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Simpan Itinerary PDF");
+        fileChooser.setSelectedFile(new File("Itinerary-" + reservasi.getKodeReservasi() + ".pdf"));
+
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = fileChooser.getSelectedFile();
+            // Panggil generator PDF kita
+            PdfGenerator.createPaketItinerary(reservasi, paket, daftarRincian, fileToSave.getAbsolutePath());
+        }
     }
 }

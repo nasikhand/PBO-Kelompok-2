@@ -8,7 +8,7 @@ import config.DatabaseConnection;
 import model.Kota;
 import model.PaketPerjalanan;
 import model.RincianPaketPerjalanan;
-import model.Destinasi; // Diperlukan untuk getAllDestinasiForComboBox
+import model.Destinasi;
 
 import javax.swing.JOptionPane;
 import java.io.File;
@@ -17,30 +17,36 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Types; // Diperlukan untuk setNull
-import java.sql.Date; // Diperlukan untuk parameter tanggal
+import java.sql.Types;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PerjalananController {
     
-    /**
-     * Menghitung total jumlah paket perjalanan.
-     * Diperlukan untuk paginasi.
-     */
-    public int getTotalPaketPerjalananCount(String filterNama) { // Tambahkan filter jika pencarian juga dipaginasi
-        String query = "SELECT COUNT(*) FROM paket_perjalanan";
+    // <<< METODE DIPERBARUI DENGAN filterStatus >>>
+    public int getTotalPaketPerjalananCount(String filterNama, String filterStatus) {
+        StringBuilder query = new StringBuilder("SELECT COUNT(*) FROM paket_perjalanan ");
+        List<String> params = new ArrayList<>();
+        boolean inWhere = false;
+
         if (filterNama != null && !filterNama.isEmpty()) {
-            query += " WHERE nama_paket LIKE ?";
+            query.append("WHERE nama_paket LIKE ? ");
+            params.add("%" + filterNama + "%");
+            inWhere = true;
+        }
+        if (filterStatus != null && !filterStatus.isEmpty()) {
+            query.append(inWhere ? "AND " : "WHERE ");
+            query.append("status = ?");
+            params.add(filterStatus);
         }
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+             PreparedStatement stmt = conn.prepareStatement(query.toString())) {
             
             if (conn == null) return 0;
-
-            if (filterNama != null && !filterNama.isEmpty()) {
-                stmt.setString(1, "%" + filterNama + "%");
+            for (int i = 0; i < params.size(); i++) {
+                stmt.setString(i + 1, params.get(i));
             }
 
             try (ResultSet rs = stmt.executeQuery()) {
@@ -55,28 +61,31 @@ public class PerjalananController {
         return 0;
     }
 
-    /**
-     * Mengambil data paket perjalanan dengan paginasi dan pencarian.
-     */
-    
-    public List<PaketPerjalanan> getPaketPerjalananWithPagination(int halaman, int dataPerHalaman, String filterNama) {
+    // <<< METODE DIPERBARUI DENGAN filterStatus >>>
+    public List<PaketPerjalanan> getPaketPerjalananWithPagination(int halaman, int dataPerHalaman, String filterNama, String filterStatus) {
         List<PaketPerjalanan> daftarPaket = new ArrayList<>();
-        // Query dengan JOIN untuk nama kota dan filter nama paket
-        String query = "SELECT pp.*, k.nama_kota FROM paket_perjalanan pp " +
-                       "JOIN kota k ON pp.kota_id = k.id ";
+        StringBuilder query = new StringBuilder("SELECT pp.*, k.nama_kota FROM paket_perjalanan pp JOIN kota k ON pp.kota_id = k.id ");
         
         List<Object> params = new ArrayList<>();
+        boolean inWhere = false;
+
         if (filterNama != null && !filterNama.isEmpty()) {
-            query += "WHERE pp.nama_paket LIKE ? ";
+            query.append("WHERE pp.nama_paket LIKE ? ");
             params.add("%" + filterNama + "%");
+            inWhere = true;
+        }
+        if (filterStatus != null && !filterStatus.isEmpty()) {
+            query.append(inWhere ? "AND " : "WHERE ");
+            query.append("pp.status = ? ");
+            params.add(filterStatus);
         }
         
-        query += "ORDER BY pp.id DESC LIMIT ? OFFSET ?";
+        query.append("ORDER BY pp.id DESC LIMIT ? OFFSET ?");
         params.add(dataPerHalaman);
         params.add((halaman - 1) * dataPerHalaman);
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+             PreparedStatement stmt = conn.prepareStatement(query.toString())) {
 
             if (conn == null) return daftarPaket;
             
@@ -108,33 +117,31 @@ public class PerjalananController {
         }
         return daftarPaket;
     }
-
+    
+    // ... Sisa metode lain di bawah ini tidak perlu diubah ...
     public List<PaketPerjalanan> getAllPaketPerjalanan() {
         List<PaketPerjalanan> daftarPaket = new ArrayList<>();
         String query = "SELECT pp.*, k.nama_kota FROM paket_perjalanan pp JOIN kota k ON pp.kota_id = k.id ORDER BY pp.id";
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
-
             if (conn == null) return daftarPaket;
-
             while (rs.next()) {
                 PaketPerjalanan paket = new PaketPerjalanan();
                 paket.setId(rs.getInt("id"));
                 paket.setNamaPaket(rs.getString("nama_paket"));
-                paket.setNamaKota(rs.getString("nama_kota")); // Dari join
-                paket.setKotaId(rs.getInt("kota_id")); // Ambil juga kota_id
+                paket.setNamaKota(rs.getString("nama_kota"));
+                paket.setKotaId(rs.getInt("kota_id"));
                 paket.setTanggalMulai(rs.getDate("tanggal_mulai"));
                 paket.setTanggalAkhir(rs.getDate("tanggal_akhir"));
                 paket.setHarga(rs.getBigDecimal("harga"));
                 paket.setKuota(rs.getInt("kuota"));
                 paket.setStatus(rs.getString("status"));
                 paket.setGambar(rs.getString("gambar"));
-                paket.setDeskripsi(rs.getString("deskripsi")); // Ambil deskripsi
+                paket.setDeskripsi(rs.getString("deskripsi"));
                 daftarPaket.add(paket);
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Gagal mengambil data perjalanan: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
         return daftarPaket;
@@ -146,9 +153,7 @@ public class PerjalananController {
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
-            
             if (conn == null) return daftarKota;
-
             while (rs.next()) {
                 Kota kota = new Kota();
                 kota.setId(rs.getInt("id"));
@@ -157,7 +162,6 @@ public class PerjalananController {
                 daftarKota.add(kota);
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Gagal mengambil data kota: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
         return daftarKota;
@@ -167,9 +171,7 @@ public class PerjalananController {
         String query = "INSERT INTO paket_perjalanan (kota_id, nama_paket, tanggal_mulai, tanggal_akhir, kuota, harga, deskripsi, status, gambar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
-            
             if (conn == null) return false;
-            
             stmt.setInt(1, paket.getKotaId());
             stmt.setString(2, paket.getNamaPaket());
             stmt.setDate(3, paket.getTanggalMulai());
@@ -181,7 +183,6 @@ public class PerjalananController {
             stmt.setString(9, paket.getGambar());
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Gagal menambah paket perjalanan: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
             return false;
         }
@@ -192,9 +193,7 @@ public class PerjalananController {
         String query = "SELECT * FROM paket_perjalanan WHERE id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
-
             if (conn == null) return null;
-
             stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -212,7 +211,6 @@ public class PerjalananController {
                 }
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Gagal mengambil detail paket: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
         return paket;
@@ -222,9 +220,7 @@ public class PerjalananController {
         String query = "UPDATE paket_perjalanan SET kota_id=?, nama_paket=?, tanggal_mulai=?, tanggal_akhir=?, kuota=?, harga=?, deskripsi=?, status=?, gambar=? WHERE id=?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
-            
             if (conn == null) return false;
-
             stmt.setInt(1, paket.getKotaId());
             stmt.setString(2, paket.getNamaPaket());
             stmt.setDate(3, paket.getTanggalMulai());
@@ -237,7 +233,6 @@ public class PerjalananController {
             stmt.setInt(10, paket.getId());
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Gagal memperbarui paket perjalanan: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
             return false;
         }
@@ -245,27 +240,17 @@ public class PerjalananController {
     
     public boolean deletePaketPerjalanan(int id) {
         PaketPerjalanan paket = getPaketById(id);
-        if (paket == null) {
-            JOptionPane.showMessageDialog(null, "Gagal menghapus: Paket perjalanan tidak ditemukan.", "Kesalahan", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
-
+        if (paket == null) return false;
         String query = "DELETE FROM paket_perjalanan WHERE id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
-
             if (conn == null) return false;
-
             stmt.setInt(1, id);
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected > 0) {
                 if (paket.getGambar() != null && !paket.getGambar().isEmpty()) {
                     File fileGambar = new File("images/paket_perjalanan/" + paket.getGambar());
-                    if (fileGambar.exists()) {
-                        if(!fileGambar.delete()){
-                             System.err.println("Gagal menghapus file gambar: " + fileGambar.getAbsolutePath());
-                        }
-                    }
+                    if (fileGambar.exists()) fileGambar.delete();
                 }
                 return true;
             }
@@ -275,25 +260,105 @@ public class PerjalananController {
         }
         return false;
     }
+    public List<RincianPaketPerjalanan> getRincianByPaketId(int paketId) {
+        List<RincianPaketPerjalanan> daftarRincian = new ArrayList<>();
+        String query = "SELECT rpp.id, rpp.paket_perjalanan_id, rpp.destinasi_id, " +
+                       "rpp.urutan_kunjungan, rpp.durasi_jam, d.nama_destinasi " +
+                       "FROM rincian_paket_perjalanan rpp " +
+                       "JOIN destinasi d ON rpp.destinasi_id = d.id " +
+                       "WHERE rpp.paket_perjalanan_id = ? " +
+                       "ORDER BY rpp.urutan_kunjungan ASC, rpp.id ASC";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            if (conn == null) return daftarRincian;
+            stmt.setInt(1, paketId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    RincianPaketPerjalanan rincian = new RincianPaketPerjalanan();
+                    rincian.setId(rs.getInt("id"));
+                    rincian.setPaketPerjalananId(rs.getInt("paket_perjalanan_id"));
+                    rincian.setDestinasiId(rs.getInt("destinasi_id"));
+                    rincian.setNamaDestinasi(rs.getString("nama_destinasi"));
+                    rincian.setUrutanKunjungan(rs.getObject("urutan_kunjungan", Integer.class));
+                    rincian.setDurasiJam(rs.getObject("durasi_jam", Integer.class));
+                    daftarRincian.add(rincian);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return daftarRincian;
+    }
 
-    public int getTotalPaketPerjalananAktif() {
-        String query = "SELECT COUNT(*) AS jumlah_paket FROM paket_perjalanan WHERE status = 'tersedia'";
+    public boolean addRincianPaket(RincianPaketPerjalanan rincian) {
+        String query = "INSERT INTO rincian_paket_perjalanan (paket_perjalanan_id, destinasi_id, urutan_kunjungan, durasi_jam) VALUES (?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            if (conn == null) return false;
+            stmt.setInt(1, rincian.getPaketPerjalananId());
+            stmt.setInt(2, rincian.getDestinasiId());
+            if (rincian.getUrutanKunjungan() != null) stmt.setInt(3, rincian.getUrutanKunjungan());
+            else stmt.setNull(3, Types.INTEGER);
+            if (rincian.getDurasiJam() != null) stmt.setInt(4, rincian.getDurasiJam());
+            else stmt.setNull(4, Types.INTEGER);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateRincianPaket(RincianPaketPerjalanan rincian) {
+        String query = "UPDATE rincian_paket_perjalanan SET destinasi_id = ?, urutan_kunjungan = ?, durasi_jam = ? WHERE id = ? AND paket_perjalanan_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            if (conn == null) return false;
+            stmt.setInt(1, rincian.getDestinasiId());
+            if (rincian.getUrutanKunjungan() != null) stmt.setInt(2, rincian.getUrutanKunjungan());
+            else stmt.setNull(2, Types.INTEGER);
+            if (rincian.getDurasiJam() != null) stmt.setInt(3, rincian.getDurasiJam());
+            else stmt.setNull(3, Types.INTEGER);
+            stmt.setInt(4, rincian.getId());
+            stmt.setInt(5, rincian.getPaketPerjalananId());
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean deleteRincianPaket(int idRincian) {
+        String query = "DELETE FROM rincian_paket_perjalanan WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            if (conn == null) return false;
+            stmt.setInt(1, idRincian);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public List<Destinasi> getAllDestinasiForComboBox() {
+        List<Destinasi> daftarDestinasi = new ArrayList<>();
+        String query = "SELECT id, nama_destinasi FROM destinasi ORDER BY nama_destinasi";
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
-            
-            if (conn == null) return 0;
-
-            if (rs.next()) {
-                return rs.getInt("jumlah_paket");
+            if (conn == null) return daftarDestinasi;
+            while (rs.next()) {
+                Destinasi dest = new Destinasi();
+                dest.setId(rs.getInt("id"));
+                dest.setNamaDestinasi(rs.getString("nama_destinasi"));
+                daftarDestinasi.add(dest);
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Gagal mengambil total paket aktif: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
-        return 0;
+        return daftarDestinasi;
     }
-
+    
     public List<Object[]> getLaporanDestinasiPopuler(Date tanggalMulai, Date tanggalAkhir) {
         List<Object[]> laporan = new ArrayList<>();
         String query = "SELECT d.nama_destinasi, COUNT(DISTINCT COALESCE(res_pp.id, res_ct.id)) AS jumlah_kunjungan_unik_reservasi " +
@@ -340,124 +405,5 @@ public class PerjalananController {
             e.printStackTrace();
         }
         return laporan;
-    }
-
-    // Metode untuk Rincian Paket Perjalanan
-    public List<RincianPaketPerjalanan> getRincianByPaketId(int paketId) {
-        List<RincianPaketPerjalanan> daftarRincian = new ArrayList<>();
-        String query = "SELECT rpp.id, rpp.paket_perjalanan_id, rpp.destinasi_id, " +
-                       "rpp.urutan_kunjungan, rpp.durasi_jam, d.nama_destinasi " +
-                       "FROM rincian_paket_perjalanan rpp " +
-                       "JOIN destinasi d ON rpp.destinasi_id = d.id " +
-                       "WHERE rpp.paket_perjalanan_id = ? " +
-                       "ORDER BY rpp.urutan_kunjungan ASC, rpp.id ASC";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            if (conn == null) return daftarRincian;
-            stmt.setInt(1, paketId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    RincianPaketPerjalanan rincian = new RincianPaketPerjalanan();
-                    rincian.setId(rs.getInt("id"));
-                    rincian.setPaketPerjalananId(rs.getInt("paket_perjalanan_id"));
-                    rincian.setDestinasiId(rs.getInt("destinasi_id"));
-                    rincian.setNamaDestinasi(rs.getString("nama_destinasi"));
-                    int urutan = rs.getInt("urutan_kunjungan");
-                    rincian.setUrutanKunjungan(rs.wasNull() ? null : urutan);
-                    int durasi = rs.getInt("durasi_jam");
-                    rincian.setDurasiJam(rs.wasNull() ? null : durasi);
-                    daftarRincian.add(rincian);
-                }
-            }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Gagal mengambil rincian paket: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
-        return daftarRincian;
-    }
-
-    public boolean addRincianPaket(RincianPaketPerjalanan rincian) {
-        String query = "INSERT INTO rincian_paket_perjalanan (paket_perjalanan_id, destinasi_id, urutan_kunjungan, durasi_jam) VALUES (?, ?, ?, ?)";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            if (conn == null) return false;
-            stmt.setInt(1, rincian.getPaketPerjalananId());
-            stmt.setInt(2, rincian.getDestinasiId());
-            if (rincian.getUrutanKunjungan() != null) {
-                stmt.setInt(3, rincian.getUrutanKunjungan());
-            } else {
-                stmt.setNull(3, Types.INTEGER);
-            }
-            if (rincian.getDurasiJam() != null) {
-                stmt.setInt(4, rincian.getDurasiJam());
-            } else {
-                stmt.setNull(4, Types.INTEGER);
-            }
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Gagal menambah rincian destinasi ke paket: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    public boolean updateRincianPaket(RincianPaketPerjalanan rincian) {
-        String query = "UPDATE rincian_paket_perjalanan SET destinasi_id = ?, urutan_kunjungan = ?, durasi_jam = ? WHERE id = ? AND paket_perjalanan_id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            if (conn == null) return false;
-            stmt.setInt(1, rincian.getDestinasiId());
-            if (rincian.getUrutanKunjungan() != null) {
-                stmt.setInt(2, rincian.getUrutanKunjungan());
-            } else {
-                stmt.setNull(2, Types.INTEGER);
-            }
-            if (rincian.getDurasiJam() != null) {
-                stmt.setInt(3, rincian.getDurasiJam());
-            } else {
-                stmt.setNull(3, Types.INTEGER);
-            }
-            stmt.setInt(4, rincian.getId());
-            stmt.setInt(5, rincian.getPaketPerjalananId());
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Gagal memperbarui rincian destinasi: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    public boolean deleteRincianPaket(int idRincian) {
-        String query = "DELETE FROM rincian_paket_perjalanan WHERE id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            if (conn == null) return false;
-            stmt.setInt(1, idRincian);
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Gagal menghapus rincian destinasi: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    public List<Destinasi> getAllDestinasiForComboBox() {
-        List<Destinasi> daftarDestinasi = new ArrayList<>();
-        String query = "SELECT id, nama_destinasi FROM destinasi ORDER BY nama_destinasi";
-        try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-            if (conn == null) return daftarDestinasi;
-            while (rs.next()) {
-                Destinasi dest = new Destinasi();
-                dest.setId(rs.getInt("id"));
-                dest.setNamaDestinasi(rs.getString("nama_destinasi"));
-                daftarDestinasi.add(dest);
-            }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Gagal mengambil daftar destinasi: " + e.getMessage(), "Kesalahan SQL", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
-        return daftarDestinasi;
     }
 }

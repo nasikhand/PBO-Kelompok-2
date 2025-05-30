@@ -26,6 +26,7 @@ import java.util.Date;
 import java.awt.Image;
 import java.io.File;
 import java.awt.Dimension; // Untuk setPreferredSize jika perlu
+import javax.swing.SwingUtilities;
 
 /**
  * PanelBeranda adalah representasi JPanel dari HomeScreen.

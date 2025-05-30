@@ -15,6 +15,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.text.NumberFormat;
 import java.util.List;
@@ -25,8 +26,8 @@ public class KelolaPerjalananView extends JPanel {
     private DefaultTableModel modelTabel;
     private PerjalananController controller;
     private JTextField txtPencarian;
+    private JComboBox<String> cmbFilterStatus; // <-- KOMPONEN BARU
 
-    // Komponen dan variabel untuk Paginasi
     private JButton btnSebelumnya, btnBerikutnya;
     private JLabel lblInfoHalaman;
     private int halamanSaatIni = 1;
@@ -40,8 +41,8 @@ public class KelolaPerjalananView extends JPanel {
         setBorder(new EmptyBorder(20, 25, 20, 25));
         setOpaque(false);
 
-        // Panel Atas: Judul dan Kolom Pencarian
-        JPanel panelAtas = new JPanel(new BorderLayout(10, 5));
+        // Panel Atas: Judul, Filter, dan Pencarian
+        JPanel panelAtas = new JPanel(new BorderLayout(10, 10));
         panelAtas.setOpaque(false);
 
         JLabel judul = new JLabel("Manajemen Paket Perjalanan");
@@ -49,29 +50,33 @@ public class KelolaPerjalananView extends JPanel {
         judul.setForeground(Color.WHITE);
         panelAtas.add(judul, BorderLayout.NORTH);
 
-        txtPencarian = new JTextField();
-        txtPencarian.putClientProperty("JTextField.placeholderText", "Cari berdasarkan Nama Paket...");
-        panelAtas.add(txtPencarian, BorderLayout.SOUTH);
+        // Panel untuk filter dan pencarian
+        JPanel panelFilter = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        panelFilter.setOpaque(false);
 
+        panelFilter.add(new JLabel("Filter Status:"));
+        cmbFilterStatus = new JComboBox<>(new String[]{"Semua", "tersedia", "penuh", "selesai"});
+        panelFilter.add(cmbFilterStatus);
+
+        panelFilter.add(new JLabel("   Cari Nama Paket:"));
+        txtPencarian = new JTextField(25);
+        panelFilter.add(txtPencarian);
+        panelAtas.add(panelFilter, BorderLayout.CENTER);
+        
         add(panelAtas, BorderLayout.NORTH);
 
         // Tabel untuk menampilkan data
         JScrollPane scrollPane = new JScrollPane();
         tabel = new JTable();
         modelTabel = new DefaultTableModel(
-                new Object[][] {},
-                new String[] { "ID", "Gambar", "Nama Paket", "Kota Tujuan", "Tgl Mulai", "Tgl Akhir", "Harga", "Kuota",
-                        "Status" }) {
+                new Object[][]{},
+                new String[]{"ID", "Gambar", "Nama Paket", "Kota Tujuan", "Tgl Mulai", "Tgl Akhir", "Harga", "Kuota", "Status"}
+        ) {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-
+            public boolean isCellEditable(int row, int column) { return false; }
             @Override
             public Class<?> getColumnClass(int columnIndex) {
-                if (columnIndex == 1) {
-                    return ImageIcon.class;
-                }
+                if (columnIndex == 1) return ImageIcon.class;
                 return Object.class;
             }
         };
@@ -80,26 +85,22 @@ public class KelolaPerjalananView extends JPanel {
         TableColumn imageColumn = tabel.getColumn("Gambar");
         imageColumn.setCellRenderer(new ImageRenderer());
         imageColumn.setPreferredWidth(120);
-
         TableColumn idColumn = tabel.getColumnModel().getColumn(0);
-        idColumn.setMinWidth(0);
-        idColumn.setMaxWidth(0);
-        idColumn.setWidth(0);
+        idColumn.setMinWidth(0); idColumn.setMaxWidth(0);
 
         scrollPane.setViewportView(tabel);
         add(scrollPane, BorderLayout.CENTER);
 
-        // Panel Tombol Aksi CRUD
+        // Panel Tombol Aksi
         JPanel panelTombolAksi = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panelTombolAksi.setOpaque(false);
         JButton btnTambah = new JButton("Tambah Paket Baru");
         JButton btnUbah = new JButton("Ubah Paket");
         JButton btnHapus = new JButton("Hapus Paket");
-        JButton btnKelolaRincian = new JButton("Kelola Rincian Destinasi"); // <-- TOMBOL BARU
-
+        JButton btnKelolaRincian = new JButton("Kelola Rincian Destinasi");
         panelTombolAksi.add(btnTambah);
         panelTombolAksi.add(btnUbah);
-        panelTombolAksi.add(btnKelolaRincian); // <-- PENAMBAHAN TOMBOL BARU
+        panelTombolAksi.add(btnKelolaRincian);
         panelTombolAksi.add(btnHapus);
 
         // Panel Paginasi
@@ -122,27 +123,23 @@ public class KelolaPerjalananView extends JPanel {
         muatDataDenganPaginasi();
 
         // Action Listeners
+        ActionListener filterListener = e -> {
+            halamanSaatIni = 1;
+            muatDataDenganPaginasi();
+        };
+
         btnTambah.addActionListener(e -> bukaDialogForm(null));
         btnUbah.addActionListener(e -> ubahDataTerpilih());
         btnHapus.addActionListener(e -> hapusDataTerpilih());
-        btnKelolaRincian.addActionListener(e -> bukaDialogRincian()); // <-- ACTION LISTENER BARU
-
+        btnKelolaRincian.addActionListener(e -> bukaDialogRincian());
+        
         txtPencarian.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) {
-                halamanSaatIni = 1;
-                muatDataDenganPaginasi();
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                halamanSaatIni = 1;
-                muatDataDenganPaginasi();
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                halamanSaatIni = 1;
-                muatDataDenganPaginasi();
-            }
+            public void insertUpdate(DocumentEvent e) { filterListener.actionPerformed(null); }
+            public void removeUpdate(DocumentEvent e) { filterListener.actionPerformed(null); }
+            public void changedUpdate(DocumentEvent e) { filterListener.actionPerformed(null); }
         });
+        
+        cmbFilterStatus.addActionListener(filterListener);
 
         btnSebelumnya.addActionListener(e -> {
             if (halamanSaatIni > 1) {
@@ -161,44 +158,26 @@ public class KelolaPerjalananView extends JPanel {
 
     private void muatDataDenganPaginasi() {
         String filterText = txtPencarian.getText().trim();
+        String filterStatus = cmbFilterStatus.getSelectedItem().toString();
+        if ("Semua".equalsIgnoreCase(filterStatus)) {
+            filterStatus = null; // Kirim null jika "Semua" dipilih
+        }
 
-        totalData = controller.getTotalPaketPerjalananCount(filterText);
+        totalData = controller.getTotalPaketPerjalananCount(filterText, filterStatus);
         totalHalaman = (int) Math.ceil((double) totalData / DATA_PER_HALAMAN);
         if (totalHalaman == 0) totalHalaman = 1;
         if (halamanSaatIni > totalHalaman) halamanSaatIni = totalHalaman;
         if (halamanSaatIni < 1) halamanSaatIni = 1;
 
-        List<PaketPerjalanan> daftarPaket = controller.getPaketPerjalananWithPagination(halamanSaatIni, DATA_PER_HALAMAN, filterText);
-
+        List<PaketPerjalanan> daftarPaket = controller.getPaketPerjalananWithPagination(halamanSaatIni, DATA_PER_HALAMAN, filterText, filterStatus);
         modelTabel.setRowCount(0);
         NumberFormat formatMataUang = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
         formatMataUang.setMaximumFractionDigits(0);
 
         for (PaketPerjalanan paket : daftarPaket) {
-            ImageIcon gambar = null;
-            String namaFileGambarPaket = paket.getGambar();
-
-            if (namaFileGambarPaket != null && !namaFileGambarPaket.isEmpty()) {
-                String imagePathRelatif = "images/paket_perjalanan/" + namaFileGambarPaket;
-                File imgFile = new File(imagePathRelatif);
-
-                if (imgFile.exists() && imgFile.isFile()) {
-                    try {
-                        ImageIcon originalIcon = new ImageIcon(imgFile.getAbsolutePath());
-                        if (originalIcon.getIconWidth() != -1) {
-                            // Menggunakan ImageUtil untuk resizing berkualitas tinggi
-                            gambar = config.ImageUtil.resizeImage(originalIcon, 100, 60);
-                        } else {
-                            System.err.println("Kelola Perjalanan - GAGAL memuat ImageIcon: " + imgFile.getAbsolutePath());
-                        }
-                    } catch (Exception ex) {
-                        System.err.println("Kelola Perjalanan - EXCEPTION saat memuat gambar: " + imgFile.getAbsolutePath());
-                        ex.printStackTrace();
-                    }
-                } else {
-                     System.err.println("Kelola Perjalanan - File gambar TIDAK DITEMUKAN di path: " + imgFile.getAbsolutePath());
-                }
-            }
+            String imagePath = "images/paket_perjalanan/" + paket.getGambar();
+            ImageIcon gambar = ImageUtil.loadAndResizeFromFile(imagePath, 100, 60);
+            
             modelTabel.addRow(new Object[]{
                     paket.getId(),
                     gambar,
@@ -217,17 +196,16 @@ public class KelolaPerjalananView extends JPanel {
         btnBerikutnya.setEnabled(halamanSaatIni < totalHalaman);
     }
 
+    // ... sisa metode (bukaDialogForm, ubahDataTerpilih, hapusDataTerpilih, bukaDialogRincian) tidak berubah
     private void bukaDialogForm(PaketPerjalanan paket) {
         FormPerjalananDialog dialog = new FormPerjalananDialog((Frame) SwingUtilities.getWindowAncestor(this), paket);
         dialog.setVisible(true);
         muatDataDenganPaginasi();
     }
-
     private void ubahDataTerpilih() {
         int barisTerpilih = tabel.getSelectedRow();
         if (barisTerpilih == -1) {
-            JOptionPane.showMessageDialog(this, "Silakan pilih data yang ingin diubah.", "Peringatan",
-                    JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Silakan pilih data yang ingin diubah.", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
         }
         int idPaket = (int) modelTabel.getValueAt(barisTerpilih, 0);
@@ -235,16 +213,13 @@ public class KelolaPerjalananView extends JPanel {
         if (paket != null) {
             bukaDialogForm(paket);
         } else {
-            JOptionPane.showMessageDialog(this, "Data tidak ditemukan di basis data.", "Kesalahan",
-                    JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Data tidak ditemukan di basis data.", "Kesalahan", JOptionPane.ERROR_MESSAGE);
         }
     }
-
     private void hapusDataTerpilih() {
         int barisTerpilih = tabel.getSelectedRow();
         if (barisTerpilih == -1) {
-            JOptionPane.showMessageDialog(this, "Silakan pilih data yang ingin dihapus.", "Peringatan",
-                    JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Silakan pilih data yang ingin dihapus.", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
         }
         int idPaket = (int) modelTabel.getValueAt(barisTerpilih, 0);
@@ -262,27 +237,19 @@ public class KelolaPerjalananView extends JPanel {
             }
         }
     }
-
-    // vvv METODE BARU UNTUK MEMBUKA DIALOG RINCIAN vvv
     private void bukaDialogRincian() {
         int barisTerpilih = tabel.getSelectedRow();
         if (barisTerpilih == -1) {
-            JOptionPane.showMessageDialog(this, "Silakan pilih paket perjalanan untuk mengelola rinciannya.",
-                    "Peringatan", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Silakan pilih paket perjalanan untuk mengelola rinciannya.", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
         }
         int idPaket = (int) modelTabel.getValueAt(barisTerpilih, 0);
         PaketPerjalanan paketTerpilih = controller.getPaketById(idPaket);
-
         if (paketTerpilih != null) {
-            RincianPaketDialog dialog = new RincianPaketDialog((Frame) SwingUtilities.getWindowAncestor(this),
-                    paketTerpilih);
+            RincianPaketDialog dialog = new RincianPaketDialog((Frame) SwingUtilities.getWindowAncestor(this), paketTerpilih);
             dialog.setVisible(true);
-            // Tidak perlu muat ulang data di sini karena rincian tidak ditampilkan di tabel
-            // utama
         } else {
-            JOptionPane.showMessageDialog(this, "Data paket tidak ditemukan di basis data.", "Kesalahan",
-                    JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Data paket tidak ditemukan di basis data.", "Kesalahan", JOptionPane.ERROR_MESSAGE);
         }
     }
 }
