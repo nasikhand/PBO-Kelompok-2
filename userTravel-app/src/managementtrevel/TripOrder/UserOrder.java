@@ -5,18 +5,17 @@
 package managementtrevel.TripOrder;
 
 import managementtrevel.HomeUser.UserProfile;
-import managementtrevel.TripDetailScreen.TripDetail;
 
 /**
  *
  * @author aldy
  */
-public class OrderHistory extends javax.swing.JFrame {
+public class UserOrder extends javax.swing.JFrame {
 
     /**
-     * Creates new form OrderHistory
+     * Creates new form UserOrder
      */
-    public OrderHistory() {
+    public UserOrder() {
         initComponents();
     }
 
@@ -30,11 +29,9 @@ public class OrderHistory extends javax.swing.JFrame {
     private void initComponents() {
 
         jLabel1 = new javax.swing.JLabel();
-        jPanel1 = new javax.swing.JPanel();
-        jLabel2 = new javax.swing.JLabel();
         btn_back = new javax.swing.JButton();
         panelTemplate = new javax.swing.JPanel();
-        btn_pesanLagi = new javax.swing.JButton();
+        btn_detailPesanan = new javax.swing.JButton();
         jLabel7 = new javax.swing.JLabel();
         tf_namakota = new javax.swing.JTextField();
         tf_hari = new javax.swing.JTextField();
@@ -42,33 +39,13 @@ public class OrderHistory extends javax.swing.JFrame {
         tf_orang1 = new javax.swing.JTextField();
         tf_harga = new javax.swing.JTextField();
         foto_user = new javax.swing.JLabel();
+        status_pesanan = new javax.swing.JLabel();
+        tf_statusPesanan = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         jLabel1.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
-        jLabel1.setText("Riwayat Pesanan");
-
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
-
-        jLabel2.setFont(new java.awt.Font("Helvetica Neue", 1, 13)); // NOI18N
-        jLabel2.setText("Tanggal Pemesanan ");
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel2)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(10, 10, 10)
-                .addComponent(jLabel2)
-                .addContainerGap(10, Short.MAX_VALUE))
-        );
+        jLabel1.setText("Pesanan Anda");
 
         btn_back.setText("< Kembali");
         btn_back.addActionListener(new java.awt.event.ActionListener() {
@@ -79,10 +56,10 @@ public class OrderHistory extends javax.swing.JFrame {
 
         panelTemplate.setBackground(new java.awt.Color(255, 255, 255));
 
-        btn_pesanLagi.setText("Pesan Lagi");
-        btn_pesanLagi.addActionListener(new java.awt.event.ActionListener() {
+        btn_detailPesanan.setText("Lihat Detail Pesanan");
+        btn_detailPesanan.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_pesanLagiActionPerformed(evt);
+                btn_detailPesananActionPerformed(evt);
             }
         });
 
@@ -108,6 +85,11 @@ public class OrderHistory extends javax.swing.JFrame {
         tf_harga.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         tf_harga.setText("Rp...");
         tf_harga.setBorder(null);
+        tf_harga.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tf_hargaActionPerformed(evt);
+            }
+        });
 
         foto_user.setBackground(new java.awt.Color(0, 0, 0));
         foto_user.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -115,6 +97,18 @@ public class OrderHistory extends javax.swing.JFrame {
         foto_user.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         foto_user.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         foto_user.setFocusCycleRoot(true);
+
+        status_pesanan.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        status_pesanan.setText("Status Pesanan:");
+
+        tf_statusPesanan.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        tf_statusPesanan.setText(".....");
+        tf_statusPesanan.setBorder(null);
+        tf_statusPesanan.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tf_statusPesananActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout panelTemplateLayout = new javax.swing.GroupLayout(panelTemplate);
         panelTemplate.setLayout(panelTemplateLayout);
@@ -137,53 +131,59 @@ public class OrderHistory extends javax.swing.JFrame {
                                 .addComponent(tf_hari, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(tf_orang, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(tf_orang1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(tf_orang1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(panelTemplateLayout.createSequentialGroup()
+                                .addComponent(status_pesanan)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(tf_statusPesanan, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addContainerGap(113, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelTemplateLayout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(btn_pesanLagi)
+                        .addComponent(btn_detailPesanan)
                         .addContainerGap())))
         );
         panelTemplateLayout.setVerticalGroup(
             panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelTemplateLayout.createSequentialGroup()
-                .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(btn_pesanLagi)
-                    .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(panelTemplateLayout.createSequentialGroup()
-                            .addGap(25, 25, 25)
-                            .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(tf_namakota, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(tf_hari, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(tf_orang, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(tf_orang1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                            .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(jLabel7)
-                                .addComponent(tf_harga, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGroup(panelTemplateLayout.createSequentialGroup()
-                            .addGap(26, 26, 26)
-                            .addComponent(foto_user, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(23, Short.MAX_VALUE))
+                .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(panelTemplateLayout.createSequentialGroup()
+                        .addGap(25, 25, 25)
+                        .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(tf_namakota, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(tf_hari, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(tf_orang, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(tf_orang1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel7)
+                            .addComponent(tf_harga, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(status_pesanan)
+                            .addComponent(tf_statusPesanan, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(1, 1, 1)
+                        .addComponent(btn_detailPesanan))
+                    .addGroup(panelTemplateLayout.createSequentialGroup()
+                        .addGap(26, 26, 26)
+                        .addComponent(foto_user, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(22, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(btn_back)
-                .addGap(79, 79, 79)
-                .addComponent(jLabel1)
-                .addContainerGap(188, Short.MAX_VALUE))
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(panelTemplate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addContainerGap()))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(btn_back)
+                        .addGap(103, 103, 103)
+                        .addComponent(jLabel1)
+                        .addGap(0, 182, Short.MAX_VALUE))
+                    .addComponent(panelTemplate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -192,14 +192,9 @@ public class OrderHistory extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
                     .addComponent(btn_back))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(316, Short.MAX_VALUE))
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addGap(105, 105, 105)
-                    .addComponent(panelTemplate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(131, Short.MAX_VALUE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(panelTemplate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(168, Short.MAX_VALUE))
         );
 
         pack();
@@ -210,10 +205,17 @@ public class OrderHistory extends javax.swing.JFrame {
         this.dispose();
     }//GEN-LAST:event_btn_backActionPerformed
 
-    private void btn_pesanLagiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_pesanLagiActionPerformed
-        new TripDetail().show();
-        this.dispose();
-    }//GEN-LAST:event_btn_pesanLagiActionPerformed
+    private void btn_detailPesananActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_detailPesananActionPerformed
+        
+    }//GEN-LAST:event_btn_detailPesananActionPerformed
+
+    private void tf_hargaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tf_hargaActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_tf_hargaActionPerformed
+
+    private void tf_statusPesananActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tf_statusPesananActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_tf_statusPesananActionPerformed
 
     /**
      * @param args the command line arguments
@@ -232,37 +234,37 @@ public class OrderHistory extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(OrderHistory.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(UserOrder.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(OrderHistory.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(UserOrder.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(OrderHistory.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(UserOrder.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(OrderHistory.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(UserOrder.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new OrderHistory().setVisible(true);
+                new UserOrder().setVisible(true);
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btn_back;
-    private javax.swing.JButton btn_pesanLagi;
+    private javax.swing.JButton btn_detailPesanan;
     private javax.swing.JLabel foto_user;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel7;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel panelTemplate;
+    private javax.swing.JLabel status_pesanan;
     private javax.swing.JTextField tf_harga;
     private javax.swing.JTextField tf_hari;
     private javax.swing.JTextField tf_namakota;
     private javax.swing.JTextField tf_orang;
     private javax.swing.JTextField tf_orang1;
+    private javax.swing.JTextField tf_statusPesanan;
     // End of variables declaration//GEN-END:variables
 }
