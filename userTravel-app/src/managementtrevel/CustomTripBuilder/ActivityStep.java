@@ -1,13 +1,13 @@
 package managementtrevel.CustomTripBuilder;
 
-import Asset.SidebarPanel;
+// import Asset.SidebarPanel;
 
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
 public class ActivityStep extends JFrame {
 
@@ -299,9 +299,9 @@ public class ActivityStep extends JFrame {
 
     private void setupLogicAndVisuals() {
         JLayeredPane layeredPane = getLayeredPane();
-        SidebarPanel iconOnlySidebar = new SidebarPanel(); 
-        iconOnlySidebar.setBounds(0, 0, 65, Integer.MAX_VALUE); 
-        layeredPane.add(iconOnlySidebar, JLayeredPane.PALETTE_LAYER); 
+        // SidebarPanel iconOnlySidebar = new SidebarPanel(); 
+        // iconOnlySidebar.setBounds(0, 0, 65, Integer.MAX_VALUE); 
+        // layeredPane.add(iconOnlySidebar, JLayeredPane.PALETTE_LAYER); 
         
         updateBuildStepLabels(5); 
         

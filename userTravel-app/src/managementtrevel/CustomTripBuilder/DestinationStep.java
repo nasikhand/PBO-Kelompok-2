@@ -1,15 +1,13 @@
 package managementtrevel.CustomTripBuilder;
 
-import Asset.SidebarPanel;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.FocusEvent;
 import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
 public class DestinationStep extends JFrame {
 
@@ -240,9 +238,9 @@ public class DestinationStep extends JFrame {
 
     private void setupLogicAndVisuals() {
         JLayeredPane layeredPane = getLayeredPane();
-        SidebarPanel iconOnlySidebar = new SidebarPanel(); 
-        iconOnlySidebar.setBounds(0, 0, 65, Integer.MAX_VALUE); 
-        layeredPane.add(iconOnlySidebar, JLayeredPane.PALETTE_LAYER); 
+        // SidebarPanel iconOnlySidebar = new SidebarPanel(); 
+        // iconOnlySidebar.setBounds(0, 0, 65, Integer.MAX_VALUE); 
+        // layeredPane.add(iconOnlySidebar, JLayeredPane.PALETTE_LAYER); 
         
         updateBuildStepLabels(1); 
         

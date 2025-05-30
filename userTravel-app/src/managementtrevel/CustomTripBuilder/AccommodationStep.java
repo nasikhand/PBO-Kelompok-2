@@ -1,6 +1,6 @@
 package managementtrevel.CustomTripBuilder;
 
-import Asset.SidebarPanel;
+// import Asset.SidebarPanel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -292,9 +292,9 @@ public class AccommodationStep extends JFrame {
 
     private void setupLogicAndVisuals() {
         JLayeredPane layeredPane = getLayeredPane();
-        SidebarPanel iconOnlySidebar = new SidebarPanel(); 
-        iconOnlySidebar.setBounds(0, 0, 65, Integer.MAX_VALUE); 
-        layeredPane.add(iconOnlySidebar, JLayeredPane.PALETTE_LAYER); 
+        // SidebarPanel iconOnlySidebar = new SidebarPanel(); 
+        // iconOnlySidebar.setBounds(0, 0, 65, Integer.MAX_VALUE); 
+        // layeredPane.add(iconOnlySidebar, JLayeredPane.PALETTE_LAYER); 
         
         updateBuildStepLabels(4); 
         
