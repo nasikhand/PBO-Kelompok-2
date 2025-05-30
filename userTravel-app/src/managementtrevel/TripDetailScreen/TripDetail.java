@@ -30,9 +30,9 @@ public class TripDetail extends javax.swing.JFrame {
 
     // Buat layeredPane
     JLayeredPane layeredPane = getLayeredPane();
-    SidebarPanel sidebar = new SidebarPanel();
-    sidebar.setBounds(0, 0, 65, getHeight()); // atur ukuran dan posisi sidebar
-    layeredPane.add(sidebar, JLayeredPane.POPUP_LAYER); // tambahkan di atas layer default
+    // SidebarPanel sidebar = new SidebarPanel();
+    // sidebar.setBounds(0, 0, 65, getHeight()); // atur ukuran dan posisi sidebar
+    // layeredPane.add(sidebar, JLayeredPane.POPUP_LAYER); // tambahkan di atas layer default
     }
     
     

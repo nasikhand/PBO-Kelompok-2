@@ -238,9 +238,9 @@ public class HomeScreen extends javax.swing.JFrame {
     JLayeredPane layeredPane = getLayeredPane();
 
     // Tambahkan sidebar ke layeredPane
-    SidebarPanel sidebar = new SidebarPanel();
-    sidebar.setBounds(0, 0, 65, getHeight()); // atur ukuran dan posisi sidebar
-    layeredPane.add(sidebar, JLayeredPane.POPUP_LAYER); // tambahkan di atas layer default
+    // SidebarPanel sidebar = new SidebarPanel();
+    // sidebar.setBounds(0, 0, 65, getHeight()); // atur ukuran dan posisi sidebar
+    // layeredPane.add(sidebar, JLayeredPane.POPUP_LAYER); // tambahkan di atas layer default
 }
 
 

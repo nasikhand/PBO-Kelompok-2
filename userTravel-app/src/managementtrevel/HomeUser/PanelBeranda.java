@@ -1,13 +1,17 @@
 package managementtrevel.HomeUser;
 
-// Import yang relevan (beberapa mungkin tidak dibutuhkan lagi jika terkait JFrame)
-import Asset.SidebarPanel; // Pastikan path ini benar
+// Import yang relevan
 import javax.swing.ImageIcon;
-import javax.swing.JLayeredPane;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel; // Mengganti JFrame dengan JPanel
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.BorderFactory; // Untuk border
+import javax.swing.UIDefaults; // Untuk placeholder JComboBox
+import javax.swing.UIManager; // Untuk placeholder JComboBox
+import javax.swing.plaf.basic.BasicComboBoxRenderer; // Untuk placeholder JComboBox
+
+
 import managementtrevel.CustomTripBuilder.DestinationStep;
-// import managementtrevel.LoginAndRegist.LoginUser; // Mungkin tidak relevan lagi di sini
 import managementtrevel.SearchResultScreen.SearchResult;
 import managementtrevel.TripDetailScreen.TripDetail;
 import model.Session;
@@ -18,33 +22,46 @@ import controller.PaketPerjalananController;
 import model.DestinasiModel;
 import model.PaketPerjalananModel;
 
+// Impor AppTheme Anda
+import Asset.AppTheme;
+
 import java.sql.Connection;
 import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.Calendar; // Nama variabel Calendar bentrok dengan java.util.Calendar
 import java.util.Date;
 import java.awt.Image;
 import java.io.File;
+<<<<<<< HEAD
 import java.awt.Dimension; // Untuk setPreferredSize jika perlu
 import javax.swing.SwingUtilities;
+=======
+import java.awt.Dimension;
+import java.awt.GridBagLayout;
+import javax.swing.JLabel;
+import java.awt.Color;
+import java.awt.Component; // Untuk ComboBox Renderer
+import java.awt.Cursor;
+import javax.swing.JList; // Untuk ComboBox Renderer
+import java.awt.event.FocusAdapter; // Untuk focus listener
+import java.awt.event.FocusEvent;   // Untuk focus listener
+import java.awt.event.MouseAdapter; // Untuk hover effect
+import java.awt.event.MouseEvent;   // Untuk hover effect
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.SwingConstants;
+>>>>>>> 2d86fa6403fb5379932c31ede5f865afd2bebb91
 
-/**
- * PanelBeranda adalah representasi JPanel dari HomeScreen.
- * @author aldy (dimodifikasi untuk menjadi JPanel)
- */
-public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
 
-    // Variabel instance tetap sama
-    private boolean isSidebarVisible = false;
+public class PanelBeranda extends JPanel {
+
     private List<DestinasiModel> daftarDestinasi;
     private Date tanggalDipilih;
     private String jumlahTravelerDipilih = null;
     private PaketPerjalananController paketPerjalananController;
-    private SidebarPanel sidebar; // Deklarasikan sidebar di sini
-    private JLayeredPane layeredPane; // Deklarasikan layeredPane di sini
+    private final String PLACEHOLDER_DESTINASI = "-- Pilih Destinasi --";
+    private final String PLACEHOLDER_TRAVELERS = "Travelers";
 
 
-    // Metode loadTopRated, getNamaKotaById, dll. tetap sama
     public void loadTopRated(PaketPerjalananModel paket) {
         if (paket != null) {
             String namaKota = getNamaKotaById(paket.getKotaId());
@@ -55,30 +72,19 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
             jLabel22.setText("Harga: Rp " + String.format("%,.0f", paket.getHarga()));
 
             String userDir = System.getProperty("user.dir");
-            // Coba asumsikan struktur folder proyek Anda, sesuaikan jika perlu
-            // Misal, jika gambar ada di folder 'src/Asset/images' relatif terhadap root proyek
-            // atau 'travel_app/src/Asset/images'
-            File baseDir = new File(userDir); // Atau new File(userDir).getParentFile() jika HomeScreen ada di sub-package
-                                            // dan gambar relatif terhadap parent package.
-                                            // Ini bagian yang paling sering butuh penyesuaian.
+            File baseDir = new File(userDir); 
 
             String gambarRelatif = paket.getGambar();
-            // Hapus slash di awal jika ada, karena File akan menggabungkannya dengan benar
             if (gambarRelatif != null && gambarRelatif.startsWith("/")) {
                 gambarRelatif = gambarRelatif.substring(1);
             } else if (gambarRelatif == null) {
-                System.out.println("Path gambar null untuk paket: " + paket.getNamaPaket());
-                jLabel10.setText("Gambar tidak tersedia");
-                jLabel10.setIcon(null);
+                System.out.println("Path gambar null untuk paket: " + (paket.getNamaPaket() != null ? paket.getNamaPaket() : "ID " + paket.getId()));
+                setPlaceholderImage(jLabel10, "Gambar tidak tersedia");
                 return;
             }
             
-            // Pastikan path gambar tidak absolut dari database, tapi relatif ke proyek.
-            // Jika path dari DB adalah 'Asset/images/namafile.jpg', maka ini seharusnya bekerja.
             File gambarFile = new File(baseDir, gambarRelatif);
-             // Untuk debugging path:
             System.out.println("Mencoba memuat gambar dari: " + gambarFile.getAbsolutePath());
-
 
             if (gambarFile.exists() && jLabel10.getWidth() > 0 && jLabel10.getHeight() > 0) {
                 ImageIcon icon = new ImageIcon(
@@ -88,21 +94,20 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
                 );
                 jLabel10.setIcon(icon);
                 jLabel10.setText("");
+                jLabel10.setBackground(AppTheme.PANEL_BACKGROUND); // Hapus background jika gambar ada
             } else {
                  if (!gambarFile.exists()) {
                     System.out.println("Gambar paket tidak ditemukan: " + gambarFile.getAbsolutePath());
                 } else {
                     System.out.println("Ukuran jLabel10 belum siap untuk gambar: " + jLabel10.getWidth() + "x" + jLabel10.getHeight());
                 }
-                jLabel10.setText("Gambar tidak tersedia");
-                jLabel10.setIcon(null); // Hapus ikon lama jika ada
+                setPlaceholderImage(jLabel10, "Gambar tidak tersedia");
             }
         } else {
             jLabel20.setText("Data tidak ditemukan");
             jLabel21.setText("Rating:");
             jLabel22.setText("Harga:");
-            jLabel10.setText("FOTO");
-            jLabel10.setIcon(null);
+            setPlaceholderImage(jLabel10, "FOTO");
         }
     }
 
@@ -121,33 +126,30 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
             if (gambarRelatif != null && gambarRelatif.startsWith("/")) {
                 gambarRelatif = gambarRelatif.substring(1);
             } else if (gambarRelatif == null) {
-                 System.out.println("Path gambar null untuk paket: " + paket.getNamaPaket());
-                jLabel12.setText("Gambar tidak tersedia");
-                jLabel12.setIcon(null);
+                 System.out.println("Path gambar null untuk paket: " + (paket.getNamaPaket() != null ? paket.getNamaPaket() : "ID " + paket.getId()));
+                setPlaceholderImage(jLabel12, "Gambar tidak tersedia");
                 return;
             }
             File gambarFile = new File(baseDir, gambarRelatif);
             System.out.println("Mencoba memuat gambar (2) dari: " + gambarFile.getAbsolutePath());
-
 
             if (gambarFile.exists() && jLabel12.getWidth() > 0 && jLabel12.getHeight() > 0) {
                 ImageIcon icon = new ImageIcon(new ImageIcon(gambarFile.getAbsolutePath())
                         .getImage().getScaledInstance(jLabel12.getWidth(), jLabel12.getHeight(), Image.SCALE_SMOOTH));
                 jLabel12.setIcon(icon);
                 jLabel12.setText("");
+                jLabel12.setBackground(AppTheme.PANEL_BACKGROUND);
             } else {
                 if (!gambarFile.exists()) {
                     System.out.println("Gambar paket (2) tidak ditemukan: " + gambarFile.getAbsolutePath());
                 } else {
                     System.out.println("Ukuran jLabel12 belum siap untuk gambar: " + jLabel12.getWidth() + "x" + jLabel12.getHeight());
                 }
-                jLabel12.setText("Gambar tidak tersedia");
-                jLabel12.setIcon(null);
+                setPlaceholderImage(jLabel12, "Gambar tidak tersedia");
             }
         } else {
             jLabel31.setText("Data tidak ditemukan");
-            jLabel12.setText("FOTO");
-            jLabel12.setIcon(null);
+            setPlaceholderImage(jLabel12, "FOTO");
             jLabel32.setText("Rating:");
             jLabel33.setText("Harga:");
         }
@@ -168,9 +170,8 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
             if (gambarRelatif != null && gambarRelatif.startsWith("/")) {
                 gambarRelatif = gambarRelatif.substring(1);
             } else if (gambarRelatif == null) {
-                System.out.println("Path gambar null untuk paket: " + paket.getNamaPaket());
-                jLabel13.setText("Gambar tidak tersedia");
-                jLabel13.setIcon(null);
+                System.out.println("Path gambar null untuk paket: " + (paket.getNamaPaket() != null ? paket.getNamaPaket() : "ID " + paket.getId()));
+                setPlaceholderImage(jLabel13, "Gambar tidak tersedia");
                 return;
             }
             File gambarFile = new File(baseDir, gambarRelatif);
@@ -184,47 +185,44 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
                 );
                 jLabel13.setIcon(icon);
                 jLabel13.setText("");
+                jLabel13.setBackground(AppTheme.PANEL_BACKGROUND);
             } else {
                  if (!gambarFile.exists()) {
                     System.out.println("Gambar paket (3) tidak ditemukan: " + gambarFile.getAbsolutePath());
                 } else {
                     System.out.println("Ukuran jLabel13 belum siap untuk gambar: " + jLabel13.getWidth() + "x" + jLabel13.getHeight());
                 }
-                jLabel13.setIcon(null);
-                jLabel13.setText("Gambar tidak tersedia");
+                setPlaceholderImage(jLabel13, "Gambar tidak tersedia");
             }
         } else {
             jLabel34.setText("Data tidak ditemukan");
             jLabel35.setText("Rating:");
             jLabel36.setText("Harga:");
-            jLabel13.setIcon(null);
-            jLabel13.setText("FOTO");
+            setPlaceholderImage(jLabel13, "FOTO");
         }
     }
+    
+    private void setPlaceholderImage(JLabel label, String text) {
+        label.setIcon(null);
+        label.setText(text);
+        label.setBackground(new Color(220,220,220)); // Latar belakang abu-abu muda untuk placeholder
+        label.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+        label.setOpaque(true); // Pastikan background terlihat
+    }
+
 
     private String getNamaKotaById(int kotaId) {
         return new KotaDAO().getNamaKotaById(kotaId);
     }
 
     public PanelBeranda() {
-        // Inisialisasi JLayeredPane dan SidebarPanel di sini
-        layeredPane = new JLayeredPane();
-        // Gunakan BorderLayout untuk PanelBeranda agar layeredPane mengisi seluruh area
-        this.setLayout(new java.awt.BorderLayout()); 
-        this.add(layeredPane, java.awt.BorderLayout.CENTER);
+        initComponents(); 
+        applyAppTheme(); // Panggil metode untuk menerapkan tema
 
-        initComponents(); // Panggil initComponents yang dihasilkan NetBeans
-
-        // Logika konstruktor lainnya dipindahkan ke sini
         if (Session.currentUser != null) {
             labelNama.setText("Selamat Datang, " + Session.currentUser.getNamaLengkap());
         } else {
-            // Jika belum login, idealnya ini ditangani oleh AuthFrame.
-            // Untuk sementara, bisa tampilkan pesan atau biarkan kosong.
-            // Atau, jika PanelBeranda hanya dibuat setelah login sukses, ini tidak akan terjadi.
             labelNama.setText("Selamat Datang, Tamu");
-            // new LoginUser().setVisible(true); // Jangan buka JFrame baru dari dalam JPanel
-            // this.dispose(); // JPanel tidak punya dispose()
         }
 
         Connection conn = Koneksi.getConnection();
@@ -232,86 +230,320 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
         this.daftarDestinasi = controller.getDaftarDestinasi();
 
         destinasi.removeAllItems();
-        destinasi.addItem("-- Pilih Destinasi --");
+        destinasi.addItem(PLACEHOLDER_DESTINASI); // Placeholder
         if (this.daftarDestinasi != null) {
             for (DestinasiModel dest : daftarDestinasi) {
                 destinasi.addItem(dest.getNamaDestinasi());
             }
         }
+        // Atur renderer untuk placeholder ComboBox
+        destinasi.setRenderer(new PlaceholderComboBoxRenderer(PLACEHOLDER_DESTINASI));
+        destinasi.setSelectedIndex(0); // Pilih placeholder
 
-        // Ganti nama variabel 'Calendar' menjadi 'jDateChooserCalendar' atau sejenisnya
-        // untuk menghindari konflik dengan java.util.Calendar
+
+        pilih_travelers.removeAllItems();
+        pilih_travelers.addItem(PLACEHOLDER_TRAVELERS);
+        pilih_travelers.addItem("1 Orang");
+        pilih_travelers.addItem("2 Orang");
+        pilih_travelers.addItem("3 Orang");
+        pilih_travelers.addItem("4 Orang");
+        pilih_travelers.addItem("5 Orang");
+        pilih_travelers.setRenderer(new PlaceholderComboBoxRenderer(PLACEHOLDER_TRAVELERS));
+        pilih_travelers.setSelectedIndex(0);
+
+
         jDateChooserCalendar.getDateEditor().addPropertyChangeListener(evt -> {
             if ("date".equals(evt.getPropertyName())) {
                 tanggalDipilih = jDateChooserCalendar.getDate();
                 System.out.println("Tanggal dipilih: " + tanggalDipilih);
+                 // Hapus border fokus jika tanggal dipilih
+                jDateChooserCalendar.setBorder(AppTheme.createDefaultInputBorder());
             }
         });
 
         paketPerjalananController = new PaketPerjalananController(conn);
-        List<PaketPerjalananModel> topRated = paketPerjalananController.getTopRatedPakets(3);
-
-        // Panggil loadTopRated setelah komponen diinisialisasi dan memiliki ukuran
-        // Sebaiknya dipanggil setelah panel ditampilkan atau menggunakan SwingUtilities.invokeLater
-        // untuk memastikan komponen sudah dirender. Untuk sementara, kita panggil langsung.
-        // Namun, ukuran JLabel mungkin 0 saat ini.
+        
         SwingUtilities.invokeLater(() -> {
+            List<PaketPerjalananModel> topRated = paketPerjalananController.getTopRatedPakets(3);
             if (topRated != null) {
-                if (topRated.size() > 0) {
-                    loadTopRated(topRated.get(0));
-                } else {
-                    loadTopRated(null); // Handle jika tidak ada data
-                }
-                if (topRated.size() > 1) {
-                    loadTopRated2(topRated.get(1));
-                } else {
-                    loadTopRated2(null);
-                }
-                if (topRated.size() > 2) {
-                    loadTopRated3(topRated.get(2));
-                } else {
-                    loadTopRated3(null);
-                }
+                if (topRated.size() > 0) loadTopRated(topRated.get(0)); else loadTopRated(null);
+                if (topRated.size() > 1) loadTopRated2(topRated.get(1)); else loadTopRated2(null);
+                if (topRated.size() > 2) loadTopRated3(topRated.get(2)); else loadTopRated3(null);
             }
         });
+    }
+
+    private void applyAppTheme() {
+        // Latar belakang utama panel
+        this.setBackground(AppTheme.PANEL_BACKGROUND);
+        if (jPanel3 != null) jPanel3.setBackground(AppTheme.PANEL_BACKGROUND);
+        if (jPanel4 != null) jPanel4.setBackground(AppTheme.PANEL_BACKGROUND); // Panel Cari Cepat
+        if (jPanel7 != null) jPanel7.setBackground(AppTheme.PANEL_BACKGROUND); // Panel dalam scrollpane
+        
+        // Latar belakang untuk "kartu" atau section
+        Color cardBackgroundColor = Color.WHITE; // Atau AppTheme.BACKGROUND_LIGHT_GRAY jika ingin sama
+        if (jPanel5 != null) jPanel5.setBackground(cardBackgroundColor); // Perjalanan Sebelumnya
+        if (jPanel1 != null) jPanel1.setBackground(cardBackgroundColor); // Detail dalam Perjalanan Sebelumnya
+        if (jPanel2 != null) jPanel2.setBackground(cardBackgroundColor); // Penawaran Spesial
+        if (jPanel8 != null) jPanel8.setBackground(cardBackgroundColor); // Detail dalam Penawaran Spesial
+        if (jPanel9 != null) jPanel9.setBackground(cardBackgroundColor); // Detail dalam Penawaran Spesial
+        if (popular_destination1 != null) popular_destination1.setBackground(cardBackgroundColor);
+        if (popular_destination4 != null) popular_destination4.setBackground(cardBackgroundColor);
+        if (popular_destination5 != null) popular_destination5.setBackground(cardBackgroundColor);
+
+        // Border untuk "kartu"
+        javax.swing.border.Border cardBorder = BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(AppTheme.BORDER_COLOR, 1),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10) // Padding dalam kartu
+        );
+        if (jPanel5 != null) jPanel5.setBorder(cardBorder);
+        if (jPanel2 != null) jPanel2.setBorder(cardBorder);
+        if (popular_destination1 != null) popular_destination1.setBorder(cardBorder);
+        if (popular_destination4 != null) popular_destination4.setBorder(cardBorder);
+        if (popular_destination5 != null) popular_destination5.setBorder(cardBorder);
 
 
-        // Pengaturan JFrame seperti setTitle, setDefaultCloseOperation, setSize, setLocationRelativeTo
-        // sudah tidak diperlukan di sini karena PanelBeranda akan dimasukkan ke MainAppFrame.
-        // setLayout(null); // Ini juga mungkin perlu diubah jika jPanel3 adalah konten utama.
-                         // Jika jPanel3 mengisi seluruh PanelBeranda, maka PanelBeranda bisa
-                         // menggunakan BorderLayout dan menambahkan jPanel3 ke BorderLayout.CENTER.
-
-        // Tambahkan jPanel3 (konten utama) ke JLayeredPane.DEFAULT_LAYER
-        // dan SidebarPanel ke JLayeredPane.POPUP_LAYER
-        // Pastikan jPanel3 di-set bounds atau layout manager-nya diatur di layeredPane
-        if (jPanel3 != null) { // jPanel3 diinisialisasi di initComponents()
-            jPanel3.setBounds(0, 0, 740, 610); // Sesuaikan ukuran ini atau gunakan layout manager
-                                                // Ukuran ini harus sesuai dengan preferensi Anda
-                                                // atau ukuran MainAppFrame
-            layeredPane.add(jPanel3, JLayeredPane.DEFAULT_LAYER);
+        // Label Nama Pengguna
+        if (labelNama != null) {
+            labelNama.setFont(AppTheme.FONT_TITLE_MEDIUM);
+            labelNama.setForeground(AppTheme.PRIMARY_BLUE_DARK);
+            labelNama.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5)); // Padding
         }
 
+        // Judul Section
+        if (jLabel1 != null) { // Cari Cepat
+            jLabel1.setFont(AppTheme.FONT_SUBTITLE);
+            jLabel1.setForeground(AppTheme.TEXT_DARK);
+        }
+        if (jLabel2 != null) { // Perjalanan Sebelumnya
+            jLabel2.setFont(AppTheme.FONT_SUBTITLE);
+            jLabel2.setForeground(AppTheme.TEXT_DARK);
+        }
+         if (jLabel8 != null) { // Penawaran Spesial
+            jLabel8.setFont(AppTheme.FONT_SUBTITLE);
+            jLabel8.setForeground(AppTheme.TEXT_DARK);
+        }
+        if (jLabel4 != null) { // Destinasi Populer
+            jLabel4.setFont(AppTheme.FONT_SUBTITLE);
+            jLabel4.setForeground(AppTheme.TEXT_DARK);
+        }
 
-        sidebar = new SidebarPanel(); // Inisialisasi sidebar
-        // Ukuran sidebar mungkin perlu disesuaikan dengan tinggi PanelBeranda saat ditampilkan
-        // Untuk sekarang, kita set ukuran awal.
-        // Anda mungkin perlu listener untuk menyesuaikan tinggi sidebar jika ukuran PanelBeranda berubah.
-        sidebar.setBounds(0, 0, 65, 610); // Sesuaikan tinggi dengan tinggi jPanel3 atau PanelBeranda
-        layeredPane.add(sidebar, JLayeredPane.PALETTE_LAYER); // PALETTE_LAYER atau POPUP_LAYER
+        // Input Fields (ComboBox, DateChooser)
+        if (destinasi != null) styleComboBox(destinasi);
+        if (pilih_travelers != null) styleComboBox(pilih_travelers);
+        if (jDateChooserCalendar != null) {
+            jDateChooserCalendar.setFont(AppTheme.FONT_TEXT_FIELD);
+            jDateChooserCalendar.getCalendarButton().setFont(AppTheme.FONT_BUTTON); // Tombol kalender
+            jDateChooserCalendar.getCalendarButton().setBackground(AppTheme.PRIMARY_BLUE_LIGHT);
+            jDateChooserCalendar.getCalendarButton().setForeground(AppTheme.TEXT_WHITE);
+            jDateChooserCalendar.getCalendarButton().setFocusPainted(false);
+            jDateChooserCalendar.getCalendarButton().setBorder(BorderFactory.createEmptyBorder(5,8,5,8));
 
-        // Pastikan PanelBeranda memiliki ukuran yang disukai
-        this.setPreferredSize(new Dimension(740 + 65, 610)); // Lebar total = sidebar + jPanel3
+            // Styling untuk text field di JDateChooser
+            com.toedter.calendar.JTextFieldDateEditor editor = (com.toedter.calendar.JTextFieldDateEditor) jDateChooserCalendar.getDateEditor();
+            editor.setFont(AppTheme.FONT_TEXT_FIELD);
+            editor.setBackground(AppTheme.INPUT_BACKGROUND);
+            editor.setForeground(AppTheme.INPUT_TEXT);
+            editor.setBorder(AppTheme.createDefaultInputBorder());
+            editor.addFocusListener(new FocusAdapter() {
+                @Override
+                public void focusGained(FocusEvent e) {
+                    editor.setBorder(AppTheme.createFocusBorder());
+                }
+                @Override
+                public void focusLost(FocusEvent e) {
+                    editor.setBorder(AppTheme.createDefaultInputBorder());
+                }
+            });
+        }
+        
+        // Buttons
+        if (tombolCari != null) stylePrimaryButton(tombolCari);
+        if (btn_CustomTrip != null) styleSecondaryButton(btn_CustomTrip); // Atau Primary jika dianggap aksi utama juga
+
+        // Tombol dalam kartu (Detail, Booking Cepat)
+        if (btn_detail1 != null) styleLinkButton(btn_detail1); // Gaya link untuk detail
+        if (jButton13 != null) styleSecondaryButton(jButton13); // Booking Cepat sebagai secondary
+        if (btn_detail4 != null) styleLinkButton(btn_detail4);
+        if (jButton14 != null) styleSecondaryButton(jButton14);
+        if (btn_detail5 != null) styleLinkButton(btn_detail5);
+        if (jButton16 != null) styleSecondaryButton(jButton16);
+        
+        // Tombol di Penawaran Spesial (Pesan Sekarang)
+        if (jButton1 != null) stylePrimaryButton(jButton1);
+        if (jButton4 != null) stylePrimaryButton(jButton4);
+
+
+        // Label Teks dalam Kartu (Destinasi Populer, Perjalanan Sebelumnya, Penawaran)
+        JLabel[] cardTextLabels = {
+            jLabel20, jLabel21, jLabel22, // Populer 1
+            jLabel31, jLabel32, jLabel33, // Populer 2
+            jLabel34, jLabel35, jLabel36, // Populer 3
+            jLabel26, jLabel27, jLabel28, // Perjalanan Sebelumnya
+            jLabel3, jLabel29,             // Penawaran 1
+            jLabel9, jLabel30              // Penawaran 2
+        };
+        for (JLabel label : cardTextLabels) {
+            if (label != null) {
+                label.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
+                label.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+                if (label.getText().toLowerCase().contains("harga")) {
+                    label.setFont(AppTheme.FONT_PRIMARY_BOLD); // Harga dibuat bold
+                    label.setForeground(AppTheme.ACCENT_ORANGE); // Harga dengan warna aksen
+                }
+                 if (label.getText().toLowerCase().contains("rating")) {
+                    label.setFont(AppTheme.FONT_PRIMARY_MEDIUM);
+                }
+            }
+        }
+
+        // Placeholder Gambar
+        JLabel[] imageLabels = {jLabel10, jLabel11, jLabel12, jLabel13};
+        for (JLabel imgLabel : imageLabels) {
+            if (imgLabel != null) {
+                imgLabel.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER_COLOR));
+                imgLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                setPlaceholderImage(imgLabel, "FOTO"); // Set default placeholder
+            }
+        }
+        
+        // ScrollPane
+        if (jScrollPane2 != null) {
+            jScrollPane2.setBackground(AppTheme.PANEL_BACKGROUND);
+            jScrollPane2.getViewport().setBackground(AppTheme.PANEL_BACKGROUND);
+            jScrollPane2.setBorder(BorderFactory.createEmptyBorder()); // Hapus border default scrollpane
+        }
+    }
+
+    private void styleComboBox(JComboBox<String> comboBox) {
+        comboBox.setFont(AppTheme.FONT_TEXT_FIELD);
+        comboBox.setBackground(AppTheme.INPUT_BACKGROUND);
+        comboBox.setForeground(AppTheme.INPUT_TEXT);
+        comboBox.setBorder(AppTheme.createDefaultInputBorder());
+        // Tambahkan focus listener untuk mengubah border
+        comboBox.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                comboBox.setBorder(AppTheme.createFocusBorder());
+            }
+            @Override
+            public void focusLost(FocusEvent e) {
+                comboBox.setBorder(AppTheme.createDefaultInputBorder());
+            }
+        });
+    }
+    
+    private void stylePrimaryButton(JButton button) {
+        button.setFont(AppTheme.FONT_BUTTON);
+        button.setBackground(AppTheme.BUTTON_PRIMARY_BACKGROUND);
+        button.setForeground(AppTheme.BUTTON_PRIMARY_TEXT);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15)); // Padding
+        button.setOpaque(true); // Agar background terlihat
+        button.setBorderPainted(false); // Matikan border default jika menggunakan padding sebagai border
+        
+        // Hover effect
+        Color originalBg = AppTheme.BUTTON_PRIMARY_BACKGROUND;
+        Color hoverBg = originalBg.darker();
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                button.setBackground(hoverBg);
+            }
+            @Override
+            public void mouseExited(MouseEvent e) {
+                button.setBackground(originalBg);
+            }
+        });
+    }
+
+    private void styleSecondaryButton(JButton button) {
+        button.setFont(AppTheme.FONT_BUTTON);
+        button.setBackground(AppTheme.BUTTON_SECONDARY_BACKGROUND);
+        button.setForeground(AppTheme.BUTTON_SECONDARY_TEXT);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        button.setOpaque(true);
+        button.setBorderPainted(false);
+
+        Color originalBg = AppTheme.BUTTON_SECONDARY_BACKGROUND;
+        Color hoverBg = originalBg.darker();
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                button.setBackground(hoverBg);
+            }
+            @Override
+            public void mouseExited(MouseEvent e) {
+                button.setBackground(originalBg);
+            }
+        });
+    }
+    
+    private void styleLinkButton(JButton button) {
+        button.setFont(AppTheme.FONT_LINK_BUTTON);
+        button.setForeground(AppTheme.BUTTON_LINK_FOREGROUND);
+        button.setBackground(Color.WHITE); // Atau TRANSPARENT jika didukung
+        button.setOpaque(false); // Agar background panel tembus jika diinginkan
+        button.setContentAreaFilled(false); // Tidak mengisi area tombol
+        button.setBorderPainted(false); // Tidak ada border
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        Color originalFg = AppTheme.BUTTON_LINK_FOREGROUND;
+        Color hoverFg = AppTheme.ACCENT_ORANGE; // Warna aksen saat hover
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                button.setForeground(hoverFg);
+            }
+            @Override
+            public void mouseExited(MouseEvent e) {
+                button.setForeground(originalFg);
+            }
+        });
+    }
+
+
+    // Custom Renderer untuk ComboBox dengan Placeholder
+    private class PlaceholderComboBoxRenderer extends BasicComboBoxRenderer {
+        private String placeholder;
+
+        public PlaceholderComboBoxRenderer(String placeholder) {
+            this.placeholder = placeholder;
+        }
+
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value,
+                                                      int index, boolean isSelected,
+                                                      boolean cellHasFocus) {
+            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (value == null || value.toString().equals(placeholder)) {
+                if (index == -1) { // Hanya untuk item yang terpilih (bukan di dropdown list)
+                    setText(placeholder);
+                    setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
+                } else { // Untuk item di dropdown list
+                    setText("  " + placeholder); // Beri sedikit indentasi
+                    setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
+                }
+            } else {
+                setText("  " + value.toString()); // Beri sedikit indentasi untuk item non-placeholder juga
+                setForeground(isSelected ? list.getSelectionForeground() : AppTheme.INPUT_TEXT);
+                setBackground(isSelected ? list.getSelectionBackground() : AppTheme.INPUT_BACKGROUND);
+            }
+            
+            if (!isSelected) { // Pastikan background default untuk item yang tidak dipilih
+                 setBackground(AppTheme.INPUT_BACKGROUND);
+            }
+            setFont(AppTheme.FONT_TEXT_FIELD);
+            return this;
+        }
     }
 
 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        // PENTING: Variabel 'Calendar' bentrok dengan kelas java.util.Calendar.
-        // Ganti nama variabel JDateChooser Anda di NetBeans GUI Builder
-        // dari 'Calendar' menjadi misalnya 'jDateChooserCalendar'.
-        // Saya akan menggunakan 'jDateChooserCalendar' di bawah ini.
 
         jPanel3 = new javax.swing.JPanel();
         labelNama = new javax.swing.JLabel();
@@ -320,7 +552,7 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
         pilih_travelers = new javax.swing.JComboBox<>();
         tombolCari = new javax.swing.JButton();
         btn_CustomTrip = new javax.swing.JButton();
-        jDateChooserCalendar = new com.toedter.calendar.JDateChooser(); // Nama variabel diubah
+        jDateChooserCalendar = new com.toedter.calendar.JDateChooser();
         destinasi = new javax.swing.JComboBox<>();
         jPanel5 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
@@ -364,21 +596,10 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
         jLabel36 = new javax.swing.JLabel();
         jLabel13 = new javax.swing.JLabel();
 
-        // Hapus setDefaultCloseOperation karena ini JPanel
-        // setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-
-        // jPanel3 adalah panel utama yang berisi semua komponen UI Anda.
-        // Kita akan menambahkan jPanel3 ini ke PanelBeranda (this)
-        // atau lebih baik, PanelBeranda akan mengatur layoutnya sendiri dan
-        // komponen-komponen ini akan menjadi bagian dari PanelBeranda.
-
-        // Jika jPanel3 adalah container utama, maka PanelBeranda bisa jadi hanya wrapper.
-        // Untuk menjaga struktur GUI Builder, kita biarkan jPanel3.
-        // PanelBeranda akan menggunakan BorderLayout dan menambahkan jPanel3 ke tengah.
-        // Namun, karena Anda menggunakan JLayeredPane, kita akan menambahkan jPanel3 ke layeredPane.
+        setLayout(new java.awt.BorderLayout());
 
         jPanel3.setBackground(new java.awt.Color(204, 204, 204));
-        // jPanel3.setPreferredSize(new java.awt.Dimension(740, 610)); // Ukuran ini akan diatur oleh layeredPane atau layout
+        jPanel3.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15)); // Padding luar untuk jPanel3
 
         labelNama.setText(" Selamat Datang");
 
@@ -425,37 +646,35 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
         jPanel4Layout.setHorizontalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jLabel1)
-                .addGap(326, 326, 326))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
-                .addGap(35, 35, 35)
-                .addComponent(destinasi, javax.swing.GroupLayout.PREFERRED_SIZE, 138, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(32, 32, 32)
-                .addComponent(jDateChooserCalendar, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE) // Nama diubah
-                .addGap(34, 34, 34)
-                .addComponent(pilih_travelers, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(tombolCari)
-                .addGap(26, 26, 26)
-                .addComponent(btn_CustomTrip, javax.swing.GroupLayout.PREFERRED_SIZE, 128, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(21, 21, 21))
+                .addContainerGap()
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addComponent(destinasi, 0, 170, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jDateChooserCalendar, javax.swing.GroupLayout.DEFAULT_SIZE, 170, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(pilih_travelers, 0, 150, Short.MAX_VALUE)
+                        .addGap(28, 28, 28)
+                        .addComponent(tombolCari, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(btn_CustomTrip, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(destinasi, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jDateChooserCalendar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE) // Nama diubah
-                            .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(pilih_travelers, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(tombolCari)
-                                .addComponent(btn_CustomTrip)))))
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jDateChooserCalendar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(destinasi)
+                    .addComponent(pilih_travelers)
+                    .addComponent(tombolCari, javax.swing.GroupLayout.DEFAULT_SIZE, 35, Short.MAX_VALUE)
+                    .addComponent(btn_CustomTrip, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(13, Short.MAX_VALUE))
         );
 
@@ -478,35 +697,35 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
         jLabel11.setText("FOTO");
         jLabel11.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         jLabel11.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        jLabel11.setPreferredSize(new java.awt.Dimension(100, 80));
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(8, 8, 8)
-                .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap()
+                .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jLabel26, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel27, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jLabel28))
-                .addContainerGap(18, Short.MAX_VALUE))
+                    .addComponent(jLabel26, javax.swing.GroupLayout.DEFAULT_SIZE, 181, Short.MAX_VALUE)
+                    .addComponent(jLabel27, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel28, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel26)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel27)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel28)))
-                .addContainerGap(9, Short.MAX_VALUE))
+                        .addComponent(jLabel28, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
@@ -515,12 +734,12 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel5Layout.createSequentialGroup()
+                        .addComponent(jLabel2)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addGap(83, 83, 83)
-                .addComponent(jLabel2)
-                .addContainerGap(87, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -529,7 +748,7 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(9, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jPanel2.setPreferredSize(new java.awt.Dimension(0, 149));
@@ -540,11 +759,7 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
         jPanel8.setBackground(new java.awt.Color(204, 204, 204));
 
         jButton1.setText("Pesan Sekarang");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
+        jButton1.addActionListener(evt -> jButton1ActionPerformed(evt));
 
         jLabel3.setText("Diskon 10% untuk destinasi");
 
@@ -558,21 +773,18 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
             .addGroup(jPanel8Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel8Layout.createSequentialGroup()
-                        .addComponent(jLabel29, javax.swing.GroupLayout.DEFAULT_SIZE, 179, Short.MAX_VALUE)
-                        .addGap(79, 79, 79))
-                    .addGroup(jPanel8Layout.createSequentialGroup()
-                        .addComponent(jLabel3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addComponent(jButton1)
+                    .addComponent(jLabel29, javax.swing.GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         jPanel8Layout.setVerticalGroup(
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel8Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jButton1)
+                .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, 38, Short.MAX_VALUE)
                     .addGroup(jPanel8Layout.createSequentialGroup()
                         .addComponent(jLabel3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -583,11 +795,7 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
         jPanel9.setBackground(new java.awt.Color(204, 204, 204));
 
         jButton4.setText("Pesan Sekarang");
-        jButton4.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton4ActionPerformed(evt);
-            }
-        });
+        jButton4.addActionListener(evt -> jButton4ActionPerformed(evt));
 
         jLabel9.setText("Diskon 15% untuk destinasi");
 
@@ -601,21 +809,18 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
             .addGroup(jPanel9Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel9Layout.createSequentialGroup()
-                        .addComponent(jLabel30, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(79, 79, 79))
-                    .addGroup(jPanel9Layout.createSequentialGroup()
-                        .addComponent(jLabel9)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addComponent(jButton4)
+                    .addComponent(jLabel30, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         jPanel9Layout.setVerticalGroup(
             jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel9Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jButton4)
+                .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jButton4, javax.swing.GroupLayout.DEFAULT_SIZE, 38, Short.MAX_VALUE)
                     .addGroup(jPanel9Layout.createSequentialGroup()
                         .addComponent(jLabel9)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -627,15 +832,14 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jLabel8)
-                .addGap(137, 137, 137))
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel8, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(jLabel8)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -647,28 +851,20 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
                 .addComponent(jPanel8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(12, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jLabel4.setFont(new java.awt.Font("Helvetica Neue", 1, 14)); // NOI18N
         jLabel4.setText("Destinasi Populer");
 
         popular_destination1.setBackground(new java.awt.Color(204, 204, 204));
-        popular_destination1.setPreferredSize(new java.awt.Dimension(731, 112));
+        popular_destination1.setPreferredSize(new java.awt.Dimension(200, 112)); // Adjusted preferred width
 
         btn_detail1.setText("Detail");
-        btn_detail1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_detail1ActionPerformed(evt);
-            }
-        });
+        btn_detail1.addActionListener(evt -> btn_detail1ActionPerformed(evt));
 
         jButton13.setText("Booking Cepat");
-        jButton13.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton13ActionPerformed(evt);
-            }
-        });
+        jButton13.addActionListener(evt -> jButton13ActionPerformed(evt));
 
         jLabel20.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel20.setText("Nama Kota - ... hari - ... orang ");
@@ -684,63 +880,53 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
         jLabel10.setText("FOTO");
         jLabel10.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         jLabel10.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        jLabel10.setPreferredSize(new java.awt.Dimension(120, 90)); // Adjusted image placeholder size
 
         javax.swing.GroupLayout popular_destination1Layout = new javax.swing.GroupLayout(popular_destination1);
         popular_destination1.setLayout(popular_destination1Layout);
         popular_destination1Layout.setHorizontalGroup(
             popular_destination1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(popular_destination1Layout.createSequentialGroup()
-                .addGap(26, 26, 26)
-                .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap()
+                .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addGroup(popular_destination1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(popular_destination1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jLabel20, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel21, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jLabel22))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 227, Short.MAX_VALUE)
-                .addGroup(popular_destination1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton13)
-                    .addComponent(btn_detail1))
-                .addGap(105, 105, 105))
+                    .addComponent(jLabel20, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
+                    .addComponent(jLabel21, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel22, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 150, Short.MAX_VALUE) // Adjusted spacing
+                .addGroup(popular_destination1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jButton13, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btn_detail1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         popular_destination1Layout.setVerticalGroup(
             popular_destination1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(popular_destination1Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(btn_detail1)
-                .addGap(28, 28, 28)
-                .addComponent(jButton13)
-                .addGap(16, 16, 16))
-            .addGroup(popular_destination1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(popular_destination1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(popular_destination1Layout.createSequentialGroup()
                         .addComponent(jLabel20)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel21)
-                        .addGap(10, 10, 10)
-                        .addComponent(jLabel22)))
-                .addContainerGap(15, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel22))
+                    .addGroup(popular_destination1Layout.createSequentialGroup()
+                        .addComponent(btn_detail1, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jButton13, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         popular_destination4.setBackground(new java.awt.Color(204, 204, 204));
-        popular_destination4.setPreferredSize(new java.awt.Dimension(731, 112));
+        popular_destination4.setPreferredSize(new java.awt.Dimension(200, 112));
 
         btn_detail4.setText("Detail");
-        btn_detail4.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_detail4ActionPerformed(evt);
-            }
-        });
+        btn_detail4.addActionListener(evt -> btn_detail4ActionPerformed(evt));
 
         jButton14.setText("Booking Cepat");
-        jButton14.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton14ActionPerformed(evt);
-            }
-        });
+        jButton14.addActionListener(evt -> jButton14ActionPerformed(evt));
 
         jLabel31.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel31.setText("Nama Kota - ... hari - ... orang ");
@@ -756,63 +942,53 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
         jLabel12.setText("FOTO");
         jLabel12.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         jLabel12.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        jLabel12.setPreferredSize(new java.awt.Dimension(120, 90));
 
         javax.swing.GroupLayout popular_destination4Layout = new javax.swing.GroupLayout(popular_destination4);
         popular_destination4.setLayout(popular_destination4Layout);
         popular_destination4Layout.setHorizontalGroup(
             popular_destination4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(popular_destination4Layout.createSequentialGroup()
-                .addGap(26, 26, 26)
-                .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap()
+                .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addGroup(popular_destination4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(popular_destination4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jLabel31, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel32, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jLabel33))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 227, Short.MAX_VALUE)
-                .addGroup(popular_destination4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton14)
-                    .addComponent(btn_detail4))
-                .addGap(105, 105, 105))
+                    .addComponent(jLabel31, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
+                    .addComponent(jLabel32, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel33, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(popular_destination4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jButton14, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btn_detail4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         popular_destination4Layout.setVerticalGroup(
             popular_destination4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(popular_destination4Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(btn_detail4)
-                .addGap(28, 28, 28)
-                .addComponent(jButton14)
-                .addGap(16, 16, 16))
-            .addGroup(popular_destination4Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(popular_destination4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(popular_destination4Layout.createSequentialGroup()
                         .addComponent(jLabel31)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel32)
-                        .addGap(10, 10, 10)
-                        .addComponent(jLabel33)))
-                .addContainerGap(15, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel33))
+                    .addGroup(popular_destination4Layout.createSequentialGroup()
+                        .addComponent(btn_detail4, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jButton14, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         popular_destination5.setBackground(new java.awt.Color(204, 204, 204));
-        popular_destination5.setPreferredSize(new java.awt.Dimension(731, 112));
+        popular_destination5.setPreferredSize(new java.awt.Dimension(200, 112));
 
         btn_detail5.setText("Detail");
-        btn_detail5.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_detail5ActionPerformed(evt);
-            }
-        });
+        btn_detail5.addActionListener(evt -> btn_detail5ActionPerformed(evt));
 
         jButton16.setText("Booking Cepat");
-        jButton16.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton16ActionPerformed(evt);
-            }
-        });
+        jButton16.addActionListener(evt -> jButton16ActionPerformed(evt));
 
         jLabel34.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel34.setText("Nama Kota - ... hari - ... orang ");
@@ -828,45 +1004,43 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
         jLabel13.setText("FOTO");
         jLabel13.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         jLabel13.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        jLabel13.setPreferredSize(new java.awt.Dimension(120, 90));
 
         javax.swing.GroupLayout popular_destination5Layout = new javax.swing.GroupLayout(popular_destination5);
         popular_destination5.setLayout(popular_destination5Layout);
         popular_destination5Layout.setHorizontalGroup(
             popular_destination5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(popular_destination5Layout.createSequentialGroup()
-                .addGap(26, 26, 26)
-                .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap()
+                .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addGroup(popular_destination5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(popular_destination5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jLabel34, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel35, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jLabel36))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 227, Short.MAX_VALUE)
-                .addGroup(popular_destination5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton16)
-                    .addComponent(btn_detail5))
-                .addGap(105, 105, 105))
+                    .addComponent(jLabel34, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
+                    .addComponent(jLabel35, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel36, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(popular_destination5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jButton16, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btn_detail5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         popular_destination5Layout.setVerticalGroup(
             popular_destination5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(popular_destination5Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(btn_detail5)
-                .addGap(28, 28, 28)
-                .addComponent(jButton16)
-                .addGap(16, 16, 16))
-            .addGroup(popular_destination5Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(popular_destination5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(popular_destination5Layout.createSequentialGroup()
                         .addComponent(jLabel34)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel35)
-                        .addGap(10, 10, 10)
-                        .addComponent(jLabel36)))
-                .addContainerGap(15, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel36))
+                    .addGroup(popular_destination5Layout.createSequentialGroup()
+                        .addComponent(btn_detail5, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jButton16, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
@@ -874,15 +1048,14 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
         jPanel7Layout.setHorizontalGroup(
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel7Layout.createSequentialGroup()
-                .addGap(304, 304, 304)
-                .addComponent(jLabel4)
-                .addContainerGap(359, Short.MAX_VALUE))
-            .addGroup(jPanel7Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(popular_destination1, javax.swing.GroupLayout.DEFAULT_SIZE, 769, Short.MAX_VALUE)
-                    .addComponent(popular_destination4, javax.swing.GroupLayout.DEFAULT_SIZE, 769, Short.MAX_VALUE)
-                    .addComponent(popular_destination5, javax.swing.GroupLayout.DEFAULT_SIZE, 769, Short.MAX_VALUE))
+                    .addComponent(popular_destination1, javax.swing.GroupLayout.DEFAULT_SIZE, 757, Short.MAX_VALUE)
+                    .addComponent(popular_destination4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 757, Short.MAX_VALUE)
+                    .addComponent(popular_destination5, javax.swing.GroupLayout.DEFAULT_SIZE, 757, Short.MAX_VALUE)
+                    .addGroup(jPanel7Layout.createSequentialGroup()
+                        .addComponent(jLabel4)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel7Layout.setVerticalGroup(
@@ -890,17 +1063,18 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
             .addGroup(jPanel7Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(popular_destination1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(popular_destination4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(popular_destination5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(79, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jScrollPane2.setViewportView(jPanel7);
 
+        // Layout untuk jPanel3 (panel konten utama)
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -909,88 +1083,84 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addComponent(labelNama, javax.swing.GroupLayout.PREFERRED_SIZE, 245, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(labelNama, javax.swing.GroupLayout.PREFERRED_SIZE, 400, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 395, Short.MAX_VALUE)))
+                        .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(8, 8, 8)
+                .addContainerGap()
                 .addComponent(labelNama)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(18, 18, 18)
                 .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 357, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 160, Short.MAX_VALUE)) // Adjusted height for jPanel2
+                .addGap(18, 18, 18)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE) // Adjusted height
+                .addContainerGap())
         );
+        
+        add(jPanel3, java.awt.BorderLayout.CENTER);
 
-        // Kode GroupLayout untuk PanelBeranda (this) yang sebelumnya untuk getContentPane()
-        // Ini perlu disesuaikan. Jika PanelBeranda hanya berisi jPanel3 dan sidebar di layeredPane,
-        // maka PanelBeranda sendiri tidak memerlukan GroupLayout yang kompleks ini.
-        // Kita sudah mengatur layeredPane sebagai konten utama PanelBeranda.
-
-        // Hapus bagian ini:
-        /*
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(0, 65, Short.MAX_VALUE) // Ini mungkin terkait sidebar
-                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, 623, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 10, Short.MAX_VALUE))
-        );
-        pack(); // Hapus pack()
-        */
     }// </editor-fold>//GEN-END:initComponents
-
-    // Metode event handler (tombolCariActionPerformed, dll.) tetap sama,
-    // namun perhatikan cara navigasi. Membuka JFrame baru dari dalam JPanel
-    // biasanya bukan praktik terbaik dalam model CardLayout.
-    // Idealnya, aksi ini akan memberi tahu MainAppFrame untuk beralih panel.
-    // Untuk saat ini, kita biarkan dulu agar fungsionalitas internal tetap ada.
 
     private void pilih_travelersActionPerformed(java.awt.event.ActionEvent evt) {                                                 
         int selectedIndex = pilih_travelers.getSelectedIndex();
-        if (selectedIndex > 0) {
+        if (selectedIndex > 0 && !pilih_travelers.getSelectedItem().toString().equals(PLACEHOLDER_TRAVELERS)) {
             jumlahTravelerDipilih = pilih_travelers.getSelectedItem().toString();
             System.out.println("Jumlah traveler dipilih: " + jumlahTravelerDipilih);
+            pilih_travelers.setForeground(AppTheme.INPUT_TEXT); // Kembalikan warna teks normal
         } else {
             jumlahTravelerDipilih = null;
+            if (selectedIndex == 0) { // Jika placeholder yang dipilih
+                 pilih_travelers.setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
+            }
         }
     }                                                
 
     private void pilih_travelersFocusGained(java.awt.event.FocusEvent evt) {                                            
-        // TODO add your handling code here:
+        //
     }                                           
 
     private void tombolCariActionPerformed(java.awt.event.ActionEvent evt) {                                           
-        if(destinasi.getSelectedIndex() == 0) {
-            JOptionPane.showMessageDialog(this, "Masukkan Destinasi Anda"); // Gunakan 'this' untuk parent
+        boolean valid = true;
+        if(destinasi.getSelectedIndex() == 0 || destinasi.getSelectedItem().toString().equals(PLACEHOLDER_DESTINASI)) {
+            JOptionPane.showMessageDialog(this, "Masukkan Destinasi Anda", "Input Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
             destinasi.requestFocus();
-        } else if(tanggalDipilih == null) {
-            JOptionPane.showMessageDialog(this, "Pilih Tanggal Terlebih Dahulu");
-            jDateChooserCalendar.requestFocus(); // Gunakan nama variabel yang sudah diubah
-        } else if(pilih_travelers.getSelectedIndex() == 0){
-            JOptionPane.showMessageDialog(this,"Silahkan Pilih Jumlah Travelers");
-            pilih_travelers.requestFocus();
+            destinasi.setBorder(AppTheme.createFocusBorder()); // Tunjukkan error
+            valid = false;
         } else {
+            destinasi.setBorder(AppTheme.createDefaultInputBorder());
+        }
+
+        if(tanggalDipilih == null && valid) {
+            JOptionPane.showMessageDialog(this, "Pilih Tanggal Terlebih Dahulu", "Input Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
+            jDateChooserCalendar.requestFocus();
+            ((com.toedter.calendar.JTextFieldDateEditor) jDateChooserCalendar.getDateEditor()).setBorder(AppTheme.createFocusBorder());
+            valid = false;
+        } else if (tanggalDipilih != null) {
+             ((com.toedter.calendar.JTextFieldDateEditor) jDateChooserCalendar.getDateEditor()).setBorder(AppTheme.createDefaultInputBorder());
+        }
+
+        if((pilih_travelers.getSelectedIndex() == 0 || pilih_travelers.getSelectedItem().toString().equals(PLACEHOLDER_TRAVELERS)) && valid){
+            JOptionPane.showMessageDialog(this,"Silahkan Pilih Jumlah Travelers", "Input Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
+            pilih_travelers.requestFocus();
+            pilih_travelers.setBorder(AppTheme.createFocusBorder());
+            valid = false;
+        } else if (pilih_travelers.getSelectedIndex() != 0) {
+            pilih_travelers.setBorder(AppTheme.createDefaultInputBorder());
+        }
+        
+        if (valid) {
             String destinasiTerpilih = daftarDestinasi.get(destinasi.getSelectedIndex() - 1).getNamaDestinasi();
             String tanggalStr = new SimpleDateFormat("yyyy-MM-dd").format(tanggalDipilih);
             String travelers = jumlahTravelerDipilih;
@@ -999,81 +1169,65 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
             System.out.println("Tanggal: " + tanggalStr);
             System.out.println("Travelers: " + travelers);
 
-            // Navigasi ke SearchResult (JFrame baru)
-            // Ini akan tetap membuka JFrame baru. Untuk integrasi penuh dengan CardLayout,
-            // SearchResult juga perlu menjadi JPanel dan MainAppFrame yang mengelola perpindahannya.
             SearchResult hasil = new SearchResult(destinasiTerpilih, tanggalStr, travelers);
             hasil.setVisible(true);
-            // this.dispose(); // JPanel tidak bisa di-dispose. Frame induknya (MainAppFrame) yang bisa.
-            // Mungkin Anda ingin memberi tahu MainAppFrame untuk menyembunyikan PanelBeranda
-            // dan menampilkan PanelHasilPencarian. Ini langkah lanjutan.
-            javax.swing.SwingUtilities.getWindowAncestor(this).dispose(); // Menutup MainAppFrame jika ini dipanggil
-                                                                        // Sebaiknya jangan dispose di sini.
         }
     }                                          
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {                                         
         // TODO add your handling code here:
+         JOptionPane.showMessageDialog(this, "Tombol Pesan Sekarang (Penawaran 1) diklik!");
     }                                        
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {                                         
         // TODO add your handling code here:
+         JOptionPane.showMessageDialog(this, "Tombol Pesan Sekarang (Penawaran 2) diklik!");
     }                                        
 
     private void btn_CustomTripActionPerformed(java.awt.event.ActionEvent evt) {                                               
-        new DestinationStep().setVisible(true); // .show() deprecated
-        // this.dispose(); // Sama seperti di atas
-        javax.swing.SwingUtilities.getWindowAncestor(this).dispose(); // Sama seperti di atas
+        new DestinationStep().setVisible(true); 
     }                                              
 
     private void destinasiActionPerformed(java.awt.event.ActionEvent evt) {                                          
         int selectedIndex = destinasi.getSelectedIndex();
-        if (selectedIndex > 0 && daftarDestinasi != null && selectedIndex <= daftarDestinasi.size()) {
+        if (selectedIndex > 0 && daftarDestinasi != null && selectedIndex <= daftarDestinasi.size() && !destinasi.getSelectedItem().toString().equals(PLACEHOLDER_DESTINASI)) {
             DestinasiModel selectedDest = daftarDestinasi.get(selectedIndex - 1); 
             System.out.println("Dipilih: " + selectedDest.getNamaDestinasi());
+            destinasi.setForeground(AppTheme.INPUT_TEXT); // Kembalikan warna teks normal
+        } else if (selectedIndex == 0) { // Jika placeholder yang dipilih
+            destinasi.setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
         }
     }                                         
 
     private void jButton13ActionPerformed(java.awt.event.ActionEvent evt) {                                          
-        // TODO add your handling code here:
+        JOptionPane.showMessageDialog(this, "Tombol Booking Cepat (Populer 1) diklik!");
     }                                         
 
     private void btn_detail1ActionPerformed(java.awt.event.ActionEvent evt) {                                            
-        new TripDetail().setVisible(true); // .show() deprecated
-        // this.dispose(); // Sama seperti di atas
-         javax.swing.SwingUtilities.getWindowAncestor(this).dispose(); // Sama seperti di atas
+        // Ambil data paket terkait jika perlu, lalu kirim ke TripDetail
+        // Untuk sekarang, hanya buka TripDetail kosong
+        new TripDetail().setVisible(true); 
     }                                           
 
     private void btn_detail4ActionPerformed(java.awt.event.ActionEvent evt) {                                            
-        // TODO add your handling code here:
+        new TripDetail().setVisible(true); 
     }                                           
 
     private void jButton14ActionPerformed(java.awt.event.ActionEvent evt) {                                          
-        // TODO add your handling code here:
+        JOptionPane.showMessageDialog(this, "Tombol Booking Cepat (Populer 2) diklik!");
     }                                         
 
     private void btn_detail5ActionPerformed(java.awt.event.ActionEvent evt) {                                            
-        // TODO add your handling code here:
+        new TripDetail().setVisible(true); 
     }                                           
 
     private void jButton16ActionPerformed(java.awt.event.ActionEvent evt) {                                          
-        // TODO add your handling code here:
-    }                                         
+       JOptionPane.showMessageDialog(this, "Tombol Booking Cepat (Populer 3) diklik!");
+    }      
 
-    // Hapus main method dari PanelBeranda, karena akan dijalankan dari AuthFrame -> MainAppFrame
-    /*
-    public static void main(String args[]) {
-        // ... look and feel setup ...
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                // new PanelBeranda().setVisible(true); // JPanel tidak punya setVisible secara langsung untuk ditampilkan sebagai window
-            }
-        });
-    }
-    */
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private com.toedter.calendar.JDateChooser jDateChooserCalendar; // Nama variabel diubah
+    private com.toedter.calendar.JDateChooser jDateChooserCalendar;
     private javax.swing.JButton btn_CustomTrip;
     private javax.swing.JButton btn_detail1;
     private javax.swing.JButton btn_detail4;
@@ -1110,7 +1264,7 @@ public class PanelBeranda extends JPanel { // Diubah dari JFrame ke JPanel
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3; // Ini adalah panel konten utama Anda
+    private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel7;
