@@ -15,6 +15,7 @@ import javax.swing.*;
 import java.io.*;
 import java.nio.file.*;
 import java.awt.*;
+import managementtrevel.TripOrder.UserOrder;
 
 
 /**
@@ -313,6 +314,11 @@ public class UserProfile extends javax.swing.JFrame {
 
         btn_pesananSaya.setFont(new java.awt.Font("Helvetica Neue", 1, 14)); // NOI18N
         btn_pesananSaya.setText("Pesanan Saya");
+        btn_pesananSaya.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_pesananSayaActionPerformed(evt);
+            }
+        });
 
         btn_riwayatPesanan.setFont(new java.awt.Font("Helvetica Neue", 1, 14)); // NOI18N
         btn_riwayatPesanan.setText("Riwayat Pesanan");
@@ -585,6 +591,11 @@ public class UserProfile extends javax.swing.JFrame {
     private void btn_editFotoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_editFotoActionPerformed
         showEditPhotoOptions();
     }//GEN-LAST:event_btn_editFotoActionPerformed
+
+    private void btn_pesananSayaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_pesananSayaActionPerformed
+        new UserOrder().show();
+        this.dispose();
+    }//GEN-LAST:event_btn_pesananSayaActionPerformed
 
     /**
      * @param args the command line arguments
