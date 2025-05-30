@@ -6,6 +6,7 @@ package managementtrevel.BookingScreen;
 
 import javax.swing.JOptionPane;
 import managementtrevel.HomeUser.HomeScreen;
+import managementtrevel.Payment.Payment;
 import managementtrevel.TripDetailScreen.TripDetail;
 
 /**
@@ -337,7 +338,8 @@ public class BookingScreen extends javax.swing.JFrame {
         if (!cbox_syaratdanketentuan.isSelected()) {
         JOptionPane.showMessageDialog(this, "Silakan setujui syarat dan ketentuan yang berlaku terlebih dahulu.", "Peringatan", JOptionPane.WARNING_MESSAGE);
     } else {
-        
+        new Payment().show();
+        this.dispose();
     }
     }//GEN-LAST:event_btn_selanjutnyaActionPerformed
 

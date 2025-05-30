@@ -4,6 +4,9 @@
  */
 package managementtrevel.Payment;
 
+import managementtrevel.BookingScreen.BookingScreen;
+import managementtrevel.TripDetailScreen.TripDetail;
+
 /**
  *
  * @author Bagas Adi
@@ -40,6 +43,7 @@ public class Payment extends javax.swing.JFrame {
         jLabel7 = new javax.swing.JLabel();
         cb_bank2 = new javax.swing.JComboBox<>();
         btn_bayar = new javax.swing.JButton();
+        btn_back = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jLabel8 = new javax.swing.JLabel();
         tf_namakota = new javax.swing.JTextField();
@@ -122,6 +126,13 @@ public class Payment extends javax.swing.JFrame {
         btn_bayar.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
         btn_bayar.setText("Bayar Sekarang");
 
+        btn_back.setText("< Kembali");
+        btn_back.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_backActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -129,7 +140,9 @@ public class Payment extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(175, 175, 175)
+                        .addContainerGap()
+                        .addComponent(btn_back)
+                        .addGap(94, 94, 94)
                         .addComponent(jLabel1))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(15, 15, 15)
@@ -165,7 +178,9 @@ public class Payment extends javax.swing.JFrame {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel1)
+                    .addComponent(btn_back))
                 .addGap(34, 34, 34)
                 .addComponent(jLabel2)
                 .addGap(18, 18, 18)
@@ -523,6 +538,11 @@ public class Payment extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_tf_pajak1ActionPerformed
 
+    private void btn_backActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_backActionPerformed
+        new BookingScreen().show();
+        this.dispose();
+    }//GEN-LAST:event_btn_backActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -559,6 +579,7 @@ public class Payment extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btn_back;
     private javax.swing.JButton btn_bayar;
     private javax.swing.JComboBox<String> cb_bank;
     private javax.swing.JComboBox<String> cb_bank1;
