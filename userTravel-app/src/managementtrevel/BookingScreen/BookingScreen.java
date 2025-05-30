@@ -335,7 +335,7 @@ public class BookingScreen extends javax.swing.JFrame {
 
     private void btn_selanjutnyaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_selanjutnyaActionPerformed
         if (!cbox_syaratdanketentuan.isSelected()) {
-        JOptionPane.showMessageDialog(this, "Silakan centang checkbox terlebih dahulu.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Silakan setujui syarat dan ketentuan yang berlaku terlebih dahulu.", "Peringatan", JOptionPane.WARNING_MESSAGE);
     } else {
         
     }
