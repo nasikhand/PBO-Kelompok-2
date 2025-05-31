@@ -22,6 +22,7 @@ import db.dao.KotaDAO;
 import controller.CariCepatController;
 import controller.PaketPerjalananController;
 import model.DestinasiModel;
+import model.KotaModel;
 import model.PaketPerjalananModel;
 
 import java.sql.Connection;
@@ -41,7 +42,7 @@ import java.io.File;
 public class HomeScreen extends javax.swing.JFrame {
 
     private boolean isSidebarVisible = false;
-    private List<DestinasiModel> daftarDestinasi;
+    private List<KotaModel> daftarDestinasi;
     private Date tanggalDipilih;
     private String jumlahTravelerDipilih = null;
     private PaketPerjalananController paketPerjalananController;
@@ -192,15 +193,15 @@ public class HomeScreen extends javax.swing.JFrame {
     
 
     // Ambil data destinasi dari controller
-    this.daftarDestinasi = controller.getDaftarDestinasi();
+    this.daftarDestinasi = controller.getDaftarKota();
 
     // Kosongkan combo box dulu
     destinasi.removeAllItems();
 
     // Tambahkan destinasi ke combo box, setelah data diisi
     destinasi.addItem("-- Pilih Destinasi --");
-    for (DestinasiModel dest : daftarDestinasi) {
-        destinasi.addItem(dest.getNamaDestinasi());
+    for (KotaModel dest : daftarDestinasi) {
+        destinasi.addItem(dest.getNamaKota());
     }
 
     // inisialisasi dan event listener calendar
@@ -913,7 +914,7 @@ public class HomeScreen extends javax.swing.JFrame {
             pilih_travelers.requestFocus();
         } else {
             // Ambil data setelah validasi
-            String destinasiTerpilih = daftarDestinasi.get(destinasi.getSelectedIndex() - 1).getNamaDestinasi();
+            String destinasiTerpilih = daftarDestinasi.get(destinasi.getSelectedIndex() - 1).getNamaKota();
             String tanggalStr = new SimpleDateFormat("yyyy-MM-dd").format(tanggalDipilih);
             String travelers = jumlahTravelerDipilih; // Ini sudah diset di actionPerformed sebelumnya
 
@@ -946,8 +947,8 @@ public class HomeScreen extends javax.swing.JFrame {
         int selectedIndex = destinasi.getSelectedIndex();
 
         if (selectedIndex > 0 && daftarDestinasi != null) {
-            DestinasiModel selectedDest = daftarDestinasi.get(selectedIndex - 1); 
-            System.out.println("Dipilih: " + selectedDest.getNamaDestinasi());
+            KotaModel selectedDest = daftarDestinasi.get(selectedIndex - 1); 
+            System.out.println("Dipilih: " + selectedDest.getNamaKota());
             // Tambahkan aksi lain jika perlu, misalnya tampilkan detail ke textfield
         }
 //GEN-FIRST:event_destinasiActionPerformed
@@ -982,37 +983,37 @@ public class HomeScreen extends javax.swing.JFrame {
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(HomeScreen.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(HomeScreen.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(HomeScreen.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(HomeScreen.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
+    // public static void main(String args[]) {
+    //     /* Set the Nimbus look and feel */
+    //     //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+    //     /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+    //      * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+    //      */
+    //     try {
+    //         for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+    //             if ("Nimbus".equals(info.getName())) {
+    //                 javax.swing.UIManager.setLookAndFeel(info.getClassName());
+    //                 break;
+    //             }
+    //         }
+    //     } catch (ClassNotFoundException ex) {
+    //         java.util.logging.Logger.getLogger(HomeScreen.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+    //     } catch (InstantiationException ex) {
+    //         java.util.logging.Logger.getLogger(HomeScreen.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+    //     } catch (IllegalAccessException ex) {
+    //         java.util.logging.Logger.getLogger(HomeScreen.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+    //     } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+    //         java.util.logging.Logger.getLogger(HomeScreen.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+    //     }
         
 
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new HomeScreen().setVisible(true);
-            }
-        });
-    }
+    //     /* Create and display the form */
+    //     java.awt.EventQueue.invokeLater(new Runnable() {
+    //         public void run() {
+    //             new HomeScreen().setVisible(true);
+    //         }
+    //     });
+    // }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private com.toedter.calendar.JDateChooser Calendar;

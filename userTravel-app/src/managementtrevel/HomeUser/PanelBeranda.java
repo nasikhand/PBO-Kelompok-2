@@ -3,25 +3,19 @@ package managementtrevel.HomeUser;
 import Asset.AppTheme;
 import com.toedter.calendar.JDateChooser;
 import com.toedter.calendar.JTextFieldDateEditor;
-import controller.CariCepatController;
+import controller.CariCepatController; 
 import controller.PaketPerjalananController;
 import db.Koneksi;
-import db.dao.KotaDAO; // Diasumsikan Anda memiliki ini
-// import db.dao.PenawaranSpesialDAO; // Untuk implementasi nanti
-// import db.dao.PerjalananSebelumnyaDAO; // Untuk implementasi nanti
+import db.dao.KotaDAO;
 import managementtrevel.MainAppFrame;
 import managementtrevel.SearchResultScreen.SearchResult;
 import managementtrevel.TripDetailScreen.TripDetail;
-import model.DestinasiModel;
+import model.KotaModel; 
 import model.PaketPerjalananModel;
-// import model.PenawaranSpesialModel; // Untuk implementasi nanti
-// import model.PerjalananSebelumnyaModel; // Untuk implementasi nanti
 import model.Session;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -39,215 +33,225 @@ import java.util.List;
 public class PanelBeranda extends JPanel {
 
     private MainAppFrame mainAppFrame;
-    private List<DestinasiModel> daftarDestinasi;
+    private List<KotaModel> daftarKota; 
     private Date tanggalDipilihCariCepat;
-    private String jumlahTravelerDipilihCariCepat = null;
+    // private String jumlahTravelerDipilihCariCepat = null; // Dihapus
     private PaketPerjalananController paketPerjalananController;
-    // private PenawaranSpesialDAO penawaranSpesialDAO; // Untuk nanti
-    // private PerjalananSebelumnyaDAO perjalananSebelumnyaDAO; // Untuk nanti
 
-
-    private final String PLACEHOLDER_DESTINASI = "-- Pilih Destinasi --";
-    private final String PLACEHOLDER_TRAVELERS = "Travelers";
+    private final String PLACEHOLDER_KOTA = "-- Pilih Kota --"; 
+    // private final String PLACEHOLDER_TRAVELERS = "Travelers"; // Dihapus
 
     // Komponen UI Utama
     private JLabel labelNama;
     private JPanel panelCariCepat;
-    private JComboBox<String> cmbDestinasiCariCepat;
+    private JComboBox<String> cmbKotaCariCepat; 
     private JDateChooser dateChooserCariCepat;
-    private JComboBox<String> cmbTravelersCariCepat;
+    // private JComboBox<String> cmbTravelersCariCepat; // Dihapus
     private JButton btnTombolCariCepat;
     private JButton btnCustomTrip;
 
-    private JPanel panelPerjalananSebelumnyaContent;
-    private JPanel panelPenawaranSpesialContent;
-    private JPanel panelDestinasiPopulerContent;
+    private JPanel panelPerjalananSebelumnyaContentHolder; 
+    private JPanel panelPenawaranSpesialContentHolder;   
+    private JPanel panelDestinasiPopulerContentHolder; 
 
 
     public PanelBeranda(MainAppFrame mainAppFrame) {
         this.mainAppFrame = mainAppFrame;
-        // Inisialisasi DAO jika sudah ada
-        // this.penawaranSpesialDAO = new PenawaranSpesialDAO();
-        // this.perjalananSebelumnyaDAO = new PerjalananSebelumnyaDAO();
-
-        Connection conn = Koneksi.getConnection(); // Pastikan Koneksi.getConnection() berfungsi
+        Connection conn = Koneksi.getConnection();
         if (conn == null) {
             System.err.println("Koneksi database gagal di PanelBeranda.");
-            // Handle error koneksi, mungkin tampilkan pesan ke user
         }
         this.paketPerjalananController = new PaketPerjalananController(conn);
 
-
-        initializeUIStructure();
+        initializeUIProgrammatically(); 
         applyAppTheme();
         populateCariCepat();
         loadDynamicContent();
         setupActionListeners();
     }
+    
+    private PanelBeranda() { 
+        this(null); 
+        System.err.println("PERINGATAN: Konstruktor default PanelBeranda dipanggil. mainAppFrame akan null.");
+    }
 
-    private void initializeUIStructure() {
+    private void initializeUIProgrammatically() {
         this.setLayout(new BorderLayout(10, 10));
-        this.setBorder(new EmptyBorder(15, 20, 15, 20)); // Padding luar
+        this.setBorder(new EmptyBorder(15, 20, 15, 20));
 
-        // === Bagian Atas: Welcome & Cari Cepat ===
-        JPanel topPanel = new JPanel(new BorderLayout(0, 10));
+        JPanel topPanel = new JPanel(new BorderLayout(0, 15)); 
         topPanel.setOpaque(false);
 
-        labelNama = new JLabel("Selamat Datang, Tamu"); // Default text
+        labelNama = new JLabel("Selamat Datang, Tamu");
         topPanel.add(labelNama, BorderLayout.NORTH);
 
-        panelCariCepat = createSearchPanel();
-        topPanel.add(panelCariCepat, BorderLayout.CENTER);
+        this.panelCariCepat = createSearchPanel(); 
+        topPanel.add(this.panelCariCepat, BorderLayout.CENTER);
 
         this.add(topPanel, BorderLayout.NORTH);
 
-        // === Bagian Tengah: Konten Utama dengan Scroll ===
         JPanel mainContentPanel = new JPanel();
         mainContentPanel.setLayout(new BoxLayout(mainContentPanel, BoxLayout.Y_AXIS));
-        mainContentPanel.setBackground(AppTheme.PANEL_BACKGROUND); // Atau Color.WHITE jika ingin kontras
+        mainContentPanel.setOpaque(false); 
 
-        // Section: Perjalanan Sebelumnya
-        panelPerjalananSebelumnyaContent = createSectionCard("Perjalanan Sebelumnya");
-        mainContentPanel.add(panelPerjalananSebelumnyaContent);
-        mainContentPanel.add(Box.createRigidArea(new Dimension(0, 20))); // Spasi antar section
-
-        // Section: Penawaran Spesial
-        panelPenawaranSpesialContent = createSectionCard("Penawaran Spesial");
-        mainContentPanel.add(panelPenawaranSpesialContent);
+        JPanel sectionPerjalananSebelumnya = createSectionPanel("Perjalanan Sebelumnya");
+        panelPerjalananSebelumnyaContentHolder = new JPanel(); 
+        panelPerjalananSebelumnyaContentHolder.setOpaque(false); 
+        sectionPerjalananSebelumnya.add(panelPerjalananSebelumnyaContentHolder, BorderLayout.CENTER);
+        mainContentPanel.add(sectionPerjalananSebelumnya);
         mainContentPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // Section: Destinasi Populer
-        panelDestinasiPopulerContent = createSectionCard("Destinasi Populer");
-        mainContentPanel.add(panelDestinasiPopulerContent);
-        mainContentPanel.add(Box.createVerticalGlue()); // Mendorong konten ke atas jika ruang berlebih
+        JPanel sectionPenawaranSpesial = createSectionPanel("Penawaran Spesial");
+        panelPenawaranSpesialContentHolder = new JPanel();
+        panelPenawaranSpesialContentHolder.setOpaque(false);
+        sectionPenawaranSpesial.add(panelPenawaranSpesialContentHolder, BorderLayout.CENTER);
+        mainContentPanel.add(sectionPenawaranSpesial);
+        mainContentPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        JPanel sectionDestinasiPopuler = createSectionPanel("Destinasi Populer");
+        panelDestinasiPopulerContentHolder = new JPanel();
+        panelDestinasiPopulerContentHolder.setOpaque(false);
+        sectionDestinasiPopuler.add(panelDestinasiPopulerContentHolder, BorderLayout.CENTER);
+        mainContentPanel.add(sectionDestinasiPopuler);
+        mainContentPanel.add(Box.createVerticalGlue());
 
         JScrollPane mainScrollPane = new JScrollPane(mainContentPanel);
         mainScrollPane.setBorder(BorderFactory.createEmptyBorder());
         mainScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         mainScrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        mainScrollPane.getViewport().setBackground(AppTheme.PANEL_BACKGROUND);
-
+        mainScrollPane.getViewport().setOpaque(false); 
+        mainScrollPane.setOpaque(false);
 
         this.add(mainScrollPane, BorderLayout.CENTER);
     }
 
     private JPanel createSearchPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setOpaque(false); // Transparan terhadap background topPanel
+        panel.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JLabel lblCariCepat = new JLabel("Cari Cepat");
-        // Styling untuk lblCariCepat akan di applyAppTheme
 
-        cmbDestinasiCariCepat = new JComboBox<>();
+        cmbKotaCariCepat = new JComboBox<>(); 
         dateChooserCariCepat = new JDateChooser();
-        cmbTravelersCariCepat = new JComboBox<>();
-        btnTombolCariCepat = new JButton("Cari");
-        btnCustomTrip = new JButton("Custom Trip");
+        // cmbTravelersCariCepat = new JComboBox<>(); // Dihapus
+        btnTombolCariCepat = new JButton(); 
+        btnCustomTrip = new JButton();   
 
-        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 5; gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 4; gbc.anchor = GridBagConstraints.WEST; // gridwidth disesuaikan
         panel.add(lblCariCepat, gbc);
-        gbc.gridwidth = 1; // Reset gridwidth
+        gbc.gridwidth = 1; 
 
         gbc.gridy = 1;
-        gbc.gridx = 0; gbc.weightx = 0.3; panel.add(cmbDestinasiCariCepat, gbc);
-        gbc.gridx = 1; gbc.weightx = 0.2; panel.add(dateChooserCariCepat, gbc);
-        gbc.gridx = 2; gbc.weightx = 0.2; panel.add(cmbTravelersCariCepat, gbc);
-        gbc.gridx = 3; gbc.weightx = 0.1; gbc.fill = GridBagConstraints.NONE; gbc.anchor = GridBagConstraints.EAST;
+        gbc.gridx = 0; gbc.weightx = 0.4; panel.add(cmbKotaCariCepat, gbc); 
+        gbc.gridx = 1; gbc.weightx = 0.3; panel.add(dateChooserCariCepat, gbc);
+        // gbc.gridx = 2; gbc.weightx = 0.2; panel.add(cmbTravelersCariCepat, gbc); // Dihapus
+        gbc.gridx = 2; gbc.weightx = 0.15; gbc.fill = GridBagConstraints.NONE; gbc.anchor = GridBagConstraints.CENTER; // GridX disesuaikan
         panel.add(btnTombolCariCepat, gbc);
-        gbc.gridx = 4; gbc.weightx = 0.1; panel.add(btnCustomTrip, gbc);
+        gbc.gridx = 3; gbc.weightx = 0.15; panel.add(btnCustomTrip, gbc); // GridX disesuaikan
         
         return panel;
     }
     
-    private JPanel createSectionCard(String title) {
-        JPanel sectionPanel = new JPanel(new BorderLayout(0,10));
-        sectionPanel.setBackground(Color.WHITE); // Kartu putih
+    private JPanel createSectionPanel(String titleText) {
+        JPanel sectionPanel = new JPanel(new BorderLayout(0,10)); 
+        sectionPanel.setOpaque(false); 
         sectionPanel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(AppTheme.BORDER_COLOR, 1),
             new EmptyBorder(15,15,15,15)
         ));
+        sectionPanel.setBackground(Color.WHITE); 
 
-        JLabel titleLabel = new JLabel(title);
-        // Font dan warna akan diatur di applyAppTheme
+        JLabel titleLabel = new JLabel(titleText);
+        titleLabel.setFont(AppTheme.FONT_TITLE_MEDIUM);
+        titleLabel.setForeground(AppTheme.PRIMARY_BLUE_DARK);
+        titleLabel.setBorder(new EmptyBorder(0,0,10,0));
         sectionPanel.add(titleLabel, BorderLayout.NORTH);
         
-        JPanel contentHolder = new JPanel(); 
-        contentHolder.setLayout(new BoxLayout(contentHolder, BoxLayout.Y_AXIS)); 
-        contentHolder.setOpaque(false);
-        sectionPanel.add(contentHolder, BorderLayout.CENTER);
-
         return sectionPanel;
     }
-
 
     private void applyAppTheme() {
         this.setBackground(AppTheme.PANEL_BACKGROUND);
 
-        // Welcome Label
         labelNama.setFont(AppTheme.FONT_TITLE_LARGE);
         labelNama.setForeground(AppTheme.TEXT_DARK);
-        labelNama.setBorder(new EmptyBorder(0, 0, 10, 0)); 
+        labelNama.setBorder(new EmptyBorder(0, 0, 15, 0)); 
 
-        // Search Panel
-        Component lblCariCepatComp = panelCariCepat.getComponent(0); // Asumsi lblCariCepat adalah komponen pertama
-        if (lblCariCepatComp instanceof JLabel) { 
-            JLabel lblCariCepat = (JLabel) lblCariCepatComp;
-            lblCariCepat.setFont(AppTheme.FONT_SUBTITLE);
-            lblCariCepat.setForeground(AppTheme.TEXT_DARK);
+        if (this.panelCariCepat != null && this.panelCariCepat.getComponentCount() > 0) {
+            Component lblCariCepatComp = this.panelCariCepat.getComponent(0); 
+            if (lblCariCepatComp instanceof JLabel) { 
+                JLabel lblCariCepat = (JLabel) lblCariCepatComp;
+                lblCariCepat.setFont(AppTheme.FONT_SUBTITLE); 
+                lblCariCepat.setForeground(AppTheme.TEXT_DARK);
+            }
         }
-        styleComboBox(cmbDestinasiCariCepat);
-        styleDateChooser(dateChooserCariCepat);
-        styleComboBox(cmbTravelersCariCepat);
+        styleComboBox(cmbKotaCariCepat); 
+        styleDateChooser(dateChooserCariCepat); 
+        // styleComboBox(cmbTravelersCariCepat); // Dihapus
         stylePrimaryButton(btnTombolCariCepat, "Cari");
         styleSecondaryButton(btnCustomTrip, "Custom Trip");
 
-        // Styling untuk judul section di createSectionCard
-        if (panelPerjalananSebelumnyaContent.getComponent(0) instanceof JLabel) {
-            JLabel title = (JLabel) panelPerjalananSebelumnyaContent.getComponent(0);
-            title.setFont(AppTheme.FONT_TITLE_MEDIUM);
-            title.setForeground(AppTheme.PRIMARY_BLUE_DARK);
-            title.setBorder(new EmptyBorder(0,0,10,0));
+        if(panelPerjalananSebelumnyaContentHolder != null && panelPerjalananSebelumnyaContentHolder.getParent() instanceof JPanel){
+            JPanel parentPanel = (JPanel) panelPerjalananSebelumnyaContentHolder.getParent();
+            if(parentPanel.getComponentCount() > 0 && parentPanel.getComponent(0) instanceof JLabel) {
+                 styleSectionTitle((JLabel)parentPanel.getComponent(0));
+            }
         }
-        if (panelPenawaranSpesialContent.getComponent(0) instanceof JLabel) {
-             JLabel title = (JLabel) panelPenawaranSpesialContent.getComponent(0);
-            title.setFont(AppTheme.FONT_TITLE_MEDIUM);
-            title.setForeground(AppTheme.PRIMARY_BLUE_DARK);
-            title.setBorder(new EmptyBorder(0,0,10,0));
+         if(panelPenawaranSpesialContentHolder != null && panelPenawaranSpesialContentHolder.getParent() instanceof JPanel){
+            JPanel parentPanel = (JPanel) panelPenawaranSpesialContentHolder.getParent();
+            if(parentPanel.getComponentCount() > 0 && parentPanel.getComponent(0) instanceof JLabel) {
+                 styleSectionTitle((JLabel)parentPanel.getComponent(0));
+            }
         }
-        if (panelDestinasiPopulerContent.getComponent(0) instanceof JLabel) {
-             JLabel title = (JLabel) panelDestinasiPopulerContent.getComponent(0);
-            title.setFont(AppTheme.FONT_TITLE_MEDIUM);
-            title.setForeground(AppTheme.PRIMARY_BLUE_DARK);
-            title.setBorder(new EmptyBorder(0,0,10,0));
+        if(panelDestinasiPopulerContentHolder != null && panelDestinasiPopulerContentHolder.getParent() instanceof JPanel){
+            JPanel parentPanel = (JPanel) panelDestinasiPopulerContentHolder.getParent();
+            if(parentPanel.getComponentCount() > 0 && parentPanel.getComponent(0) instanceof JLabel) {
+                 styleSectionTitle((JLabel)parentPanel.getComponent(0));
+            }
+        }
+    }
+
+    private void styleSectionTitle(JLabel titleLabel) {
+        if (titleLabel != null) {
+            // Font dan warna sudah diatur di createSectionPanel
         }
     }
 
     private void populateCariCepat() {
+        if (Session.currentUser != null) {
+            labelNama.setText("Selamat Datang, " + Session.currentUser.getNamaLengkap());
+        } else {
+            labelNama.setText("Selamat Datang, Tamu");
+        }
+
         Connection conn = Koneksi.getConnection();
         if (conn == null) return; 
         CariCepatController controller = new CariCepatController(conn);
-        this.daftarDestinasi = controller.getDaftarDestinasi();
+        this.daftarKota = controller.getDaftarKota(); 
 
-        cmbDestinasiCariCepat.removeAllItems();
-        cmbDestinasiCariCepat.addItem(PLACEHOLDER_DESTINASI);
-        if (this.daftarDestinasi != null) {
-            for (DestinasiModel dest : daftarDestinasi) {
-                cmbDestinasiCariCepat.addItem(dest.getNamaDestinasi());
+        cmbKotaCariCepat.removeAllItems();
+        cmbKotaCariCepat.addItem(PLACEHOLDER_KOTA); 
+        if (this.daftarKota != null) {
+            for (KotaModel kota : daftarKota) { 
+                if (kota != null) { 
+                    cmbKotaCariCepat.addItem(kota.getNamaKota()); 
+                } else {
+                    System.err.println("Peringatan: Objek KotaModel null ditemukan dalam daftarKota.");
+                }
             }
         }
-        cmbDestinasiCariCepat.setRenderer(new PlaceholderComboBoxRenderer(PLACEHOLDER_DESTINASI));
-        cmbDestinasiCariCepat.setSelectedIndex(0);
+        cmbKotaCariCepat.setRenderer(new PlaceholderComboBoxRenderer(PLACEHOLDER_KOTA));
+        cmbKotaCariCepat.setSelectedIndex(0);
 
-        cmbTravelersCariCepat.removeAllItems();
-        cmbTravelersCariCepat.addItem(PLACEHOLDER_TRAVELERS);
-        for (int i = 1; i <= 10; i++) { 
-            cmbTravelersCariCepat.addItem(i + " Orang");
-        }
-        cmbTravelersCariCepat.setRenderer(new PlaceholderComboBoxRenderer(PLACEHOLDER_TRAVELERS));
-        cmbTravelersCariCepat.setSelectedIndex(0);
+        // Bagian untuk cmbTravelersCariCepat dihapus
+        // cmbTravelersCariCepat.removeAllItems();
+        // cmbTravelersCariCepat.addItem(PLACEHOLDER_TRAVELERS);
+        // ... (loop untuk menambahkan jumlah traveler) ...
+        // cmbTravelersCariCepat.setRenderer(new PlaceholderComboBoxRenderer(PLACEHOLDER_TRAVELERS));
+        // cmbTravelersCariCepat.setSelectedIndex(0);
 
         dateChooserCariCepat.setDate(null); 
         dateChooserCariCepat.setMinSelectableDate(new Date()); 
@@ -260,77 +264,66 @@ public class PanelBeranda extends JPanel {
     }
 
     private void loadPerjalananSebelumnya() {
-        JPanel contentHolder = (JPanel) panelPerjalananSebelumnyaContent.getComponent(1); 
-        contentHolder.removeAll(); 
-
+        panelPerjalananSebelumnyaContentHolder.removeAll(); 
+        panelPerjalananSebelumnyaContentHolder.setLayout(new BorderLayout());
         JLabel noDataLabel = new JLabel("Fitur Perjalanan Sebelumnya akan segera hadir.");
         noDataLabel.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
         noDataLabel.setForeground(AppTheme.TEXT_SECONDARY_DARK);
         noDataLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        contentHolder.setLayout(new BorderLayout()); 
-        contentHolder.add(noDataLabel, BorderLayout.CENTER);
+        panelPerjalananSebelumnyaContentHolder.add(noDataLabel, BorderLayout.CENTER);
         
-        panelPerjalananSebelumnyaContent.revalidate();
-        panelPerjalananSebelumnyaContent.repaint();
+        panelPerjalananSebelumnyaContentHolder.revalidate();
+        panelPerjalananSebelumnyaContentHolder.repaint();
     }
 
     private void loadPenawaranSpesial() {
-        JPanel contentHolder = (JPanel) panelPenawaranSpesialContent.getComponent(1);
-        contentHolder.removeAll();
-        
+        panelPenawaranSpesialContentHolder.removeAll();
+        panelPenawaranSpesialContentHolder.setLayout(new BorderLayout());
         JLabel noDataLabel = new JLabel("Penawaran spesial menarik akan segera tersedia!");
         noDataLabel.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
         noDataLabel.setForeground(AppTheme.TEXT_SECONDARY_DARK);
         noDataLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        contentHolder.setLayout(new BorderLayout());
-        contentHolder.add(noDataLabel, BorderLayout.CENTER);
+        panelPenawaranSpesialContentHolder.add(noDataLabel, BorderLayout.CENTER);
         
-        panelPenawaranSpesialContent.revalidate();
-        panelPenawaranSpesialContent.repaint();
+        panelPenawaranSpesialContentHolder.revalidate();
+        panelPenawaranSpesialContentHolder.repaint();
     }
 
     private void loadDestinasiPopuler() {
-        JPanel contentHolder = (JPanel) panelDestinasiPopulerContent.getComponent(1);
-        contentHolder.removeAll();
-        
+        panelDestinasiPopulerContentHolder.removeAll();
         List<PaketPerjalananModel> topRated = paketPerjalananController.getTopRatedPakets(3);
+        
         if (topRated == null || topRated.isEmpty()) {
+            panelDestinasiPopulerContentHolder.setLayout(new BorderLayout());
             JLabel noDataLabel = new JLabel("Tidak ada destinasi populer saat ini.");
             noDataLabel.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
             noDataLabel.setForeground(AppTheme.TEXT_SECONDARY_DARK);
             noDataLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            contentHolder.setLayout(new BorderLayout());
-            contentHolder.add(noDataLabel, BorderLayout.CENTER);
+            panelDestinasiPopulerContentHolder.add(noDataLabel, BorderLayout.CENTER);
         } else {
-             contentHolder.setLayout(new GridLayout(0, 3, 15, 15)); 
+            panelDestinasiPopulerContentHolder.setLayout(new GridLayout(0, 3, 15, 15)); 
             for (PaketPerjalananModel paket : topRated) {
                 if (paket != null) { 
-                    contentHolder.add(createTripPackageCard(paket, false));
+                    panelDestinasiPopulerContentHolder.add(createTripPackageCard(paket, false));
                 }
             }
         }
-        panelDestinasiPopulerContent.revalidate();
-        panelDestinasiPopulerContent.repaint();
+        panelDestinasiPopulerContentHolder.revalidate();
+        panelDestinasiPopulerContentHolder.repaint();
     }
     
-    // Metode yang hilang ditambahkan kembali
     private void setPlaceholderImage(JLabel label, String text) {
         label.setIcon(null);
         label.setText(text);
-        label.setFont(AppTheme.FONT_PRIMARY_DEFAULT); // Atur font placeholder
-        label.setBackground(AppTheme.BACKGROUND_LIGHT_GRAY); // Latar belakang abu-abu muda untuk placeholder
+        label.setFont(AppTheme.FONT_PRIMARY_DEFAULT); 
+        label.setBackground(AppTheme.BACKGROUND_LIGHT_GRAY); 
         label.setForeground(AppTheme.TEXT_SECONDARY_DARK);
         label.setHorizontalAlignment(SwingConstants.CENTER);
         label.setVerticalAlignment(SwingConstants.CENTER);
-        label.setOpaque(true); // Pastikan background terlihat
+        label.setOpaque(true); 
     }
 
-    // Metode yang hilang ditambahkan kembali
     private String getNamaKotaById(int kotaId) {
-        // Anda perlu memastikan KotaDAO diinisialisasi atau bisa diakses di sini
-        // Jika KotaDAO memerlukan koneksi, pastikan itu tersedia.
-        // Untuk contoh ini, saya buat instance baru, tapi ini mungkin tidak efisien.
-        // Pertimbangkan untuk membuat UserDAO sebagai field instance jika sering digunakan.
         KotaDAO kotaDAO = new KotaDAO(); 
         return kotaDAO.getNamaKotaById(kotaId); 
     }
@@ -361,11 +354,12 @@ public class PanelBeranda extends JPanel {
                     lblImage.setIcon(icon);
                     lblImage.setText("");
                     lblImage.setOpaque(false);
+                    lblImage.setBackground(null);
                 } else {
                     setPlaceholderImage(lblImage, "Gbr Tdk Ada");
                 }
             } else {
-                setPlaceholderImage(lblImage, "Gbr Tdk Ada");
+                 setPlaceholderImage(lblImage, "Gbr Tdk Ada");
             }
         });
         cardPanel.add(lblImage, BorderLayout.NORTH);
@@ -381,8 +375,8 @@ public class PanelBeranda extends JPanel {
         lblNamaPaket.setAlignmentX(Component.LEFT_ALIGNMENT);
         detailsPanel.add(lblNamaPaket);
 
-        String kota = paket.getKotaId() > 0 ? getNamaKotaById(paket.getKotaId()) : "N/A";
-        JLabel lblInfo = new JLabel(String.format("%s - %d hari", kota, paket.getDurasi()));
+        String kota = paket.getKotaId() > 0 ? getNamaKotaById(paket.getKotaId()) : "N/A"; 
+        JLabel lblInfo = new JLabel(String.format("%s - %d hari - %d orang", kota, paket.getDurasi(), paket.getKuota()));
         lblInfo.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
         lblInfo.setForeground(AppTheme.TEXT_SECONDARY_DARK);
         lblInfo.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -403,21 +397,18 @@ public class PanelBeranda extends JPanel {
         }
         cardPanel.add(detailsPanel, BorderLayout.CENTER);
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-        buttonPanel.setOpaque(false);
+        JPanel buttonPanelCard = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        buttonPanelCard.setOpaque(false);
         
         JButton btnDetail = new JButton("Detail");
         styleLinkButton(btnDetail); 
         btnDetail.addActionListener(e -> {
-            // Perubahan di sini: Panggil konstruktor default TripDetail
             TripDetail tripDetailFrame = new TripDetail();
-            // Anda perlu cara untuk mengirim data 'paket' ke tripDetailFrame,
-            // misalnya: tripDetailFrame.loadData(paket);
-            // Untuk sekarang, kita hanya menampilkannya.
-            // Jika TripDetail adalah JPanel yang dikelola MainAppFrame, navigasinya akan berbeda.
+            // Anda perlu cara untuk mengirim data 'paket' ke tripDetailFrame
+            // Misalnya: tripDetailFrame.loadData(paket);
             tripDetailFrame.setVisible(true); 
         });
-        buttonPanel.add(btnDetail);
+        buttonPanelCard.add(btnDetail);
 
         if (!isPreviousTrip) {
             JButton btnBooking = new JButton("Booking");
@@ -425,23 +416,21 @@ public class PanelBeranda extends JPanel {
             btnBooking.addActionListener(e -> {
                 JOptionPane.showMessageDialog(this, "Tombol Booking Cepat untuk '" + paket.getNamaPaket() + "' diklik.", "Info Booking", JOptionPane.INFORMATION_MESSAGE);
             });
-            buttonPanel.add(btnBooking);
+            buttonPanelCard.add(btnBooking);
         } else {
              JButton btnPesanLagi = new JButton("Pesan Lagi");
             styleSecondaryButton(btnPesanLagi, "Pesan Lagi");
             btnPesanLagi.addActionListener(e -> {
                  JOptionPane.showMessageDialog(this, "Fitur 'Pesan Lagi' untuk '" + paket.getNamaPaket() + "' belum diimplementasikan.", "Info", JOptionPane.INFORMATION_MESSAGE);
             });
-            buttonPanel.add(btnPesanLagi);
+            buttonPanelCard.add(btnPesanLagi);
         }
-        cardPanel.add(buttonPanel, BorderLayout.SOUTH);
+        cardPanel.add(buttonPanelCard, BorderLayout.SOUTH);
         
         cardPanel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                // Perubahan di sini: Panggil konstruktor default TripDetail
                 TripDetail tripDetailFrame = new TripDetail();
-                // Anda perlu cara untuk mengirim data 'paket' ke tripDetailFrame
                 // tripDetailFrame.loadData(paket);
                 tripDetailFrame.setVisible(true); 
             }
@@ -453,75 +442,59 @@ public class PanelBeranda extends JPanel {
     private void setupActionListeners(){
         btnTombolCariCepat.addActionListener(this::tombolCariCepatActionPerformed);
         btnCustomTrip.addActionListener(this::btnCustomTripActionPerformed); 
-        cmbDestinasiCariCepat.addActionListener(this::cmbDestinasiCariCepatActionPerformed);
-        cmbTravelersCariCepat.addActionListener(this::cmbTravelersCariCepatActionPerformed);
+        cmbKotaCariCepat.addActionListener(this::cmbKotaCariCepatActionPerformed); 
+        // cmbTravelersCariCepat.addActionListener(this::cmbTravelersCariCepatActionPerformed); // Dihapus
     }
 
-    private void cmbDestinasiCariCepatActionPerformed(java.awt.event.ActionEvent evt) {                                          
-        int selectedIndex = cmbDestinasiCariCepat.getSelectedIndex();
-        if (selectedIndex > 0 && daftarDestinasi != null && selectedIndex <= daftarDestinasi.size() && !cmbDestinasiCariCepat.getSelectedItem().toString().equals(PLACEHOLDER_DESTINASI)) {
-            cmbDestinasiCariCepat.setForeground(AppTheme.INPUT_TEXT); 
+    private void cmbKotaCariCepatActionPerformed(java.awt.event.ActionEvent evt) {                                          
+        int selectedIndex = cmbKotaCariCepat.getSelectedIndex();
+        if (selectedIndex > 0 && daftarKota != null && selectedIndex <= daftarKota.size() && !cmbKotaCariCepat.getSelectedItem().toString().equals(PLACEHOLDER_KOTA)) {
+            cmbKotaCariCepat.setForeground(AppTheme.INPUT_TEXT); 
         } else if (selectedIndex == 0) { 
-            cmbDestinasiCariCepat.setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
+            cmbKotaCariCepat.setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
         }
     }                                         
 
-    private void cmbTravelersCariCepatActionPerformed(java.awt.event.ActionEvent evt) {                                                 
-        int selectedIndex = cmbTravelersCariCepat.getSelectedIndex();
-        if (selectedIndex > 0 && !cmbTravelersCariCepat.getSelectedItem().toString().equals(PLACEHOLDER_TRAVELERS)) {
-            jumlahTravelerDipilihCariCepat = cmbTravelersCariCepat.getSelectedItem().toString();
-            cmbTravelersCariCepat.setForeground(AppTheme.INPUT_TEXT); 
-        } else {
-            jumlahTravelerDipilihCariCepat = null;
-            if (selectedIndex == 0) { 
-                 cmbTravelersCariCepat.setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
-            }
-        }
-    }                                                
+    // Metode cmbTravelersCariCepatActionPerformed dihapus
 
     private void tombolCariCepatActionPerformed(java.awt.event.ActionEvent evt) {                                           
         boolean valid = true;
-        String destinasiPilihan = null;
-        if(cmbDestinasiCariCepat.getSelectedIndex() == 0 || cmbDestinasiCariCepat.getSelectedItem().toString().equals(PLACEHOLDER_DESTINASI)) {
-            JOptionPane.showMessageDialog(this, "Masukkan Destinasi Anda", "Input Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
-            cmbDestinasiCariCepat.requestFocus();
-            cmbDestinasiCariCepat.setBorder(AppTheme.createFocusBorder()); 
+        String kotaPilihan = null; 
+        if(cmbKotaCariCepat.getSelectedIndex() == 0 || cmbKotaCariCepat.getSelectedItem().toString().equals(PLACEHOLDER_KOTA)) {
+            JOptionPane.showMessageDialog(this, "Masukkan Kota Tujuan Anda", "Input Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
+            cmbKotaCariCepat.requestFocus();
+            cmbKotaCariCepat.setBorder(AppTheme.createFocusBorder()); 
             valid = false;
         } else {
-            destinasiPilihan = cmbDestinasiCariCepat.getSelectedItem().toString();
-            cmbDestinasiCariCepat.setBorder(AppTheme.createDefaultInputBorder());
+            kotaPilihan = cmbKotaCariCepat.getSelectedItem().toString();
+            cmbKotaCariCepat.setBorder(AppTheme.createDefaultInputBorder());
         }
 
         if(dateChooserCariCepat.getDate() == null && valid) {
             JOptionPane.showMessageDialog(this, "Pilih Tanggal Terlebih Dahulu", "Input Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
             dateChooserCariCepat.requestFocus();
-            ((JTextFieldDateEditor) dateChooserCariCepat.getDateEditor()).setBorder(AppTheme.createFocusBorder());
+            ((JTextField) dateChooserCariCepat.getDateEditor()).setBorder(AppTheme.createFocusBorder());
             valid = false;
         } else if (dateChooserCariCepat.getDate() != null) {
-             ((JTextFieldDateEditor) dateChooserCariCepat.getDateEditor()).setBorder(AppTheme.createDefaultInputBorder());
+             ((JTextField) dateChooserCariCepat.getDateEditor()).setBorder(AppTheme.createDefaultInputBorder());
         }
 
-        if((cmbTravelersCariCepat.getSelectedIndex() == 0 || cmbTravelersCariCepat.getSelectedItem().toString().equals(PLACEHOLDER_TRAVELERS)) && valid){
-            JOptionPane.showMessageDialog(this,"Silahkan Pilih Jumlah Travelers", "Input Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
-            cmbTravelersCariCepat.requestFocus();
-            cmbTravelersCariCepat.setBorder(AppTheme.createFocusBorder());
-            valid = false;
-        } else if (cmbTravelersCariCepat.getSelectedIndex() != 0) {
-            cmbTravelersCariCepat.setBorder(AppTheme.createDefaultInputBorder());
-        }
+        // Validasi untuk jumlah traveler dihapus
         
         if (valid) {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             String tanggalStr = sdf.format(dateChooserCariCepat.getDate());
-            String travelers = jumlahTravelerDipilihCariCepat;
+            // String travelers = jumlahTravelerDipilihCariCepat; // Dihapus
 
             System.out.println("Pencarian Cepat:");
-            System.out.println("Destinasi: " + destinasiPilihan);
+            System.out.println("Kota Tujuan: " + kotaPilihan); 
             System.out.println("Tanggal: " + tanggalStr);
-            System.out.println("Travelers: " + travelers);
+            // System.out.println("Travelers: " + travelers); // Dihapus
 
-            // Panggil metode di MainAppFrame untuk menampilkan PanelSearchResult
-            mainAppFrame.showSearchResultPanel(destinasiPilihan, tanggalStr, travelers);
+            // Panggil SearchResult tanpa parameter travelers
+            // SearchResult hasil = new SearchResult(mainAppFrame, kotaPilihan, tanggalStr); 
+            // Jika SearchResult adalah JPanel di MainAppFrame, Anda mungkin perlu:
+            mainAppFrame.showSearchResultPanel(kotaPilihan, tanggalStr);
         }
     }                                          
 
@@ -536,15 +509,14 @@ public class PanelBeranda extends JPanel {
     private void styleDateChooser(JDateChooser dateChooser) {
         if (dateChooser == null) return;
         dateChooser.setFont(AppTheme.FONT_TEXT_FIELD);
-        dateChooser.setPreferredSize(new Dimension(dateChooser.getPreferredSize().width, 30)); // Samakan tinggi dengan ComboBox
+        dateChooser.setPreferredSize(new Dimension(dateChooser.getPreferredSize().width, 30)); 
         
         dateChooser.getCalendarButton().setFont(AppTheme.FONT_BUTTON);
         dateChooser.getCalendarButton().setBackground(AppTheme.PRIMARY_BLUE_LIGHT);
         dateChooser.getCalendarButton().setForeground(AppTheme.TEXT_WHITE);
         dateChooser.getCalendarButton().setFocusPainted(false);
-        dateChooser.getCalendarButton().setBorder(BorderFactory.createEmptyBorder(2,5,2,5)); // Padding tombol kalender
-        // Atur tinggi tombol kalender agar konsisten
-        Dimension buttonSize = new Dimension(dateChooser.getCalendarButton().getPreferredSize().width, 26); // Tinggi tombol disesuaikan
+        dateChooser.getCalendarButton().setBorder(BorderFactory.createEmptyBorder(2,5,2,5)); 
+        Dimension buttonSize = new Dimension(dateChooser.getCalendarButton().getPreferredSize().width, 26); 
         dateChooser.getCalendarButton().setPreferredSize(buttonSize);
         dateChooser.getCalendarButton().setMaximumSize(buttonSize);
         dateChooser.getCalendarButton().setMinimumSize(buttonSize);
@@ -559,7 +531,6 @@ public class PanelBeranda extends JPanel {
         dateChooser.getDateEditor().addPropertyChangeListener("date", pcevt -> {
             Date newDate = (Date) pcevt.getNewValue();
             if (newDate == null) {
-                // JDateChooser biasanya menampilkan format tanggalnya sebagai placeholder
             } else {
                 editor.setForeground(AppTheme.INPUT_TEXT);
             }
@@ -669,7 +640,9 @@ public class PanelBeranda extends JPanel {
                                                       int index, boolean isSelected,
                                                       boolean cellHasFocus) {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            if (value == null || value.toString().equals(placeholder)) {
+            String textValue = (value == null) ? "" : value.toString(); 
+
+            if (value == null || textValue.equals(placeholder)) { 
                 if (index == -1) { 
                     setText(placeholder);
                     setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
@@ -678,7 +651,7 @@ public class PanelBeranda extends JPanel {
                     setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
                 }
             } else {
-                setText("  " + value.toString()); 
+                setText("  " + textValue); 
                 setForeground(isSelected ? list.getSelectionForeground() : AppTheme.INPUT_TEXT);
             }
             if (!isSelected) { 

@@ -1,543 +1,524 @@
 package managementtrevel.SearchResultScreen;
 
-// Import yang relevan
-import managementtrevel.MainAppFrame; // Untuk navigasi CardLayout
-import javax.swing.JPanel;
-import javax.swing.JLayeredPane; // Meskipun ini JPanel, impor tetap ada jika ada kode terkait yang tidak dihapus
+import Asset.AppTheme;
+import controller.PaketPerjalananController;
+import db.dao.KotaDAO;
+import java.awt.BorderLayout; // Impor Controller
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Image;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Comparator; 
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JTextField;
-import javax.swing.GroupLayout;
-import javax.swing.LayoutStyle;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane; 
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
+import managementtrevel.MainAppFrame;
+import model.PaketPerjalananModel;
 
-/**
- * JPanel ini menampilkan hasil pencarian dan diintegrasikan dengan MainAppFrame menggunakan CardLayout.
- * Ini adalah versi JPanel dari JFrame SearchResult sebelumnya.
- */
-public class PanelSearchResult extends javax.swing.JPanel {
+
+public class PanelSearchResult extends JPanel {
 
     private MainAppFrame mainAppFrame;
-    private String namaDestinasi;
+    private String namaKotaAtauDestinasi; 
     private String tanggalKeberangkatan;
-    private String jumlahTraveler;
+    private PaketPerjalananController paketController; 
 
-    // Deklarasi komponen UI (sesuai dengan yang dihasilkan NetBeans)
-    private javax.swing.JButton btn_back;
-    private javax.swing.JButton btn_bookingcepat;
-    private javax.swing.JButton btn_bookingcepat1;
-    private javax.swing.JButton btn_detail;
-    private javax.swing.JButton btn_detail1;
-    private javax.swing.JButton btn_reset;
-    private javax.swing.JButton btn_sebelum;
-    private javax.swing.JButton btn_selanjutnya;
-    private javax.swing.JComboBox<String> cb_durasi;
-    private javax.swing.JComboBox<String> cb_urutkan;
-    private javax.swing.JLabel foto_user;
-    private javax.swing.JLabel foto_user1;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JLabel jLabel8;
-    private javax.swing.JLabel jLabel9;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel4;
-    private javax.swing.JPanel panelTemplate;
-    private javax.swing.JTextField tf_harga;
-    private javax.swing.JTextField tf_harga1;
-    private javax.swing.JTextField tf_hari;
-    private javax.swing.JTextField tf_hari1;
-    private javax.swing.JTextField tf_namakota;
-    private javax.swing.JTextField tf_namakota1;
-    private javax.swing.JTextField tf_orang;
-    private javax.swing.JTextField tf_orang1;
-    private javax.swing.JTextField tf_orang2;
-    private javax.swing.JTextField tf_orang3;
+    // Deklarasi komponen UI
+    private JButton btn_back;
+    private JButton btn_reset;
+    private JButton btn_sebelum;
+    private JButton btn_selanjutnya;
+    private JComboBox<String> cb_durasi;
+    private JComboBox<String> cb_urutkan;
+    private JLabel jLabel1; // Filter title
+    private JLabel jLabel2; // Urutkan Dari label
+    private JLabel jLabel3; // Durasi label
+    private JLabel jLabel4; // Hasil Search: title
+    private JLabel jLabel8; // Page info label
+    
+    private JPanel panelFilter; 
+    private JPanel panelResultsContainer; 
+    private JPanel resultsDisplayPanel; 
+    private List<PaketPerjalananModel> allFetchedPackages; 
+    private List<PaketPerjalananModel> currentlyDisplayedPackages; 
 
-    /**
-     * Membuat form PanelSearchResult baru.
-     *
-     * @param mainAppFrame Instance dari MainAppFrame yang menampung panel ini,
-     * digunakan untuk navigasi.
-     * @param namaDestinasi Parameter pencarian destinasi.
-     * @param tanggalKeberangkatan Parameter pencarian tanggal keberangkatan.
-     * @param jumlahTraveler Parameter pencarian jumlah traveler.
-     */
-    public PanelSearchResult(MainAppFrame mainAppFrame, String namaDestinasi, String tanggalKeberangkatan, String jumlahTraveler) {
-        initComponents();
+
+    public PanelSearchResult(MainAppFrame mainAppFrame, String namaKotaAtauDestinasi, String tanggalKeberangkatan) { 
         this.mainAppFrame = mainAppFrame;
-        this.namaDestinasi = namaDestinasi;
+        this.namaKotaAtauDestinasi = namaKotaAtauDestinasi;
         this.tanggalKeberangkatan = tanggalKeberangkatan;
-        this.jumlahTraveler = jumlahTraveler;
+        this.paketController = new PaketPerjalananController(); 
+        
+        initializeUIProgrammatically(); 
+        applyAppTheme();
+        setupActionListeners(); 
+        fetchAndDisplayInitialResults(); 
 
-        // Contoh tampilkan di console (logika asli dari JFrame)
-        System.out.println("Destinasi: " + namaDestinasi);
-        System.out.println("Tanggal: " + tanggalKeberangkatan);
-        System.out.println("Jumlah Traveler: " + jumlahTraveler);
-
-        // Bagian yang dihapus dari JFrame:
-        // setTitle("Search Result"); // JPanel tidak punya judul
-        // setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // JPanel tidak punya operasi default close
-        // setSize(800, 600); // Ukuran akan diatur oleh parent container
-        // setLocationRelativeTo(null); // Posisi akan diatur oleh parent container
-        // setLayout(null); // Layout akan diatur oleh parent container (CardLayout)
-
-        // JLayeredPane biasanya digunakan di JFrame, mungkin tidak relevan untuk JPanel yang di CardLayout
-        // JLayeredPane layeredPane = getLayeredPane(); // JPanel tidak punya getLayeredPane()
-        // SidebarPanel sidebar = new SidebarPanel(); // Jika SidebarPanel juga JPanel, bisa ditambahkan ke MainAppFrame
-        // sidebar.setBounds(0, 0, 65, getHeight());
-        // layeredPane.add(sidebar, JLayeredPane.POPUP_LAYER);
+        System.out.println("PanelSearchResult Dibuat:");
+        System.out.println("Kota/Destinasi: " + this.namaKotaAtauDestinasi);
+        System.out.println("Tanggal: " + this.tanggalKeberangkatan);
     }
 
-    /**
-     * Method ini dipanggil dari dalam konstruktor untuk menginisialisasi komponen UI.
-     * WARNING: Jangan memodifikasi kode ini. Konten dari method ini selalu
-     * diregenerasi oleh Form Editor.
-     */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">
-    private void initComponents() {
+    private void initializeUIProgrammatically() {
+        this.setLayout(new BorderLayout(15, 0)); 
+        this.setBorder(new EmptyBorder(15, 15, 15, 15)); 
 
-        jPanel1 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        cb_urutkan = new javax.swing.JComboBox<>();
-        jLabel3 = new javax.swing.JLabel();
-        cb_durasi = new javax.swing.JComboBox<>();
-        btn_reset = new javax.swing.JButton();
-        jPanel2 = new javax.swing.JPanel();
-        jLabel4 = new javax.swing.JLabel();
-        panelTemplate = new javax.swing.JPanel();
-        btn_detail = new javax.swing.JButton();
-        btn_bookingcepat = new javax.swing.JButton();
-        jLabel7 = new javax.swing.JLabel();
-        tf_namakota = new javax.swing.JTextField();
-        tf_hari = new javax.swing.JTextField();
-        tf_orang = new javax.swing.JTextField();
-        tf_orang1 = new javax.swing.JTextField();
-        tf_harga = new javax.swing.JTextField();
-        foto_user = new javax.swing.JLabel();
-        btn_sebelum = new javax.swing.JButton();
-        btn_selanjutnya = new javax.swing.JButton();
-        jLabel8 = new javax.swing.JLabel();
-        btn_back = new javax.swing.JButton();
-        jPanel4 = new javax.swing.JPanel();
-        btn_detail1 = new javax.swing.JButton();
-        btn_bookingcepat1 = new javax.swing.JButton();
-        jLabel9 = new javax.swing.JLabel();
-        tf_namakota1 = new javax.swing.JTextField();
-        tf_hari1 = new javax.swing.JTextField();
-        tf_orang2 = new javax.swing.JTextField();
-        tf_orang3 = new javax.swing.JTextField();
-        tf_harga1 = new javax.swing.JTextField();
-        foto_user1 = new javax.swing.JLabel();
+        panelFilter = new JPanel();
+        panelFilter.setLayout(new BoxLayout(panelFilter, BoxLayout.Y_AXIS));
+        panelFilter.setPreferredSize(new Dimension(230, 0)); 
 
-        // setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE); // Dihapus karena ini JPanel
+        jLabel1 = new JLabel("Filter");
+        jLabel1.setAlignmentX(Component.LEFT_ALIGNMENT);
+        jLabel1.setBorder(new EmptyBorder(0, 0, 10, 0));
+        panelFilter.add(jLabel1);
 
-        jPanel1.setBackground(new java.awt.Color(204, 204, 204));
+        jLabel2 = new JLabel("Urutkan Dari");
+        jLabel2.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panelFilter.add(jLabel2);
 
-        jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        jLabel1.setText("Filter");
+        cb_urutkan = new JComboBox<>(new String[]{"Relevansi", "Harga: Rendah ke Tinggi", "Harga: Tinggi ke Rendah", "Rating Tertinggi"});
+        cb_urutkan.setAlignmentX(Component.LEFT_ALIGNMENT);
+        cb_urutkan.setMaximumSize(new Dimension(Integer.MAX_VALUE, cb_urutkan.getPreferredSize().height)); 
+        panelFilter.add(cb_urutkan);
+        panelFilter.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        jLabel2.setText("Urutkan Dari");
+        jLabel3 = new JLabel("Durasi");
+        jLabel3.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panelFilter.add(jLabel3);
 
-        cb_urutkan.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "...", "Harga: Rendah ke Tinggi", "Harga: Tinggi ke Rendah", " " }));
-        cb_urutkan.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cb_urutkanActionPerformed(evt);
-            }
-        });
+        cb_durasi = new JComboBox<>(new String[]{"Semua Durasi", "1-3 Hari", "4-6 Hari", "7+ Hari"});
+        cb_durasi.setAlignmentX(Component.LEFT_ALIGNMENT);
+        cb_durasi.setMaximumSize(new Dimension(Integer.MAX_VALUE, cb_durasi.getPreferredSize().height));
+        panelFilter.add(cb_durasi);
+        
+        panelFilter.add(Box.createVerticalGlue()); 
 
-        jLabel3.setText("Durasi");
+        btn_reset = new JButton("Reset Filter");
+        btn_reset.setAlignmentX(Component.CENTER_ALIGNMENT); 
+        panelFilter.add(btn_reset);
 
-        cb_durasi.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "...", "1 Hari", "2 Hari", "3 Hari", "4 Hari", "5 Hari", "6 Hari", "7 Hari" }));
+        this.add(panelFilter, BorderLayout.WEST);
 
-        btn_reset.setText("Reset ");
+        panelResultsContainer = new JPanel(new BorderLayout(0, 10)); 
+        panelResultsContainer.setOpaque(false);
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(btn_reset)
-                .addGap(50, 50, 50))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel1)
-                        .addGap(60, 60, 60))
-                    .addComponent(cb_durasi, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cb_urutkan, 0, 175, Short.MAX_VALUE)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel3)
-                            .addComponent(jLabel2))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(67, 67, 67)
-                .addComponent(jLabel1)
-                .addGap(18, 18, 18)
-                .addComponent(jLabel2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cb_urutkan, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel3)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cb_durasi, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(btn_reset)
-                .addContainerGap())
-        );
+        JPanel resultsHeaderPanel = new JPanel(new BorderLayout());
+        resultsHeaderPanel.setOpaque(false);
+        btn_back = new JButton("< Kembali ke Beranda");
+        jLabel4 = new JLabel("Hasil Pencarian untuk: " + this.namaKotaAtauDestinasi); 
+        resultsHeaderPanel.add(btn_back, BorderLayout.WEST);
+        resultsHeaderPanel.add(jLabel4, BorderLayout.CENTER); 
+        panelResultsContainer.add(resultsHeaderPanel, BorderLayout.NORTH);
 
-        jPanel2.setBackground(new java.awt.Color(204, 204, 204));
+        resultsDisplayPanel = new JPanel();
+        resultsDisplayPanel.setLayout(new BoxLayout(resultsDisplayPanel, BoxLayout.Y_AXIS)); 
+        resultsDisplayPanel.setOpaque(false); 
 
-        jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        jLabel4.setText("Hasil Search:");
+        JScrollPane scrollPaneResults = new JScrollPane(resultsDisplayPanel);
+        scrollPaneResults.setBorder(BorderFactory.createEmptyBorder());
+        scrollPaneResults.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPaneResults.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPaneResults.getViewport().setOpaque(false);
+        scrollPaneResults.setOpaque(false);
+        panelResultsContainer.add(scrollPaneResults, BorderLayout.CENTER);
 
-        panelTemplate.setBackground(new java.awt.Color(255, 255, 255));
+        JPanel paginationPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        paginationPanel.setOpaque(false);
+        btn_sebelum = new JButton("< Sebelumnya");
+        jLabel8 = new JLabel("Halaman - dari -"); 
+        btn_selanjutnya = new JButton("Selanjutnya >");
+        paginationPanel.add(btn_sebelum);
+        paginationPanel.add(jLabel8);
+        paginationPanel.add(btn_selanjutnya);
+        panelResultsContainer.add(paginationPanel, BorderLayout.SOUTH);
 
-        btn_detail.setText("Detail");
-        btn_detail.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_detailActionPerformed(evt);
-            }
-        });
-
-        btn_bookingcepat.setText("Booking Cepat");
-        btn_bookingcepat.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_bookingcepatActionPerformed(evt);
-            }
-        });
-
-        jLabel7.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        jLabel7.setText("Harga:");
-
-        tf_namakota.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        tf_namakota.setText("Nama kota");
-        tf_namakota.setBorder(null);
-
-        tf_hari.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        tf_hari.setText("...Hari");
-        tf_hari.setBorder(null);
-
-        tf_orang.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        tf_orang.setText("...Orang");
-        tf_orang.setBorder(null);
-
-        tf_orang1.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        tf_orang1.setText("Rating");
-        tf_orang1.setBorder(null);
-
-        tf_harga.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        tf_harga.setText("Rp...");
-        tf_harga.setBorder(null);
-
-        foto_user.setBackground(new java.awt.Color(0, 0, 0));
-        foto_user.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        foto_user.setText("FOTO");
-        foto_user.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
-        foto_user.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-        foto_user.setFocusCycleRoot(true);
-
-        javax.swing.GroupLayout panelTemplateLayout = new javax.swing.GroupLayout(panelTemplate);
-        panelTemplate.setLayout(panelTemplateLayout);
-        panelTemplateLayout.setHorizontalGroup(
-            panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelTemplateLayout.createSequentialGroup()
-                .addGap(23, 23, 23)
-                .addComponent(foto_user, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(36, 36, 36)
-                .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(panelTemplateLayout.createSequentialGroup()
-                        .addComponent(btn_detail)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 47, Short.MAX_VALUE)
-                        .addComponent(btn_bookingcepat)
-                        .addGap(105, 105, 105))
-                    .addGroup(panelTemplateLayout.createSequentialGroup()
-                        .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(panelTemplateLayout.createSequentialGroup()
-                                .addComponent(jLabel7)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(tf_harga, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(panelTemplateLayout.createSequentialGroup()
-                                .addComponent(tf_namakota, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(tf_hari, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(tf_orang, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(tf_orang1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-        );
-        panelTemplateLayout.setVerticalGroup(
-            panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelTemplateLayout.createSequentialGroup()
-                .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(panelTemplateLayout.createSequentialGroup()
-                        .addGap(25, 25, 25)
-                        .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(tf_namakota, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(tf_hari, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(tf_orang, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(tf_orang1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel7)
-                            .addComponent(tf_harga, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(panelTemplateLayout.createSequentialGroup()
-                        .addGap(26, 26, 26)
-                        .addComponent(foto_user, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(0, 0, 0)
-                .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btn_detail)
-                    .addComponent(btn_bookingcepat))
-                .addContainerGap(25, Short.MAX_VALUE))
-        );
-
-        btn_sebelum.setText("< Sebelum");
-        btn_sebelum.setMaximumSize(new java.awt.Dimension(101, 23));
-        btn_sebelum.setMinimumSize(new java.awt.Dimension(101, 23));
-        btn_sebelum.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_sebelumActionPerformed(evt);
-            }
-        });
-
-        btn_selanjutnya.setText("Selanjutnya >");
-
-        jLabel8.setText("Page 1 of 3");
-
-        btn_back.setText("< Back");
-        btn_back.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_backActionPerformed(evt);
-            }
-        });
-
-        jPanel4.setBackground(new java.awt.Color(255, 255, 255));
-
-        btn_detail1.setText("Detail");
-        btn_detail1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_detail1ActionPerformed(evt);
-            }
-        });
-
-        btn_bookingcepat1.setText("Booking Cepat");
-        btn_bookingcepat1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_bookingcepat1ActionPerformed(evt);
-            }
-        });
-
-        jLabel9.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        jLabel9.setText("Harga:");
-
-        tf_namakota1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        tf_namakota1.setText("Nama kota");
-        tf_namakota1.setBorder(null);
-
-        tf_hari1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        tf_hari1.setText("...Hari");
-        tf_hari1.setBorder(null);
-
-        tf_orang2.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        tf_orang2.setText("...Orang");
-        tf_orang2.setBorder(null);
-
-        tf_orang3.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        tf_orang3.setText("Rating");
-        tf_orang3.setBorder(null);
-
-        tf_harga1.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        tf_harga1.setText("Rp...");
-        tf_harga1.setBorder(null);
-
-        foto_user1.setBackground(new java.awt.Color(0, 0, 0));
-        foto_user1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        foto_user1.setText("FOTO");
-        foto_user1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
-        foto_user1.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-        foto_user1.setFocusCycleRoot(true);
-
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addGap(31, 31, 31)
-                .addComponent(foto_user1, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(28, 28, 28)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addComponent(btn_detail1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 47, Short.MAX_VALUE)
-                        .addComponent(btn_bookingcepat1)
-                        .addGap(105, 105, 105))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel4Layout.createSequentialGroup()
-                                .addComponent(jLabel9)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(tf_harga1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(jPanel4Layout.createSequentialGroup()
-                                .addComponent(tf_namakota1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(tf_hari1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(tf_orang2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(tf_orang3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addGap(25, 25, 25)
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(tf_namakota1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(tf_hari1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(tf_orang2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(tf_orang3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel9)
-                            .addComponent(tf_harga1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addGap(30, 30, 30)
-                        .addComponent(foto_user1, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(0, 0, 0)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btn_detail1)
-                    .addComponent(btn_bookingcepat1))
-                .addContainerGap(25, Short.MAX_VALUE))
-        );
-
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap(33, Short.MAX_VALUE)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addComponent(btn_sebelum, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(20, 20, 20)
-                        .addComponent(jLabel8)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(btn_selanjutnya)
-                        .addGap(115, 115, 115))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(jLabel4)
-                                .addComponent(panelTemplate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addComponent(btn_back)
-                                .addGap(417, 417, 417)))
-                        .addGap(32, 32, 32))))
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(18, 18, 18)
-                .addComponent(btn_back)
-                .addGap(26, 26, 26)
-                .addComponent(jLabel4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(panelTemplate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(30, 30, 30)
-                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 86, Short.MAX_VALUE)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btn_sebelum, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btn_selanjutnya)
-                    .addComponent(jLabel8))
-                .addContainerGap())
-        );
-
-        // Layout untuk PanelSearchResult itu sendiri
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this); // Menggunakan 'this' karena ini JPanel
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(65, 65, 65)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(19, 19, 19)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-
-        // pack(); // Dihapus karena ini JPanel
-    }// </editor-fold>
-
-    private void cb_urutkanActionPerformed(java.awt.event.ActionEvent evt) {
-        // TODO add your handling code here:
+        this.add(panelResultsContainer, BorderLayout.CENTER);
     }
 
-    private void btn_detailActionPerformed(java.awt.event.ActionEvent evt) {
-        // Mengganti navigasi JFrame dengan navigasi CardLayout di MainAppFrame
-        // Asumsi ada konstanta PANEL_TRIP_DETAIL di MainAppFrame
-        // Dan Anda perlu cara untuk meneruskan ID perjalanan ke panel detail
-        if (mainAppFrame != null) {
-            // Contoh: mainAppFrame.showTripDetailPanel(tripId);
-            mainAppFrame.showPanel("detail trip"); // Placeholder
+    private void applyAppTheme() {
+        this.setBackground(AppTheme.PANEL_BACKGROUND);
+
+        if (panelFilter != null) {
+            panelFilter.setBackground(Color.WHITE); 
+            panelFilter.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(AppTheme.BORDER_COLOR),
+                new EmptyBorder(15,15,15,15)
+            ));
+        }
+        if (jLabel1 != null) { 
+            jLabel1.setFont(AppTheme.FONT_TITLE_MEDIUM);
+            jLabel1.setForeground(AppTheme.PRIMARY_BLUE_DARK);
+        }
+        if (jLabel2 != null) { 
+            styleFormLabel(jLabel2, "Urutkan Dari:");
+        }
+        if (cb_urutkan != null) {
+            styleComboBox(cb_urutkan);
+        }
+        if (jLabel3 != null) { 
+            styleFormLabel(jLabel3, "Durasi:");
+        }
+        if (cb_durasi != null) {
+            styleComboBox(cb_durasi);
+        }
+        if (btn_reset != null) {
+            styleSecondaryButton(btn_reset, "Reset Filter");
+        }
+
+        if (jLabel4 != null) { 
+            jLabel4.setFont(AppTheme.FONT_TITLE_MEDIUM);
+            jLabel4.setForeground(AppTheme.PRIMARY_BLUE_DARK);
+            jLabel4.setBorder(new EmptyBorder(0,10,10,0)); 
+        }
+        if (btn_back != null) { 
+             styleSecondaryButton(btn_back, "< Kembali");
+        }
+        
+        if(btn_sebelum != null) styleSecondaryButton(btn_sebelum, "< Sebelumnya");
+        if(btn_selanjutnya != null) stylePrimaryButton(btn_selanjutnya, "Selanjutnya >");
+        if(jLabel8 != null) { 
+            jLabel8.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
+            jLabel8.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+        }
+        if(resultsDisplayPanel != null) resultsDisplayPanel.setBackground(AppTheme.PANEL_BACKGROUND);
+    }
+    
+    private void fetchAndDisplayInitialResults() {
+        if (this.paketController == null) {
+            System.err.println("PaketPerjalananController tidak diinisialisasi di PanelSearchResult.");
+            displayErrorMessage("Gagal memuat data: Layanan tidak tersedia.");
+            return;
+        }
+        System.out.println("[PanelSearchResult] Mencari paket untuk kota: " + this.namaKotaAtauDestinasi);
+        // Menggunakan controller untuk mencari berdasarkan nama kota
+        this.allFetchedPackages = paketController.cariPaketByNamaKota(this.namaKotaAtauDestinasi);
+        
+        // Tambahkan logging untuk melihat apa yang dikembalikan oleh controller
+        if (this.allFetchedPackages == null) {
+            System.out.println("[PanelSearchResult] Controller mengembalikan null untuk allFetchedPackages.");
+            this.allFetchedPackages = new ArrayList<>(); // Hindari NullPointerException lebih lanjut
+        } else {
+            System.out.println("[PanelSearchResult] Jumlah paket ditemukan dari Controller: " + this.allFetchedPackages.size());
+        }
+        
+        applyFiltersAndSort(); 
+    }
+    
+    private void applyFiltersAndSort() {
+        if (allFetchedPackages == null) {
+            this.currentlyDisplayedPackages = new ArrayList<>();
+        } else {
+            this.currentlyDisplayedPackages = new ArrayList<>(allFetchedPackages); 
+        }
+
+        // Filter berdasarkan Durasi
+        String durasiFilter = cb_durasi.getSelectedIndex() > 0 ? (String) cb_durasi.getSelectedItem() : "Semua Durasi";
+        if (!durasiFilter.equals("Semua Durasi")) {
+            this.currentlyDisplayedPackages = this.currentlyDisplayedPackages.stream().filter(p -> {
+                if (p == null) return false; // Pengecekan null untuk paket
+                long durasiPaket = p.getDurasi(); 
+                if (durasiFilter.equals("1-3 Hari")) return durasiPaket >= 1 && durasiPaket <= 3;
+                if (durasiFilter.equals("4-6 Hari")) return durasiPaket >= 4 && durasiPaket <= 6;
+                if (durasiFilter.equals("7+ Hari")) return durasiPaket >= 7;
+                return true; 
+            }).collect(Collectors.toList());
+        }
+
+        // Pengurutan
+        String urutkanFilter = cb_urutkan.getSelectedIndex() > 0 ? (String) cb_urutkan.getSelectedItem() : "Relevansi";
+        if (urutkanFilter.equals("Harga: Rendah ke Tinggi")) {
+            this.currentlyDisplayedPackages.sort(Comparator.comparingDouble(PaketPerjalananModel::getHarga));
+        } else if (urutkanFilter.equals("Harga: Tinggi ke Rendah")) {
+            this.currentlyDisplayedPackages.sort(Comparator.comparingDouble(PaketPerjalananModel::getHarga).reversed());
+        } else if (urutkanFilter.equals("Rating Tertinggi")) {
+            this.currentlyDisplayedPackages.sort(Comparator.comparingDouble(PaketPerjalananModel::getRating).reversed());
+        }
+
+        displayResults();
+    }
+
+
+    private void displayResults() {
+        resultsDisplayPanel.removeAll(); 
+
+        if (currentlyDisplayedPackages == null || currentlyDisplayedPackages.isEmpty()) {
+            resultsDisplayPanel.setLayout(new BorderLayout()); 
+            String message = "Tidak ada paket perjalanan yang cocok untuk '" + this.namaKotaAtauDestinasi + "'.";
+            if (this.allFetchedPackages != null && !this.allFetchedPackages.isEmpty() && currentlyDisplayedPackages.isEmpty()){ 
+                message = "Tidak ada paket yang cocok dengan filter saat ini untuk '" + this.namaKotaAtauDestinasi + "'.";
+            }
+
+            JLabel noResultsLabel = new JLabel(message);
+            noResultsLabel.setFont(AppTheme.FONT_SUBTITLE);
+            noResultsLabel.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+            noResultsLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            resultsDisplayPanel.add(noResultsLabel, BorderLayout.CENTER);
+        } else {
+            resultsDisplayPanel.setLayout(new BoxLayout(resultsDisplayPanel, BoxLayout.Y_AXIS)); 
+            for (PaketPerjalananModel paket : currentlyDisplayedPackages) {
+                if (paket != null) { // Pengecekan null untuk paket sebelum membuat kartu
+                    resultsDisplayPanel.add(createSearchResultCardPanel(paket));
+                    resultsDisplayPanel.add(Box.createRigidArea(new Dimension(0, 15))); 
+                }
+            }
+        }
+        resultsDisplayPanel.revalidate();
+        resultsDisplayPanel.repaint();
+    }
+    
+    private void displayErrorMessage(String message) {
+        resultsDisplayPanel.removeAll();
+        resultsDisplayPanel.setLayout(new BorderLayout());
+        JLabel errorLabel = new JLabel(message);
+        errorLabel.setFont(AppTheme.FONT_SUBTITLE);
+        errorLabel.setForeground(Color.RED);
+        errorLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        resultsDisplayPanel.add(errorLabel, BorderLayout.CENTER);
+        resultsDisplayPanel.revalidate();
+        resultsDisplayPanel.repaint();
+    }
+
+
+    private JPanel createSearchResultCardPanel(PaketPerjalananModel paket) {
+        JPanel cardPanel = new JPanel(new BorderLayout(10, 5)); 
+        cardPanel.setBackground(Color.WHITE);
+        cardPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(AppTheme.BORDER_COLOR),
+            new EmptyBorder(10, 10, 10, 10)
+        ));
+        cardPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 200)); 
+        cardPanel.setMinimumSize(new Dimension(300, 140)); 
+        cardPanel.setPreferredSize(new Dimension(400, 160)); 
+
+
+        JLabel imageLabel = new JLabel();
+        imageLabel.setPreferredSize(new Dimension(120, 90)); 
+        imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        imageLabel.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER_COLOR));
+        
+        SwingUtilities.invokeLater(() -> {
+            String userDir = System.getProperty("user.dir");
+            File baseDir = new File(userDir);
+            String gambarRelatif = paket.getGambar();
+            if (gambarRelatif != null && !gambarRelatif.isEmpty()) {
+                if (gambarRelatif.startsWith("/") || gambarRelatif.startsWith("\\")) {
+                    gambarRelatif = gambarRelatif.substring(1);
+                }
+                File gambarFile = new File(baseDir, gambarRelatif); 
+                 System.out.println("[PanelSearchResult] Mencoba memuat gambar kartu: " + gambarFile.getAbsolutePath()); 
+                if (gambarFile.exists()) {
+                    try {
+                        ImageIcon icon = new ImageIcon(new ImageIcon(gambarFile.toURI().toURL()).getImage().getScaledInstance(imageLabel.getPreferredSize().width, imageLabel.getPreferredSize().height, Image.SCALE_SMOOTH));
+                        imageLabel.setIcon(icon);
+                        imageLabel.setText("");
+                        imageLabel.setOpaque(false);
+                        imageLabel.setBackground(null);
+                    } catch (Exception e) {
+                        System.err.println("Error memuat gambar: " + gambarFile.getPath() + " - " + e.getMessage());
+                        imageLabel.setText("Gbr Error"); imageLabel.setOpaque(true); imageLabel.setBackground(AppTheme.BACKGROUND_LIGHT_GRAY);
+                    }
+                } else {
+                    System.err.println("File gambar tidak ditemukan: " + gambarFile.getAbsolutePath());
+                    imageLabel.setText("Gbr Tdk Ada"); imageLabel.setOpaque(true); imageLabel.setBackground(AppTheme.BACKGROUND_LIGHT_GRAY);
+                }
+            } else {
+                 imageLabel.setText("Gbr Tdk Ada"); imageLabel.setOpaque(true); imageLabel.setBackground(AppTheme.BACKGROUND_LIGHT_GRAY);
+            }
+        });
+        cardPanel.add(imageLabel, BorderLayout.WEST);
+
+        JPanel textDetailsPanel = new JPanel();
+        textDetailsPanel.setLayout(new BoxLayout(textDetailsPanel, BoxLayout.Y_AXIS));
+        textDetailsPanel.setOpaque(false);
+        textDetailsPanel.setBorder(new EmptyBorder(0,10,0,0)); 
+
+        JLabel nameLabel = new JLabel(paket.getNamaPaket());
+        nameLabel.setFont(AppTheme.FONT_SUBTITLE);
+        nameLabel.setForeground(AppTheme.PRIMARY_BLUE_DARK);
+        textDetailsPanel.add(nameLabel);
+
+        String kota = paket.getKotaId() > 0 ? new KotaDAO().getNamaKotaById(paket.getKotaId()) : "N/A"; 
+        JLabel infoLabel = new JLabel(String.format("%s - %d hari - %d orang", kota, paket.getDurasi(), paket.getKuota()));
+        infoLabel.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
+        infoLabel.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+        textDetailsPanel.add(infoLabel);
+
+        JLabel ratingLabel = new JLabel("Rating: " + paket.getRating() + "/5.0");
+        ratingLabel.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
+        ratingLabel.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+        textDetailsPanel.add(ratingLabel);
+        
+        textDetailsPanel.add(Box.createVerticalStrut(5)); 
+
+        JLabel priceTitleLabel = new JLabel("Harga:");
+        priceTitleLabel.setFont(AppTheme.FONT_LABEL_FORM);
+        priceTitleLabel.setForeground(AppTheme.TEXT_DARK);
+        textDetailsPanel.add(priceTitleLabel);
+        
+        JLabel priceLabel = new JLabel("Rp " + String.format("%,.0f", paket.getHarga()));
+        priceLabel.setFont(AppTheme.FONT_PRIMARY_BOLD);
+        priceLabel.setForeground(AppTheme.ACCENT_ORANGE);
+        textDetailsPanel.add(priceLabel);
+
+        cardPanel.add(textDetailsPanel, BorderLayout.CENTER);
+
+        JPanel buttonPanelCard = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5,0));
+        buttonPanelCard.setOpaque(false);
+        JButton detailButtonCard = new JButton();
+        styleLinkButton(detailButtonCard, "Detail");
+        detailButtonCard.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, "Lihat Detail untuk: " + paket.getNamaPaket());
+        });
+        JButton bookingButtonCard = new JButton();
+        stylePrimaryButton(bookingButtonCard, "Booking Cepat");
+         bookingButtonCard.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, "Booking Cepat untuk: " + paket.getNamaPaket());
+        });
+        buttonPanelCard.add(detailButtonCard);
+        buttonPanelCard.add(bookingButtonCard);
+        cardPanel.add(buttonPanelCard, BorderLayout.SOUTH);
+
+        return cardPanel;
+    }
+
+
+    private void styleFormLabel(JLabel label, String defaultText) {
+        if (label != null) {
+            if(label.getText() == null || label.getText().isEmpty() || label.getText().matches("jLabel\\d+")){
+                 label.setText(defaultText);
+            }
+            label.setFont(AppTheme.FONT_LABEL_FORM);
+            label.setForeground(AppTheme.TEXT_DARK);
         }
     }
-
-    private void btn_bookingcepatActionPerformed(java.awt.event.ActionEvent evt) {
-        // TODO add your handling code here:
+    
+    private void styleComboBox(JComboBox<String> comboBox) {
+        if (comboBox == null) return;
+        comboBox.setFont(AppTheme.FONT_TEXT_FIELD);
+        comboBox.setBackground(AppTheme.INPUT_BACKGROUND);
+        comboBox.setForeground(AppTheme.INPUT_TEXT);
+        comboBox.setBorder(AppTheme.createDefaultInputBorder());
+        comboBox.setPreferredSize(new Dimension(comboBox.getPreferredSize().width, 30));
+    }
+    
+    private void stylePrimaryButton(JButton button, String text) {
+        if (button == null) return;
+        button.setText(text); 
+        button.setFont(AppTheme.FONT_BUTTON);
+        button.setBackground(AppTheme.BUTTON_PRIMARY_BACKGROUND);
+        button.setForeground(AppTheme.BUTTON_PRIMARY_TEXT);
+        button.setOpaque(true);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setBorder(new EmptyBorder(8, 15, 8, 15));
+        addHoverEffect(button, AppTheme.BUTTON_PRIMARY_BACKGROUND.darker(), AppTheme.BUTTON_PRIMARY_BACKGROUND);
     }
 
-    private void btn_sebelumActionPerformed(java.awt.event.ActionEvent evt) {
-        // TODO add your handling code here:
+    private void styleSecondaryButton(JButton button, String text) {
+        if (button == null) return;
+        button.setText(text); 
+        button.setFont(AppTheme.FONT_BUTTON);
+        button.setBackground(AppTheme.BUTTON_SECONDARY_BACKGROUND);
+        button.setForeground(AppTheme.BUTTON_SECONDARY_TEXT);
+        button.setOpaque(true);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setBorder(new EmptyBorder(8, 15, 8, 15));
+        addHoverEffect(button, AppTheme.BUTTON_SECONDARY_BACKGROUND.darker(), AppTheme.BUTTON_SECONDARY_BACKGROUND);
+    }
+    
+    private void styleLinkButton(JButton button, String text) {
+        if (button == null) return;
+        button.setText(text); 
+        button.setFont(AppTheme.FONT_LINK_BUTTON);
+        button.setForeground(AppTheme.BUTTON_LINK_FOREGROUND);
+        button.setOpaque(false); 
+        button.setContentAreaFilled(false); 
+        button.setBorderPainted(false); 
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        addHoverEffect(button, AppTheme.ACCENT_ORANGE, AppTheme.BUTTON_LINK_FOREGROUND, true); 
+    }
+    
+    private void addHoverEffect(JButton button, Color hoverColor, Color originalColor) {
+        addHoverEffect(button, hoverColor, originalColor, false);
     }
 
-    private void btn_backActionPerformed(java.awt.event.ActionEvent evt) {
-        // Mengganti navigasi JFrame dengan navigasi CardLayout di MainAppFrame
+    private void addHoverEffect(JButton button, Color hoverColor, Color originalColor, boolean changeForeground) {
+        if (button == null) return;
+        button.addMouseListener(new MouseAdapter() { 
+            @Override
+            public void mouseEntered(MouseEvent e) { 
+                if (changeForeground) button.setForeground(hoverColor);
+                else button.setBackground(hoverColor);
+            }
+            @Override
+            public void mouseExited(MouseEvent e) { 
+                if (changeForeground) button.setForeground(originalColor);
+                else button.setBackground(originalColor);
+            }
+        });
+    }
+    
+    private void setupActionListeners() {
+        if(btn_back != null) btn_back.addActionListener(this::btn_backActionPerformed);
+        if(btn_reset != null) btn_reset.addActionListener(this::btn_resetActionPerformed);
+        if(btn_sebelum != null) btn_sebelum.addActionListener(this::btn_sebelumActionPerformed);
+        if(btn_selanjutnya != null) btn_selanjutnya.addActionListener(this::btn_selanjutnyaActionPerformed);
+        if(cb_urutkan != null) cb_urutkan.addActionListener(this::cb_urutkanActionPerformed);
+        if(cb_durasi != null) cb_durasi.addActionListener(this::cb_durasiActionPerformed); 
+    }
+
+    private void cb_urutkanActionPerformed(java.awt.event.ActionEvent evt) {                                           
+        System.out.println("Urutkan berdasarkan: " + cb_urutkan.getSelectedItem());
+        applyFiltersAndSort(); 
+    }                                          
+
+    private void cb_durasiActionPerformed(java.awt.event.ActionEvent evt) {                                           
+        System.out.println("Filter durasi: " + cb_durasi.getSelectedItem());
+        applyFiltersAndSort(); 
+    }   
+
+    private void btn_resetActionPerformed(java.awt.event.ActionEvent evt) {                                           
+        if(cb_urutkan != null) cb_urutkan.setSelectedIndex(0);
+        if(cb_durasi != null) cb_durasi.setSelectedIndex(0);
+        System.out.println("Filter direset");
+        fetchAndDisplayInitialResults(); 
+    }       
+
+    private void btn_sebelumActionPerformed(java.awt.event.ActionEvent evt) {                                            
+        JOptionPane.showMessageDialog(this, "Tombol Sebelumnya diklik!", "Info", JOptionPane.INFORMATION_MESSAGE);
+    }                                           
+
+    private void btn_selanjutnyaActionPerformed(java.awt.event.ActionEvent evt) {                                            
+        JOptionPane.showMessageDialog(this, "Tombol Selanjutnya diklik!", "Info", JOptionPane.INFORMATION_MESSAGE);
+    }  
+
+    private void btn_backActionPerformed(java.awt.event.ActionEvent evt) {                                         
         if (mainAppFrame != null) {
-            mainAppFrame.showPanel(MainAppFrame.PANEL_BERANDA); // Kembali ke HomeScreen
+            mainAppFrame.showPanel(MainAppFrame.PANEL_BERANDA); 
+        } else {
+            System.err.println("MainAppFrame is null in PanelSearchResult (btn_back)");
         }
-    }
-
-    private void btn_detail1ActionPerformed(java.awt.event.ActionEvent evt) {
-        // Mengganti navigasi JFrame dengan navigasi CardLayout di MainAppFrame
-        // Asumsi ada konstanta PANEL_TRIP_DETAIL di MainAppFrame
-        if (mainAppFrame != null) {
-            // Contoh: mainAppFrame.showTripDetailPanel(tripId);
-            mainAppFrame.showPanel("detail trip"); // Placeholder
-        }
-    }
-
-    private void btn_bookingcepat1ActionPerformed(java.awt.event.ActionEvent evt) {
-        // TODO add your handling code here:
-    }
-
-    // Method main tidak diperlukan lagi di JPanel
+    }                                        
 }

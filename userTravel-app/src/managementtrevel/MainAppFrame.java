@@ -95,7 +95,7 @@ public class MainAppFrame extends JFrame {
         mainPanelContainer.add(panelUserOrder, PANEL_PESANAN_SAYA);
         
         // 5. Panel Search Result - Menggunakan kelas PanelSearchResult yang baru
-        PanelSearchResult panelSearchResult = new PanelSearchResult(this, "", "", ""); // Data default kosong
+        PanelSearchResult panelSearchResult = new PanelSearchResult(this, "", ""); // Data default kosong
         panelSearchResult.setName(PANEL_SEARCH_RESULT);
         mainPanelContainer.add(panelSearchResult, PANEL_SEARCH_RESULT);
         
@@ -254,12 +254,12 @@ public class MainAppFrame extends JFrame {
     }
     
     // Metode baru untuk menampilkan PanelSearchResult dengan data pencarian
-    public void showSearchResultPanel(String namaDestinasi, String tanggalKeberangkatan, String jumlahTraveler) {
+    public void showSearchResultPanel(String namaDestinasi, String tanggalKeberangkatan) {
         // Hapus instance PanelSearchResult yang lama jika ada
         removePanelIfExists(PANEL_SEARCH_RESULT);
 
         // Buat instance baru PanelSearchResult dengan data yang diterima
-        PanelSearchResult searchResultPanel = new PanelSearchResult(this, namaDestinasi, tanggalKeberangkatan, jumlahTraveler);
+        PanelSearchResult searchResultPanel = new PanelSearchResult(this, namaDestinasi, tanggalKeberangkatan);
         searchResultPanel.setName(PANEL_SEARCH_RESULT); // Set nama untuk CardLayout
 
         // Tambahkan panel baru ke mainPanelContainer
