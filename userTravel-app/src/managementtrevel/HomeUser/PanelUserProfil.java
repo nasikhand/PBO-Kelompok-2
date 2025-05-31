@@ -220,14 +220,14 @@ public class PanelUserProfil extends JPanel {
     private void styleDestructiveButton(JButton button, String text) {
         button.setText(text);
         button.setFont(AppTheme.FONT_BUTTON);
-        button.setBackground(AppTheme.ACCENT_ORANGE.darker()); // Warna merah/oranye tua untuk logout
+        button.setBackground(AppTheme.ACCENT_ORANGE); // Warna merah/oranye tua untuk logout
         button.setForeground(AppTheme.TEXT_WHITE);
         button.setOpaque(true);
         button.setBorderPainted(false);
         button.setFocusPainted(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         button.setBorder(new EmptyBorder(10, 20, 10, 20));
-        addHoverEffect(button, AppTheme.ACCENT_ORANGE.darker().darker(), AppTheme.ACCENT_ORANGE.darker());
+        addHoverEffect(button, AppTheme.ACCENT_ORANGE.darker(), AppTheme.ACCENT_ORANGE);
     }
 
     private void stylePasswordField(JPasswordField passwordField) {

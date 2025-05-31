@@ -1,24 +1,34 @@
 package managementtrevel.TripOrder;
 
-
-import managementtrevel.HomeUser.PanelUserProfil; // Menggunakan PanelUserProfil
+import Asset.AppTheme; // Impor AppTheme Anda
 import managementtrevel.MainAppFrame; // Impor MainAppFrame
-// import managementtrevel.TripDetailScreen.PanelTripDetail; // Jika TripDetail juga diubah menjadi JPanel
-import javax.swing.JPanel; // Mengubah dari JFrame menjadi JPanel
+
+import javax.swing.JPanel; 
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.BorderLayout; // Untuk layout utama
+import java.awt.BorderLayout; 
 import javax.swing.GroupLayout;
 import javax.swing.LayoutStyle.ComponentPlacement;
-import java.awt.Dimension; // Untuk mengatur ukuran preferred
+import java.awt.Dimension; 
+import java.awt.Color; 
+import java.awt.Cursor; 
+import java.awt.Font;   
+import javax.swing.BorderFactory; 
+import javax.swing.border.EmptyBorder; 
+import javax.swing.JLabel; 
+import javax.swing.JButton; 
+import javax.swing.JTextField; 
+import javax.swing.SwingConstants; 
+import javax.swing.JOptionPane; 
+import java.awt.event.MouseAdapter; 
+import java.awt.event.MouseEvent;  
 
 /**
  * PanelUserOrder class sebagai JPanel untuk diintegrasikan dengan CardLayout di MainAppFrame.
  * Ini akan menampilkan pesanan pengguna.
  */
-public class PanelUserOrder extends JPanel { // Mengubah dari UserOrder menjadi PanelUserOrder dan extends JPanel
+public class PanelUserOrder extends JPanel { 
 
-    private MainAppFrame mainAppFrame; // Referensi ke MainAppFrame
+    private MainAppFrame mainAppFrame; 
 
     // Deklarasi komponen UI
     private javax.swing.JButton btn_back;
@@ -35,55 +45,150 @@ public class PanelUserOrder extends JPanel { // Mengubah dari UserOrder menjadi 
     private javax.swing.JTextField tf_orang1; // "Rating"
     private javax.swing.JTextField tf_statusPesanan;
 
-    /**
-     * Creates new form PanelUserOrder
-     * @param mainAppFrame Referensi ke MainAppFrame induk.
-     */
     public PanelUserOrder(MainAppFrame mainAppFrame) {
         this.mainAppFrame = mainAppFrame;
-        initComponents(); // Inisialisasi komponen UI
+        initComponents(); // PENTING: Pastikan ini adalah kode dari NetBeans Anda
+        
         // Mengatur layout untuk JPanel utama ini (PanelUserOrder)
-        // Ini akan menampung semua komponen dari desain asli.
-        // Berdasarkan struktur desain Anda, ada btn_back, jLabel1, dan panelTemplate.
-        // Kita akan menggunakan GroupLayout langsung pada PanelUserOrder ini.
+        // setelah initComponents() menginisialisasi komponen.
         GroupLayout layout = new GroupLayout(this);
         this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+        layout.setAutoCreateGaps(true);
+        layout.setAutoCreateContainerGaps(true);
+
+        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(btn_back)
-                        .addPreferredGap(ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE) // Fleksibel space kiri
-                        .addComponent(jLabel1) // Judul "Pesanan Anda"
-                        .addPreferredGap(ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE) // Fleksibel space kanan
-                        // Menambahkan ruang kosong (rigid area) di kanan untuk menyeimbangkan tombol "Kembali"
-                        // Ukuran 80px adalah perkiraan lebar tombol "Kembali", sesuaikan jika perlu
-                        .addGap(160, 160, 160)) // Nilai disesuaikan untuk centering yang lebih baik
-                    .addComponent(panelTemplate, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                .addComponent(btn_back)
+                .addPreferredGap(ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE) // Dorong jLabel1 ke tengah jika bisa
+                .addComponent(jLabel1)
+                .addPreferredGap(ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)) // Dorong jLabel1 ke tengah jika bisa
+            .addComponent(panelTemplate, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE) // panelTemplate mengambil lebar penuh
         );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(btn_back))
-                .addPreferredGap(ComponentPlacement.RELATED)
-                .addComponent(panelTemplate, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(168, Short.MAX_VALUE)) // Sesuaikan tinggi jika perlu
+        layout.setVerticalGroup(layout.createSequentialGroup()
+            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                .addComponent(btn_back)
+                .addComponent(jLabel1))
+            .addPreferredGap(ComponentPlacement.UNRELATED) // Beri jarak antara header dan template
+            .addComponent(panelTemplate, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE) // panelTemplate mengambil sisa tinggi
         );
+        
+        applyAppTheme(); 
+        setupActionListeners(); 
     }
 
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
+    private void applyAppTheme() {
+        this.setBackground(AppTheme.PANEL_BACKGROUND);
+        this.setBorder(new EmptyBorder(15, 20, 15, 20)); 
+
+        if (jLabel1 != null) {
+            jLabel1.setFont(AppTheme.FONT_TITLE_LARGE);
+            jLabel1.setForeground(AppTheme.PRIMARY_BLUE_DARK);
+        }
+
+        if (btn_back != null) {
+            btn_back.setFont(AppTheme.FONT_BUTTON);
+            btn_back.setBackground(AppTheme.BUTTON_SECONDARY_BACKGROUND);
+            btn_back.setForeground(AppTheme.BUTTON_SECONDARY_TEXT);
+            btn_back.setOpaque(true);
+            btn_back.setBorderPainted(false);
+            btn_back.setFocusPainted(false);
+            btn_back.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btn_back.setBorder(new EmptyBorder(8, 15, 8, 15));
+            addHoverEffect(btn_back, AppTheme.BUTTON_SECONDARY_BACKGROUND.darker(), AppTheme.BUTTON_SECONDARY_BACKGROUND);
+        }
+
+        if (panelTemplate != null) {
+            panelTemplate.setBackground(Color.WHITE);
+            panelTemplate.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(AppTheme.BORDER_COLOR, 1),
+                new EmptyBorder(15, 15, 15, 15)
+            ));
+        }
+
+        if (foto_user != null) {
+            foto_user.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
+            foto_user.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+            foto_user.setBackground(AppTheme.BACKGROUND_LIGHT_GRAY);
+            foto_user.setOpaque(true);
+            foto_user.setHorizontalAlignment(SwingConstants.CENTER);
+            foto_user.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER_COLOR));
+            if (foto_user.getPreferredSize().width == 0 || foto_user.getPreferredSize().height == 0) {
+                 foto_user.setPreferredSize(new Dimension(111, 111)); 
+            }
+        }
+
+        styleDisplayTextField(tf_namakota, AppTheme.FONT_SUBTITLE, AppTheme.TEXT_DARK);
+        styleDisplayTextField(tf_hari, AppTheme.FONT_PRIMARY_MEDIUM, AppTheme.TEXT_SECONDARY_DARK);
+        styleDisplayTextField(tf_orang, AppTheme.FONT_PRIMARY_MEDIUM, AppTheme.TEXT_SECONDARY_DARK);
+        styleDisplayTextField(tf_orang1, AppTheme.FONT_PRIMARY_DEFAULT, AppTheme.TEXT_SECONDARY_DARK); 
+        styleDisplayTextField(tf_harga, AppTheme.FONT_PRIMARY_BOLD, AppTheme.ACCENT_ORANGE); 
+        styleDisplayTextField(tf_statusPesanan, AppTheme.FONT_PRIMARY_BOLD, AppTheme.PRIMARY_BLUE_DARK); 
+
+        if (jLabel7 != null) { 
+            jLabel7.setFont(AppTheme.FONT_LABEL_FORM);
+            jLabel7.setForeground(AppTheme.TEXT_DARK);
+        }
+        if (status_pesanan != null) { 
+            status_pesanan.setFont(AppTheme.FONT_LABEL_FORM);
+            status_pesanan.setForeground(AppTheme.TEXT_DARK);
+        }
+
+        if (btn_detailPesanan != null) {
+            btn_detailPesanan.setFont(AppTheme.FONT_BUTTON);
+            btn_detailPesanan.setBackground(AppTheme.BUTTON_PRIMARY_BACKGROUND);
+            btn_detailPesanan.setForeground(AppTheme.BUTTON_PRIMARY_TEXT);
+            btn_detailPesanan.setOpaque(true);
+            btn_detailPesanan.setBorderPainted(false);
+            btn_detailPesanan.setFocusPainted(false);
+            btn_detailPesanan.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btn_detailPesanan.setBorder(new EmptyBorder(8, 15, 8, 15));
+            addHoverEffect(btn_detailPesanan, AppTheme.BUTTON_PRIMARY_BACKGROUND.darker(), AppTheme.BUTTON_PRIMARY_BACKGROUND);
+        }
+    }
+    
+    private void styleDisplayTextField(JTextField textField, Font font, Color foregroundColor) {
+        if (textField != null) {
+            textField.setFont(font);
+            textField.setForeground(foregroundColor);
+            textField.setEditable(false);
+            textField.setBorder(null); 
+            textField.setOpaque(false); 
+            textField.setBackground(new Color(0,0,0,0)); 
+        }
+    }
+    
+    private void addHoverEffect(JButton button, Color hoverColor, Color originalColor) {
+        if (button == null) return; // Tambahkan null check
+        button.addMouseListener(new MouseAdapter() { 
+            @Override
+            public void mouseEntered(MouseEvent e) { 
+                button.setBackground(hoverColor);
+            }
+            @Override
+            public void mouseExited(MouseEvent e) { 
+                button.setBackground(originalColor);
+            }
+        });
+    }
+    
+    private void setupActionListeners() {
+        // Listener biasanya sudah diatur di initComponents oleh NetBeans.
+        // Jika Anda memindahkannya ke sini, pastikan untuk menghapusnya dari initComponents
+        // atau cek apakah listener sudah ada sebelum menambahkannya lagi.
+        // Contoh:
+        // if (btn_back != null && btn_back.getActionListeners().length == 0) {
+        //     btn_back.addActionListener(this::btn_backActionPerformed);
+        // }
+        // if (btn_detailPesanan != null && btn_detailPesanan.getActionListeners().length == 0) {
+        //     btn_detailPesanan.addActionListener(this::btn_detailPesananActionPerformed);
+        // }
+    }
+
+    // PENTING: Anda HARUS menyalin kode initComponents() dari file UserOrder.java Anda
+    // (yang dihasilkan oleh NetBeans GUI Builder) ke dalam metode di bawah ini.
+    // Kode placeholder di bawah ini TIDAK akan menghasilkan UI yang benar.
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         jLabel1 = new javax.swing.JLabel();
@@ -100,7 +205,9 @@ public class PanelUserOrder extends JPanel { // Mengubah dari UserOrder menjadi 
         status_pesanan = new javax.swing.JLabel();
         tf_statusPesanan = new javax.swing.JTextField();
 
-        // setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE); // Dihapus karena ini JPanel
+        // Layout untuk PanelUserOrder (this) akan diatur di konstruktor
+        // setelah initComponents() dipanggil.
+        // Baris GroupLayout di konstruktor PanelUserOrder akan menggunakan komponen yang diinisialisasi di sini.
 
         jLabel1.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
         jLabel1.setText("Pesanan Anda");
@@ -154,8 +261,7 @@ public class PanelUserOrder extends JPanel { // Mengubah dari UserOrder menjadi 
         foto_user.setText("FOTO");
         foto_user.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         foto_user.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-        // foto_user.setFocusCycleRoot(true); // Dihapus karena ini JPanel
-
+        
         status_pesanan.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         status_pesanan.setText("Status Pesanan:");
 
@@ -227,26 +333,29 @@ public class PanelUserOrder extends JPanel { // Mengubah dari UserOrder menjadi 
                         .addComponent(foto_user, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(22, Short.MAX_VALUE))
         );
-    }// </editor-fold>
+    }// </editor-fold>//GEN-END:initComponents
 
-    private void btn_backActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btn_backActionPerformed(java.awt.event.ActionEvent evt) {                                         
         if (mainAppFrame != null) {
-            mainAppFrame.showPanel(MainAppFrame.PANEL_USER_PROFILE); // Kembali ke PanelUserProfil
+            mainAppFrame.showPanel(MainAppFrame.PANEL_USER_PROFILE); 
+        } else {
+            System.err.println("MainAppFrame is null in PanelUserOrder (btn_back)");
         }
-    }
+    }                                        
 
-    private void btn_detailPesananActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btn_detailPesananActionPerformed(java.awt.event.ActionEvent evt) {                                                  
         if (mainAppFrame != null) {
-            // Asumsi ada panel untuk TripDetail di MainAppFrame
-            mainAppFrame.showPanel("Detail"); // Ganti dengan konstanta yang sesuai
+            JOptionPane.showMessageDialog(this, "Navigasi ke Detail Pesanan (Belum diimplementasikan di MainAppFrame)", "Info", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+             System.err.println("MainAppFrame is null in PanelUserOrder (btn_detailPesanan)");
         }
-    }
+    }                                                 
 
-    private void tf_hargaActionPerformed(java.awt.event.ActionEvent evt) {
+    private void tf_hargaActionPerformed(java.awt.event.ActionEvent evt) {                                         
         // TODO add your handling code here:
-    }
+    }                                        
 
-    private void tf_statusPesananActionPerformed(java.awt.event.ActionEvent evt) {
+    private void tf_statusPesananActionPerformed(java.awt.event.ActionEvent evt) {                                                 
         // TODO add your handling code here:
-    }
+    }                                                
 }
