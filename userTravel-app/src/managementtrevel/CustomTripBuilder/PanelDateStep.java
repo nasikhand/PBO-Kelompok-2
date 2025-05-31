@@ -1,24 +1,29 @@
 package managementtrevel.CustomTripBuilder;
 
-import Asset.AppTheme; // Impor AppTheme Anda
-import managementtrevel.MainAppFrame; // Impor MainAppFrame
+import Asset.AppTheme; 
+import managementtrevel.MainAppFrame; 
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Date; 
+import java.text.SimpleDateFormat; 
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
-// Mengubah nama kelas dan extends JPanel
+// Impor JDateChooser
+import com.toedter.calendar.JDateChooser;
+import com.toedter.calendar.JTextFieldDateEditor;
+
+
 public class PanelDateStep extends JPanel {
 
-    private MainAppFrame mainAppFrame; // Referensi ke MainAppFrame
+    private MainAppFrame mainAppFrame; 
 
     private JPanel panelBuildSteps;
     private JPanel panelCustomTripMain;
@@ -39,12 +44,12 @@ public class PanelDateStep extends JPanel {
 
     private JPanel panelDateSelection;
     private JLabel lblStartDate;
-    private JTextField txtStartDate; 
+    private JDateChooser dateChooserStartDate; 
     private JLabel lblEndDate;
-    private JTextField txtEndDate;   
+    private JDateChooser dateChooserEndDate; 
 
     private JPanel panelTripSummary;
-    private JPanel panelSummaryDates; // Pastikan ini adalah variabel instance
+    private JPanel panelSummaryDates; 
     private JLabel lblSummaryStartDateDisplay;
     private JLabel lblSummaryEndDateDisplay;
     private JScrollPane jScrollPaneDestinasiSummary;
@@ -59,16 +64,17 @@ public class PanelDateStep extends JPanel {
 
     private DefaultListModel<String> listModelDestinasiDisplay;
     private final List<String> currentDestinations;
-    private String selectedStartDate;
-    private String selectedEndDate;
+    private Date selectedStartDate; 
+    private Date selectedEndDate;   
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); // Format tanggal
 
     private final String ACTIVE_STEP_ICON = "● ";
     private final String INACTIVE_STEP_ICON = "○ ";
-    private final String START_DATE_PLACEHOLDER = "YYYY-MM-DD"; 
-    private final String END_DATE_PLACEHOLDER = "YYYY-MM-DD"; 
+    // Placeholder tidak lagi relevan untuk JDateChooser dengan cara yang sama
     
+    // Variabel instance yang mungkin sebelumnya lokal di initializeUI()
     private JPanel panelMainHeader;
-    private JPanel panelMainFooter;  
+    private JPanel panelMainFooter;
 
     public PanelDateStep(MainAppFrame mainAppFrame, List<String> destinations) {
         this.mainAppFrame = mainAppFrame;
@@ -112,7 +118,8 @@ public class PanelDateStep extends JPanel {
         panelCustomTripMain = new JPanel(new BorderLayout(10, 10));
         panelCustomTripMain.setBorder(new EmptyBorder(0, 10, 0, 0));
 
-        JPanel panelMainHeader = new JPanel(new BorderLayout());
+        // Inisialisasi panelMainHeader sebagai variabel instance
+        this.panelMainHeader = new JPanel(new BorderLayout());
         lblCustomTripBuilderTitle = new JLabel("Custom Trip Builder - Pilih Tanggal"); 
         btnSaveTrip = new JButton("Simpan Trip");
         panelMainHeader.add(lblCustomTripBuilderTitle, BorderLayout.WEST);
@@ -136,19 +143,21 @@ public class PanelDateStep extends JPanel {
         gbcDate.gridx = 0; gbcDate.gridy = 0;
         panelDateSelection.add(lblStartDate, gbcDate);
 
-        txtStartDate = new JTextField(15);
-        txtStartDate.setToolTipText("Masukkan tanggal mulai (YYYY-MM-DD)");
+        dateChooserStartDate = new JDateChooser();
+        dateChooserStartDate.setDateFormatString("yyyy-MM-dd"); 
+        dateChooserStartDate.setPreferredSize(new Dimension(150, 28)); // Sesuaikan tinggi agar konsisten
         gbcDate.gridx = 1; gbcDate.gridy = 0; gbcDate.fill = GridBagConstraints.HORIZONTAL; gbcDate.weightx = 1.0;
-        panelDateSelection.add(txtStartDate, gbcDate);
+        panelDateSelection.add(dateChooserStartDate, gbcDate);
 
         lblEndDate = new JLabel("Tanggal Selesai:");
         gbcDate.gridx = 0; gbcDate.gridy = 1; gbcDate.fill = GridBagConstraints.NONE; gbcDate.weightx = 0;
         panelDateSelection.add(lblEndDate, gbcDate);
 
-        txtEndDate = new JTextField(15);
-        txtEndDate.setToolTipText("Masukkan tanggal selesai (YYYY-MM-DD)");
+        dateChooserEndDate = new JDateChooser();
+        dateChooserEndDate.setDateFormatString("yyyy-MM-dd");
+        dateChooserEndDate.setPreferredSize(new Dimension(150, 28)); // Sesuaikan tinggi
         gbcDate.gridx = 1; gbcDate.gridy = 1; gbcDate.fill = GridBagConstraints.HORIZONTAL; gbcDate.weightx = 1.0;
-        panelDateSelection.add(txtEndDate, gbcDate);
+        panelDateSelection.add(dateChooserEndDate, gbcDate);
         
         gbcDate.gridx = 0; gbcDate.gridy = 2; gbcDate.gridwidth = 2; gbcDate.weighty = 1.0; 
         panelDateSelection.add(new JLabel(), gbcDate); 
@@ -158,7 +167,6 @@ public class PanelDateStep extends JPanel {
 
         panelTripSummary = new JPanel(new BorderLayout(5,5));
         
-        // Inisialisasi panelSummaryDates sebagai variabel instance
         this.panelSummaryDates = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
         lblSummaryStartDateDisplay = new JLabel("Mulai: -");
         lblSummaryEndDateDisplay = new JLabel("Selesai: -");
@@ -193,7 +201,8 @@ public class PanelDateStep extends JPanel {
         splitPaneContent.setContinuousLayout(true);
         panelCustomTripMain.add(splitPaneContent, BorderLayout.CENTER);
 
-        JPanel panelMainFooter = new JPanel(new BorderLayout());
+        // Inisialisasi panelMainFooter sebagai variabel instance
+        this.panelMainFooter = new JPanel(new BorderLayout());
         btnPrevStep = new JButton("< Kembali ke Destinasi"); 
         btnNextStep = new JButton("Lanjut ke Transportasi >");
         panelMainFooter.add(btnPrevStep, BorderLayout.WEST); 
@@ -248,15 +257,10 @@ public class PanelDateStep extends JPanel {
         panelTripSummary.setOpaque(false);
         panelEstimatedCost.setOpaque(false);
         
-        // Pastikan panelSummaryDates tidak null sebelum diakses
         if (panelSummaryDates != null) {
             panelSummaryDates.setOpaque(false);
-            // Styling komponen di dalam panelSummaryDates
-            // Lebih aman untuk mengambil komponen berdasarkan referensi langsung atau nama jika memungkinkan,
-            // daripada berdasarkan indeks, karena urutan bisa berubah.
-            // Namun, jika urutannya tetap, ini bisa jalan.
             Component[] dateSummaryComponents = panelSummaryDates.getComponents();
-            if (dateSummaryComponents.length > 0 && dateSummaryComponents[0] instanceof JLabel) {
+            if (dateSummaryComponents.length > 0 && dateSummaryComponents[0] instanceof JLabel) { // "Tanggal Dipilih: "
                 ((JLabel)dateSummaryComponents[0]).setFont(AppTheme.FONT_LABEL_FORM); 
                 ((JLabel)dateSummaryComponents[0]).setForeground(AppTheme.TEXT_DARK);
             }
@@ -266,22 +270,13 @@ public class PanelDateStep extends JPanel {
             }
         }
 
-
         lblStartDate.setFont(AppTheme.FONT_LABEL_FORM);
         lblStartDate.setForeground(AppTheme.TEXT_DARK);
-        txtStartDate.setFont(AppTheme.FONT_TEXT_FIELD);
-        txtStartDate.setBorder(AppTheme.createDefaultInputBorder());
-        txtStartDate.setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
-        txtStartDate.setText(START_DATE_PLACEHOLDER);
-        addFocusBorderEffect(txtStartDate, START_DATE_PLACEHOLDER);
+        styleDateChooser(dateChooserStartDate);
 
         lblEndDate.setFont(AppTheme.FONT_LABEL_FORM);
         lblEndDate.setForeground(AppTheme.TEXT_DARK);
-        txtEndDate.setFont(AppTheme.FONT_TEXT_FIELD);
-        txtEndDate.setBorder(AppTheme.createDefaultInputBorder());
-        txtEndDate.setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
-        txtEndDate.setText(END_DATE_PLACEHOLDER);
-        addFocusBorderEffect(txtEndDate, END_DATE_PLACEHOLDER);
+        styleDateChooser(dateChooserEndDate);
         
         lblSummaryStartDateDisplay.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
         lblSummaryStartDateDisplay.setForeground(AppTheme.TEXT_SECONDARY_DARK);
@@ -303,6 +298,36 @@ public class PanelDateStep extends JPanel {
         
         if (panelMainHeader != null) panelMainHeader.setOpaque(false);
         if (panelMainFooter != null) panelMainFooter.setOpaque(false);
+    }
+
+    private void styleDateChooser(JDateChooser dateChooser) {
+        if (dateChooser == null) return;
+        dateChooser.setFont(AppTheme.FONT_TEXT_FIELD);
+        dateChooser.getCalendarButton().setFont(AppTheme.FONT_BUTTON);
+        dateChooser.getCalendarButton().setBackground(AppTheme.PRIMARY_BLUE_LIGHT);
+        dateChooser.getCalendarButton().setForeground(AppTheme.TEXT_WHITE);
+        dateChooser.getCalendarButton().setFocusPainted(false);
+        dateChooser.getCalendarButton().setBorder(BorderFactory.createEmptyBorder(2,5,2,5)); // Padding tombol kalender
+
+        JTextFieldDateEditor editor = (JTextFieldDateEditor) dateChooser.getDateEditor();
+        editor.setFont(AppTheme.FONT_TEXT_FIELD);
+        editor.setBackground(AppTheme.INPUT_BACKGROUND);
+        editor.setForeground(AppTheme.INPUT_TEXT); 
+        editor.setBorder(AppTheme.createDefaultInputBorder());
+        editor.setEditable(false); // Agar user hanya bisa memilih dari kalender
+
+        dateChooser.getDateEditor().addPropertyChangeListener("date", evt -> {
+            Date newDate = (Date) evt.getNewValue();
+            // Tidak perlu lagi set foreground untuk placeholder karena JDateChooser menanganinya
+            // Update summary
+            if (dateChooser == dateChooserStartDate) {
+                selectedStartDate = newDate;
+                lblSummaryStartDateDisplay.setText("Mulai: " + (newDate != null ? dateFormat.format(newDate) : "-"));
+            } else if (dateChooser == dateChooserEndDate) {
+                selectedEndDate = newDate;
+                lblSummaryEndDateDisplay.setText("Selesai: " + (newDate != null ? dateFormat.format(newDate) : "-"));
+            }
+        });
     }
     
     private void stylePrimaryButton(JButton button, String text) {
@@ -344,38 +369,6 @@ public class PanelDateStep extends JPanel {
         });
     }
     
-    private void addFocusBorderEffect(JTextField textField, String placeholder) {
-        textField.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                textField.setBorder(AppTheme.createFocusBorder());
-                 if (textField.getText().equals(placeholder)) {
-                    textField.setText("");
-                    textField.setForeground(AppTheme.INPUT_TEXT);
-                }
-            }
-            @Override
-            public void focusLost(FocusEvent e) {
-                textField.setBorder(AppTheme.createDefaultInputBorder());
-                if (textField.getText().isEmpty()) {
-                    textField.setText(placeholder);
-                    textField.setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
-                }
-                // Update summary on focus lost if text is valid (not placeholder)
-                if (textField == txtStartDate && !txtStartDate.getText().equals(START_DATE_PLACEHOLDER) && !txtStartDate.getText().isEmpty()) {
-                    lblSummaryStartDateDisplay.setText("Mulai: " + txtStartDate.getText());
-                } else if (textField == txtStartDate) { // Jika kosong atau placeholder setelah focus lost
-                     lblSummaryStartDateDisplay.setText("Mulai: -");
-                }
-                if (textField == txtEndDate && !txtEndDate.getText().equals(END_DATE_PLACEHOLDER) && !txtEndDate.getText().isEmpty()) {
-                    lblSummaryEndDateDisplay.setText("Selesai: " + txtEndDate.getText());
-                } else if (textField == txtEndDate) { // Jika kosong atau placeholder setelah focus lost
-                    lblSummaryEndDateDisplay.setText("Selesai: -");
-                }
-            }
-        });
-    }
-
     private void setupLogicAndVisuals() {
         updateBuildStepLabels(2); 
         
@@ -414,20 +407,22 @@ public class PanelDateStep extends JPanel {
     }
 
     private void btnSaveTripActionPerformed(ActionEvent evt) {
-        selectedStartDate = txtStartDate.getText().trim();
-        selectedEndDate = txtEndDate.getText().trim();
+        // selectedStartDate dan selectedEndDate sudah diupdate oleh listener JDateChooser
         
-        if (selectedStartDate.equals(START_DATE_PLACEHOLDER) || selectedEndDate.equals(END_DATE_PLACEHOLDER) || 
-            selectedStartDate.isEmpty() || selectedEndDate.isEmpty()) {
+        if (selectedStartDate == null || selectedEndDate == null) {
             JOptionPane.showMessageDialog(this, "Pilih tanggal mulai dan selesai yang valid sebelum menyimpan.", "Tidak Dapat Menyimpan", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+         if (selectedEndDate.before(selectedStartDate)) {
+            JOptionPane.showMessageDialog(this, "Tanggal Selesai harus setelah atau sama dengan Tanggal Mulai.", "Input Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         String message = String.format(
             "Trip Disimpan (Simulasi):\nDestinasi: %s\nTanggal Mulai: %s\nTanggal Selesai: %s\nEstimasi Biaya: %s",
             currentDestinations, 
-            selectedStartDate, 
-            selectedEndDate,
+            dateFormat.format(selectedStartDate), 
+            dateFormat.format(selectedEndDate),
             lblEstimasiHargaValue.getText()
         );
         JOptionPane.showMessageDialog(this, message, "Simpan Berhasil", JOptionPane.INFORMATION_MESSAGE);
@@ -435,6 +430,7 @@ public class PanelDateStep extends JPanel {
 
     private void btnPrevStepActionPerformed(ActionEvent evt) {
         if (mainAppFrame != null) {
+            // Saat kembali, kita tidak perlu mengirim data tanggal karena akan diisi ulang di DestinationStep
             mainAppFrame.showPanel(MainAppFrame.PANEL_DESTINATION_STEP); 
         } else {
             System.err.println("MainAppFrame reference is null in PanelDateStep (Prev).");
@@ -442,22 +438,28 @@ public class PanelDateStep extends JPanel {
     }
 
     private void btnNextStepActionPerformed(ActionEvent evt) {
-        selectedStartDate = txtStartDate.getText().trim();
-        selectedEndDate = txtEndDate.getText().trim();
-
-        if (selectedStartDate.isEmpty() || selectedStartDate.equals(START_DATE_PLACEHOLDER)) {
+        // selectedStartDate dan selectedEndDate sudah diupdate oleh listener JDateChooser
+        if (selectedStartDate == null) {
             JOptionPane.showMessageDialog(this, "Masukkan Tanggal Mulai yang valid.", "Input Error", JOptionPane.ERROR_MESSAGE);
-            txtStartDate.requestFocus();
+            dateChooserStartDate.requestFocusInWindow(); 
             return;
         }
-        if (selectedEndDate.isEmpty() || selectedEndDate.equals(END_DATE_PLACEHOLDER)) {
+        if (selectedEndDate == null) {
             JOptionPane.showMessageDialog(this, "Masukkan Tanggal Selesai yang valid.", "Input Error", JOptionPane.ERROR_MESSAGE);
-            txtEndDate.requestFocus();
+            dateChooserEndDate.requestFocusInWindow();
+            return;
+        }
+        if (selectedEndDate.before(selectedStartDate)) {
+            JOptionPane.showMessageDialog(this, "Tanggal Selesai harus setelah atau sama dengan Tanggal Mulai.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            dateChooserEndDate.requestFocusInWindow();
             return;
         }
         
         if (mainAppFrame != null) {
-            mainAppFrame.showPanel(MainAppFrame.PANEL_TRANSPORT_STEP, currentDestinations, selectedStartDate, selectedEndDate);
+            mainAppFrame.showPanel(MainAppFrame.PANEL_TRANSPORT_STEP, 
+                                   currentDestinations, 
+                                   dateFormat.format(selectedStartDate), 
+                                   dateFormat.format(selectedEndDate));
         } else {
              System.err.println("MainAppFrame reference is null in PanelDateStep (Next).");
         }
