@@ -13,6 +13,7 @@ import managementtrevel.CustomTripBuilder.PanelFinalStep;
 import managementtrevel.CustomTripBuilder.PanelTransportStep;
 import managementtrevel.HomeUser.PanelBeranda;
 import managementtrevel.HomeUser.PanelUserProfil;
+import managementtrevel.SearchResultScreen.PanelSearchResult;
 import managementtrevel.TripOrder.PanelOrderHistory;
 import managementtrevel.TripOrder.PanelUserOrder;
 import model.UserModel; 
@@ -30,6 +31,7 @@ public class MainAppFrame extends JFrame {
     public static final String PANEL_USER_PROFILE = "PanelUserProfile";
     public static final String PANEL_RIWAYAT_PESANAN = "PanelRiwayatPesanan";
     public static final String PANEL_PESANAN_SAYA = "PanelPesananSaya";
+    public static final String PANEL_SEARCH_RESULT = "TripDetailPanel";
     
     // Tambahkan konstanta untuk panel placeholder lainnya jika masih digunakan
     public static final String PANEL_DESTINASI_PLACEHOLDER = "PanelDestinasiPlaceholder";
@@ -92,7 +94,12 @@ public class MainAppFrame extends JFrame {
         panelUserOrder.setName(PANEL_PESANAN_SAYA); 
         mainPanelContainer.add(panelUserOrder, PANEL_PESANAN_SAYA);
         
-        // 5. Panel DestinationStep (Langkah pertama Custom Trip)
+        // 5. Panel Search Result - Menggunakan kelas PanelSearchResult yang baru
+        PanelSearchResult panelSearchResult = new PanelSearchResult(this, "", "", ""); // Data default kosong
+        panelSearchResult.setName(PANEL_SEARCH_RESULT);
+        mainPanelContainer.add(panelSearchResult, PANEL_SEARCH_RESULT);
+        
+        // 6. Panel DestinationStep (Langkah pertama Custom Trip)
         PanelDestinationStep panelDestinationStep = new PanelDestinationStep(this);
         panelDestinationStep.setName(PANEL_DESTINATION_STEP); 
         mainPanelContainer.add(panelDestinationStep, PANEL_DESTINATION_STEP);
@@ -244,6 +251,31 @@ public class MainAppFrame extends JFrame {
             showPanel(panelName);
         }
         if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
+    }
+    
+    // Metode baru untuk menampilkan PanelSearchResult dengan data pencarian
+    public void showSearchResultPanel(String namaDestinasi, String tanggalKeberangkatan, String jumlahTraveler) {
+        // Hapus instance PanelSearchResult yang lama jika ada
+        removePanelIfExists(PANEL_SEARCH_RESULT);
+
+        // Buat instance baru PanelSearchResult dengan data yang diterima
+        PanelSearchResult searchResultPanel = new PanelSearchResult(this, namaDestinasi, tanggalKeberangkatan, jumlahTraveler);
+        searchResultPanel.setName(PANEL_SEARCH_RESULT); // Set nama untuk CardLayout
+
+        // Tambahkan panel baru ke mainPanelContainer
+        mainPanelContainer.add(searchResultPanel, PANEL_SEARCH_RESULT);
+
+        // Tampilkan panel SearchResult
+        cardLayout.show(mainPanelContainer, PANEL_SEARCH_RESULT);
+        System.out.println("Menampilkan panel: " + PANEL_SEARCH_RESULT + " dengan hasil pencarian.");
+
+        // Pastikan UI diperbarui
+        revalidate();
+        repaint();
+
+        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) {
+            sidebarPanel.collapsePublic();
+        }
     }
     
     private void removePanelIfExists(String panelName){

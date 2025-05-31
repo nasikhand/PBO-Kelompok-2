@@ -520,8 +520,8 @@ public class PanelBeranda extends JPanel {
             System.out.println("Tanggal: " + tanggalStr);
             System.out.println("Travelers: " + travelers);
 
-            SearchResult hasil = new SearchResult(destinasiPilihan, tanggalStr, travelers);
-            hasil.setVisible(true);
+            // Panggil metode di MainAppFrame untuk menampilkan PanelSearchResult
+            mainAppFrame.showSearchResultPanel(destinasiPilihan, tanggalStr, travelers);
         }
     }                                          
 
