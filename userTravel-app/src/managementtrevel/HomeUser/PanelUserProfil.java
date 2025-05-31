@@ -1,6 +1,7 @@
 package managementtrevel.HomeUser;
 
 import Asset.AppTheme;
+import controller.UbahPasswordController;
 import controller.UserProfileController;
 import db.dao.UserDAO;
 import java.awt.*;
@@ -15,7 +16,6 @@ import java.nio.file.StandardCopyOption;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import managementtrevel.MainAppFrame;
-import static managementtrevel.MainAppFrame.PANEL_RIWAYAT_PESANAN;
 import model.Session;
 import model.UserModel;
 
@@ -24,6 +24,7 @@ public class PanelUserProfil extends JPanel {
     private UserProfileController controller;
     private UserDAO userDAO = new UserDAO();
     private MainAppFrame mainAppFrame;
+     private UbahPasswordController ubahPasswordController;
 
     private JButton btn_editFoto;
     private JButton btn_logout;
@@ -57,6 +58,7 @@ public class PanelUserProfil extends JPanel {
         initComponents(); // Inisialisasi komponen UI dari NetBeans
         applyAppTheme();  // Terapkan tema kustom
         setupEventListeners(); // Atur event listener setelah komponen diinisialisasi
+        this.ubahPasswordController = new UbahPasswordController(this.userDAO); 
 
         this.controller = new UserProfileController();
 
@@ -226,6 +228,24 @@ public class PanelUserProfil extends JPanel {
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         button.setBorder(new EmptyBorder(10, 20, 10, 20));
         addHoverEffect(button, AppTheme.ACCENT_ORANGE.darker().darker(), AppTheme.ACCENT_ORANGE.darker());
+    }
+
+    private void stylePasswordField(JPasswordField passwordField) {
+        passwordField.setFont(AppTheme.FONT_TEXT_FIELD);
+        passwordField.setBackground(AppTheme.INPUT_BACKGROUND);
+        passwordField.setForeground(AppTheme.INPUT_TEXT);
+        passwordField.setBorder(AppTheme.createDefaultInputBorder());
+        passwordField.setMargin(new Insets(4, 8, 4, 8));
+         passwordField.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                passwordField.setBorder(AppTheme.createFocusBorder());
+            }
+            @Override
+            public void focusLost(FocusEvent e) {
+                passwordField.setBorder(AppTheme.createDefaultInputBorder());
+            }
+        });
     }
 
 
@@ -490,6 +510,116 @@ public class PanelUserProfil extends JPanel {
         }
     }
 
+    private void showUbahPasswordDialog() {
+        JDialog ubahPasswordDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Ubah Password", true);
+        ubahPasswordDialog.setSize(450, 320); 
+        ubahPasswordDialog.setLocationRelativeTo(this.btn_ubahPassword); // Muncul dekat tombol ubah password
+        ubahPasswordDialog.setLayout(new BorderLayout(10,10));
+        ubahPasswordDialog.getContentPane().setBackground(AppTheme.PANEL_BACKGROUND);
+        
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBorder(new EmptyBorder(20,20,20,20));
+        formPanel.setBackground(Color.WHITE); 
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8,8,8,8); 
+        gbc.anchor = GridBagConstraints.WEST;
+
+        JLabel lblPasswordSekarang = new JLabel(); // Teks diatur oleh styleFormLabel
+        styleFormLabel(lblPasswordSekarang, "Password Sekarang:");
+        gbc.gridx = 0; gbc.gridy = 0;
+        formPanel.add(lblPasswordSekarang, gbc);
+
+        JPasswordField txtPasswordSekarang = new JPasswordField(20);
+        stylePasswordField(txtPasswordSekarang); 
+        gbc.gridx = 1; gbc.gridy = 0; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
+        formPanel.add(txtPasswordSekarang, gbc);
+
+        JLabel lblPasswordBaru = new JLabel();
+        styleFormLabel(lblPasswordBaru, "Password Baru:");
+        gbc.gridx = 0; gbc.gridy = 1; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0;
+        formPanel.add(lblPasswordBaru, gbc);
+
+        JPasswordField txtPasswordBaru = new JPasswordField(20);
+        stylePasswordField(txtPasswordBaru);
+        gbc.gridx = 1; gbc.gridy = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
+        formPanel.add(txtPasswordBaru, gbc);
+
+        JLabel lblKonfirmasiPasswordBaru = new JLabel();
+        styleFormLabel(lblKonfirmasiPasswordBaru, "Konfirmasi Password Baru:");
+        gbc.gridx = 0; gbc.gridy = 2; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0;
+        formPanel.add(lblKonfirmasiPasswordBaru, gbc);
+
+        JPasswordField txtKonfirmasiPasswordBaru = new JPasswordField(20);
+        stylePasswordField(txtKonfirmasiPasswordBaru);
+        gbc.gridx = 1; gbc.gridy = 2; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
+        formPanel.add(txtKonfirmasiPasswordBaru, gbc);
+        
+        JPanel buttonPanelDialog = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10)); 
+        buttonPanelDialog.setOpaque(false); 
+
+        JButton btnKonfirmasiDialog = new JButton();
+        stylePrimaryButton(btnKonfirmasiDialog, "Konfirmasi");
+        
+        JButton btnBatalDialog = new JButton();
+        styleSecondaryButton(btnBatalDialog, "Batal");
+
+        btnKonfirmasiDialog.addActionListener(e -> {
+            String passwordSekarang = new String(txtPasswordSekarang.getPassword());
+            String passwordBaru = new String(txtPasswordBaru.getPassword());
+            String konfirmasiPasswordBaru = new String(txtKonfirmasiPasswordBaru.getPassword());
+
+            if (!Session.isLoggedIn() || Session.currentUser == null) {
+                JOptionPane.showMessageDialog(ubahPasswordDialog, "Sesi pengguna tidak valid!", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            if (passwordSekarang.isEmpty() || passwordBaru.isEmpty() || konfirmasiPasswordBaru.isEmpty()) {
+                JOptionPane.showMessageDialog(ubahPasswordDialog, "Semua field password harus diisi!", "Input Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (!passwordBaru.equals(konfirmasiPasswordBaru)) {
+                JOptionPane.showMessageDialog(ubahPasswordDialog, "Password baru dan konfirmasi tidak cocok!", "Input Error", JOptionPane.WARNING_MESSAGE);
+                txtKonfirmasiPasswordBaru.requestFocus();
+                txtKonfirmasiPasswordBaru.setBorder(AppTheme.createFocusBorder());
+                return;
+            }
+            if (passwordBaru.length() < 6) {
+                JOptionPane.showMessageDialog(ubahPasswordDialog, "Password baru minimal 6 karakter!", "Input Error", JOptionPane.WARNING_MESSAGE);
+                txtPasswordBaru.requestFocus();
+                txtPasswordBaru.setBorder(AppTheme.createFocusBorder());
+                return;
+            }
+
+            String hasil = ubahPasswordController.ubahPassword(
+                Session.currentUser.getId(),
+                passwordSekarang,
+                passwordBaru,
+                konfirmasiPasswordBaru 
+            );
+
+            if (hasil.equals("Password berhasil diubah.")) {
+                 JOptionPane.showMessageDialog(ubahPasswordDialog, hasil, "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                ubahPasswordDialog.dispose();
+            } else {
+                 JOptionPane.showMessageDialog(ubahPasswordDialog, hasil, "Gagal", JOptionPane.ERROR_MESSAGE);
+                 if(hasil.toLowerCase().contains("lama salah")){ // Perbaiki pengecekan pesan error
+                    txtPasswordSekarang.requestFocus();
+                    txtPasswordSekarang.setBorder(AppTheme.createFocusBorder());
+                 }
+            }
+        });
+
+        btnBatalDialog.addActionListener(e -> ubahPasswordDialog.dispose());
+
+        buttonPanelDialog.add(btnBatalDialog);
+        buttonPanelDialog.add(btnKonfirmasiDialog);
+        
+        ubahPasswordDialog.add(formPanel, BorderLayout.CENTER);
+        ubahPasswordDialog.add(buttonPanelDialog, BorderLayout.SOUTH);
+        ((JPanel)ubahPasswordDialog.getContentPane()).setBorder(new EmptyBorder(10,10,10,10)); 
+
+        ubahPasswordDialog.setVisible(true);
+    }
+
     @SuppressWarnings("unchecked")
     private void initComponents() {
         // Kode initComponents() Anda yang dihasilkan NetBeans ada di sini.
@@ -662,11 +792,7 @@ public class PanelUserProfil extends JPanel {
 
     private void btn_ubahPasswordActionPerformed(java.awt.event.ActionEvent evt) {
         if (mainAppFrame != null) {
-            // Ganti "PANEL_UBAH_PASSWORD" dengan konstanta nama panel yang benar di MainAppFrame
-            // mainAppFrame.showPanel(MainAppFrame.PANEL_UBAH_PASSWORD);
-            // JOptionPane.showMessageDialog(this, "Navigasi ke Ubah Password (Belum diimplementasikan di MainAppFrame)", "Info", JOptionPane.INFORMATION_MESSAGE);
-            // Contoh jika UbahPassword adalah JFrame terpisah (kurang ideal untuk CardLayout)
-            new UbahPassword().setVisible(true);
+            showUbahPasswordDialog(); 
         }
     }
 
