@@ -13,6 +13,8 @@ import managementtrevel.CustomTripBuilder.PanelFinalStep;
 import managementtrevel.CustomTripBuilder.PanelTransportStep;
 import managementtrevel.HomeUser.PanelBeranda;
 import managementtrevel.HomeUser.PanelUserProfil;
+import managementtrevel.TripOrder.PanelOrderHistory;
+import managementtrevel.TripOrder.PanelUserOrder;
 import model.UserModel; 
 
 
@@ -26,11 +28,13 @@ public class MainAppFrame extends JFrame {
     // Konstanta untuk nama panel
     public static final String PANEL_BERANDA = "PanelBeranda";
     public static final String PANEL_USER_PROFILE = "PanelUserProfile";
+    public static final String PANEL_RIWAYAT_PESANAN = "PanelRiwayatPesanan";
+    public static final String PANEL_PESANAN_SAYA = "PanelPesananSaya";
+    
     // Tambahkan konstanta untuk panel placeholder lainnya jika masih digunakan
     public static final String PANEL_DESTINASI_PLACEHOLDER = "PanelDestinasiPlaceholder";
     public static final String PANEL_PEMESANAN_PLACEHOLDER = "PanelPemesananPlaceholder";
     public static final String PANEL_PROFIL_UMUM_PLACEHOLDER = "PanelProfilUmumPlaceholder";
-
 
     // Konstanta untuk panel Custom Trip Builder
     public static final String PANEL_DESTINATION_STEP = "PanelDestinationStep";
@@ -78,7 +82,17 @@ public class MainAppFrame extends JFrame {
         panelUserProfil.setName(PANEL_USER_PROFILE); 
         mainPanelContainer.add(panelUserProfil, PANEL_USER_PROFILE);
         
-        // 3. Panel DestinationStep (Langkah pertama Custom Trip)
+        // 3. Panel Riwayat Pesanan (Placeholder)
+        PanelOrderHistory panelOrderHistory = new PanelOrderHistory(this);
+        panelOrderHistory.setName(PANEL_RIWAYAT_PESANAN); 
+        mainPanelContainer.add(panelOrderHistory, PANEL_RIWAYAT_PESANAN);
+        
+        // 4. Panel Pesanan Saya - Menggunakan kelas PanelUserOrder yang baru
+        PanelUserOrder panelUserOrder = new PanelUserOrder(this); // Teruskan referensi MainAppFrame
+        panelUserOrder.setName(PANEL_PESANAN_SAYA); 
+        mainPanelContainer.add(panelUserOrder, PANEL_PESANAN_SAYA);
+        
+        // 5. Panel DestinationStep (Langkah pertama Custom Trip)
         PanelDestinationStep panelDestinationStep = new PanelDestinationStep(this);
         panelDestinationStep.setName(PANEL_DESTINATION_STEP); 
         mainPanelContainer.add(panelDestinationStep, PANEL_DESTINATION_STEP);

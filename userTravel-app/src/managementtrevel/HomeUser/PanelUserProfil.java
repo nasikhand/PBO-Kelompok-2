@@ -15,6 +15,7 @@ import java.nio.file.StandardCopyOption;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import managementtrevel.MainAppFrame;
+import static managementtrevel.MainAppFrame.PANEL_RIWAYAT_PESANAN;
 import model.Session;
 import model.UserModel;
 
@@ -669,27 +670,19 @@ public class PanelUserProfil extends JPanel {
         }
     }
 
-    private void btn_riwayatPesananActionPerformed(java.awt.event.ActionEvent evt) {
-        if (mainAppFrame != null) {
-            // Ganti "PANEL_RIWAYAT_PESANAN" dengan konstanta nama panel yang benar di MainAppFrame
-            // mainAppFrame.showPanel(MainAppFrame.PANEL_RIWAYAT_PESANAN);
-             mainAppFrame.showPanel("OrderHistoryPanel"); // Ganti dengan konstanta yang benar
-            // Contoh jika OrderHistory adalah JFrame terpisah
-            // new OrderHistory().setVisible(true);
-        }
-    }
-
     private void btn_editFotoActionPerformed(java.awt.event.ActionEvent evt) {
         showEditPhotoOptions();
+    }
+    
+    private void btn_riwayatPesananActionPerformed(java.awt.event.ActionEvent evt) {
+        if (mainAppFrame != null) {
+             mainAppFrame.showPanel(MainAppFrame.PANEL_RIWAYAT_PESANAN); // Ganti dengan konstanta yang benar
+        }
     }
 
     private void btn_pesananSayaActionPerformed(java.awt.event.ActionEvent evt) {
         if (mainAppFrame != null) {
-            // Ganti "PANEL_PESANAN_SAYA" dengan konstanta nama panel yang benar di MainAppFrame
-            // mainAppFrame.showPanel(MainAppFrame.PANEL_PESANAN_SAYA);
-             mainAppFrame.showPanel("UserOrderPanel"); // Ganti dengan konstanta yang benar
-            // Contoh jika UserOrder adalah JFrame terpisah
-            // new UserOrder().setVisible(true);
+             mainAppFrame.showPanel(MainAppFrame.PANEL_PESANAN_SAYA); // Ganti dengan konstanta yang benar
         }
     }
     
