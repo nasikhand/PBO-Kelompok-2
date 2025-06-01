@@ -344,7 +344,7 @@ public class PanelBeranda extends JPanel {
         
         SwingUtilities.invokeLater(() -> {
             String userDir = System.getProperty("user.dir");
-            File baseDir = new File(userDir);
+            File baseDir = new File(System.getProperty("user.dir")).getParentFile();
             String gambarRelatif = paket.getGambar();
             if (gambarRelatif != null && !gambarRelatif.isEmpty()) {
                 if (gambarRelatif.startsWith("/")) gambarRelatif = gambarRelatif.substring(1);
