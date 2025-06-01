@@ -1,7 +1,5 @@
 package managementtrevel.SearchResultScreen;
 
-import managementtrevel.TripDetailScreen.TripDetail;
-import Asset.SidebarPanel;
 import javax.swing.JFrame;
 import javax.swing.JLayeredPane;
 import managementtrevel.HomeUser.HomeScreen;
@@ -156,7 +154,7 @@ public class SearchResult extends javax.swing.JFrame {
         btn_detail.setText("Detail");
         btn_detail.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_detailActionPerformed(evt);
+                // btn_detailActionPerformed(evt);
             }
         });
 
@@ -445,10 +443,10 @@ public class SearchResult extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_cb_urutkanActionPerformed
 
-    private void btn_detailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_detailActionPerformed
-        new TripDetail().show();
-        this.dispose();
-    }//GEN-LAST:event_btn_detailActionPerformed
+    // private void btn_detailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_detailActionPerformed
+    //     new TripDetail().show();
+    //     this.dispose();
+    // }//GEN-LAST:event_btn_detailActionPerformed
 
     private void btn_bookingcepatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_bookingcepatActionPerformed
         // TODO add your handling code here:

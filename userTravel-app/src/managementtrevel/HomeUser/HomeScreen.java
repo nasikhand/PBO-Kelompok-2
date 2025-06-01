@@ -589,7 +589,7 @@ public class HomeScreen extends javax.swing.JFrame {
         btn_detail1.setText("Detail");
         btn_detail1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_detail1ActionPerformed(evt);
+                // btn_detail1ActionPerformed(evt);
             }
         });
 
@@ -959,10 +959,10 @@ public class HomeScreen extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_jButton13ActionPerformed
 
-    private void btn_detail1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_detail1ActionPerformed
-        new TripDetail().show();
-        this.dispose();
-    }//GEN-LAST:event_btn_detail1ActionPerformed
+    // private void btn_detail1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_detail1ActionPerformed
+    //     new TripDetail().show();
+    //     this.dispose();
+    // }//GEN-LAST:event_btn_detail1ActionPerformed
 
     private void btn_detail4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_detail4ActionPerformed
         // TODO add your handling code here:

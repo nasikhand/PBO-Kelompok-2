@@ -473,10 +473,11 @@ public class PanelBeranda extends JPanel {
         JButton btnDetail = new JButton("Detail");
         styleLinkButton(btnDetail); 
         btnDetail.addActionListener(e -> {
-            int idPaket = paket.getId(); // ambil id paket dari model yang sedang dibuat card-nya
-            TripDetail tripDetailFrame = new TripDetail(idPaket);
+            // int idPaket = paket.getId(); // ambil id paket dari model yang sedang dibuat card-nya
+            // TripDetail tripDetailFrame = new TripDetail(idPaket);
 
-            tripDetailFrame.setVisible(true); 
+            // tripDetailFrame.setVisible(true); 
+            mainAppFrame.showPanel(MainAppFrame.PANEL_TRIP_DETAIL, paket, null, null); 
         });
         buttonPanelCard.add(btnDetail);
 
@@ -484,7 +485,7 @@ public class PanelBeranda extends JPanel {
             JButton btnBooking = new JButton("Booking");
             styleSecondaryButton(btnBooking, "Booking"); 
             btnBooking.addActionListener(e -> {
-                JOptionPane.showMessageDialog(this, "Tombol Booking Cepat untuk '" + paket.getNamaPaket() + "' diklik.", "Info Booking", JOptionPane.INFORMATION_MESSAGE);
+                mainAppFrame.showPanel(MainAppFrame.PANEL_BOOKING_SCREEN, paket);
             });
             buttonPanelCard.add(btnBooking);
         } else {
