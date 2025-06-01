@@ -2,29 +2,32 @@ package model;
 
 public class DestinasiModel {
     private int id;
+    private int kotaId;
     private String namaDestinasi;
-    private String kota;
+    private String deskripsi;
+    private double harga;
+    private String gambar;
 
-    public DestinasiModel(int id, String namaDestinasi, String kota) {
-        this.id = id;
-        this.namaDestinasi = namaDestinasi;
-        this.kota = kota;
-    }
+    // Getter & Setter
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-    public int getId() {
-        return id;
-    }
+    public int getKotaId() { return kotaId; }
+    public void setKotaId(int kotaId) { this.kotaId = kotaId; }
 
-    public String getNamaDestinasi() {
-        return namaDestinasi;
-    }
+    public String getNamaDestinasi() { return namaDestinasi; }
+    public void setNamaDestinasi(String namaDestinasi) { this.namaDestinasi = namaDestinasi; }
 
-    public String getKota() {
-        return kota;
-    }
+    public String getDeskripsi() { return deskripsi; }
+    public void setDeskripsi(String deskripsi) { this.deskripsi = deskripsi; }
 
+    public double getHarga() { return harga; }
+    public void setHarga(double harga) { this.harga = harga; }
+
+    public String getGambar() { return gambar; }
+    public void setGambar(String gambar) { this.gambar = gambar; }
     @Override
     public String toString() {
-        return namaDestinasi + " - " + kota;
+        return namaDestinasi + " - " + kotaId;
     }
 }

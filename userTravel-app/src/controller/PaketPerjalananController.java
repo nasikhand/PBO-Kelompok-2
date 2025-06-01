@@ -56,7 +56,11 @@ public class PaketPerjalananController {
             System.err.println("PaketPerjalananDAO tidak diinisialisasi di controller (getPaketById).");
             return null;
         }
-        return paketDao.getById(id);
+        return this.paketDao.getById(id);
+    }
+
+    public String getNamaKotaById(int kotaId) {
+        return this.kotaDao.getNamaKotaById(kotaId);
     }
 
     /**

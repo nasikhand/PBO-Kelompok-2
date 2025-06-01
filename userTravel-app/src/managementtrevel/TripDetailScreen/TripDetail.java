@@ -5,22 +5,85 @@
 package managementtrevel.TripDetailScreen;
 
 import Asset.SidebarPanel;
+import controller.PaketPerjalananController;
+
+import java.util.List;
+
 import javax.swing.JFrame;
 import javax.swing.JLayeredPane;
 import managementtrevel.BookingScreen.BookingScreen;
 import managementtrevel.HomeUser.HomeScreen;
+import model.DestinasiModel;
+import model.PaketPerjalananModel;
+import controller.DestinasiController;
 
 /**
  *
  * @author Bagas Adi
  */
 public class TripDetail extends javax.swing.JFrame {
+    private PaketPerjalananController controller;
+    private int paketId;
+
+
+    private void loadDataPaket() {
+        PaketPerjalananModel paket = controller.getPaketById(paketId); // Pastikan method ini ada
+        DestinasiController destinasiController = new DestinasiController();
+
+        if (paket != null) {
+            tf_namapaket.setText("Nama Paket : " + paket.getNamaPaket());
+            tf_namapaket.setEditable(false);
+
+            tf_tanggal.setText("Durasi : " + paket.getTanggalMulai() + " s/d " + paket.getTanggalAkhir());
+            tf_tanggal.setEditable(false);
+
+            tf_harga.setText(String.valueOf("Harga : " + paket.getHarga()));
+            tf_harga.setEditable(false);
+
+            // Ambil nama kota dari kota_id
+            String namaKota = controller.getNamaKotaById(paket.getKotaId());
+            tf_kotatujuan.setText(namaKota);
+            tf_kotatujuan.setEditable(false);
+
+            // ambil data deskripsi
+            ta_deskripsi.setText(paket.getDeskripsi());
+            tf_kuota.setText("Kuota: " + paket.getKuota());
+            tf_kuota.setEditable(false);
+            tf_kuota.setBorder(null);
+
+            tf_status.setText("Status: " + paket.getStatus());
+            tf_status.setEditable(false);
+            tf_status.setBorder(null);
+        } else {
+            System.err.println("Paket tidak ditemukan untuk ID: " + paketId);
+        }
+
+        List<DestinasiModel> listDestinasi = destinasiController.getDestinasiByPaketId(paketId);
+
+        if (!listDestinasi.isEmpty()) {
+            // Ambil hanya destinasi pertama (jika hanya ingin menampilkan 1 destinasi)
+            DestinasiModel d = listDestinasi.get(0);
+
+            tf_namadestinasi.setText(d.getNamaDestinasi());
+            ta_desksingkat.setText(d.getDeskripsi());
+            tf_durasi.setText(d.getHarga() + ""); // atau kolom lain jika kamu punya kolom durasi
+
+            tf_namadestinasi.setEditable(false);
+            ta_desksingkat.setEditable(false);
+            tf_durasi.setEditable(false);
+        }
+    }
+
 
     /**
      * Creates new form TripDetail
      */
-    public TripDetail() {
+    public TripDetail(int paketId) {
+        this.paketId = paketId;
+        this.controller = new PaketPerjalananController();
         initComponents();
+        loadDataPaket();
+        
         
     setTitle("Trip Detail");
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -249,8 +312,8 @@ public class TripDetail extends javax.swing.JFrame {
                 .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel6Layout.createSequentialGroup()
                         .addComponent(tf_kuota, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(27, 27, 27)
-                        .addComponent(tf_status, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(66, 66, 66)
+                        .addComponent(tf_status, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(lbl_tentangpkt)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 580, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(19, Short.MAX_VALUE))
@@ -358,24 +421,26 @@ public class TripDetail extends javax.swing.JFrame {
                 .addComponent(btn_back_TD)
                 .addGap(51, 51, 51)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(tf_harga, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                         .addComponent(jPanel7, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(tf_namapaket, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 118, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
                             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                 .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(tf_kotatujuan, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 118, Short.MAX_VALUE))
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(tf_tanggal, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGroup(jPanel1Layout.createSequentialGroup()
                                     .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                     .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addComponent(jPanel6, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                    .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGroup(jPanel1Layout.createSequentialGroup()
+                                    .addGap(40, 40, 40)
+                                    .addComponent(tf_tanggal, javax.swing.GroupLayout.PREFERRED_SIZE, 332, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addComponent(jPanel6, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(tf_namapaket, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 348, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(tf_harga, javax.swing.GroupLayout.PREFERRED_SIZE, 283, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -393,9 +458,9 @@ public class TripDetail extends javax.swing.JFrame {
                         .addGap(31, 31, 31)
                         .addComponent(tf_namapaket, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(18, 18, 18)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(tf_kotatujuan, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tf_tanggal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(tf_tanggal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tf_kotatujuan, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tf_harga, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(12, 12, 12)
@@ -466,6 +531,10 @@ public class TripDetail extends javax.swing.JFrame {
     private void tf_durasiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tf_durasiActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_tf_durasiActionPerformed
+
+    private void tf_status1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tf_status1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_tf_status1ActionPerformed
 
     /**
      * @param args the command line arguments

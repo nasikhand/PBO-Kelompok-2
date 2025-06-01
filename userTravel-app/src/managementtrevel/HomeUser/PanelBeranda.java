@@ -473,9 +473,9 @@ public class PanelBeranda extends JPanel {
         JButton btnDetail = new JButton("Detail");
         styleLinkButton(btnDetail); 
         btnDetail.addActionListener(e -> {
-            TripDetail tripDetailFrame = new TripDetail();
-            // Anda perlu cara untuk mengirim data 'paket' ke tripDetailFrame
-            // Misalnya: tripDetailFrame.loadData(paket);
+            int idPaket = paket.getId(); // ambil id paket dari model yang sedang dibuat card-nya
+            TripDetail tripDetailFrame = new TripDetail(idPaket);
+
             tripDetailFrame.setVisible(true); 
         });
         buttonPanelCard.add(btnDetail);
