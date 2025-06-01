@@ -1,20 +1,22 @@
 package db.dao;
 
+import db.Koneksi;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.ArrayList;
-
-import model.CustomTripModel;
+import java.util.List;
 import model.CustomTripDetailModel;
-
-import db.Koneksi;
+import model.CustomTripModel;
 
 
 
 public class CustomTripDAO {
+
+    public CustomTripDAO(Connection conn) {
+        //TODO Auto-generated constructor stub
+    }
 
     public CustomTripModel getById(int customTripId) {
         CustomTripModel trip = new CustomTripModel();

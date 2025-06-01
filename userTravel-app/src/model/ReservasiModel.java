@@ -1,25 +1,58 @@
 package model;
 
 import java.time.LocalDate;
+import java.util.Objects; 
 
 public class ReservasiModel {
     private int id;
-    private String tripType; // "custom_trip" atau "paket_perjalanan"
+    private int userId; 
+    private String tripType; 
     private int tripId;
     private String kodeReservasi;
-    private LocalDate tanggalReservasi; // Ganti dari Date ke LocalDate
+    private LocalDate tanggalReservasi; 
     private String status;
-    private PaketPerjalananModel paket;
-    private CustomTripModel customTrip;
+    private PaketPerjalananModel paket; 
+    private CustomTripModel customTrip; 
+
+    // Konstruktor default
+    public ReservasiModel() {
+    }
+
+    // Konstruktor untuk membuat reservasi baru (sebelum disimpan ke DB, tanpa ID auto-increment)
+    public ReservasiModel(int userId, String tripType, int tripId, String kodeReservasi, LocalDate tanggalReservasi, String status) {
+        this.userId = userId;
+        this.tripType = tripType;
+        this.tripId = tripId;
+        this.kodeReservasi = kodeReservasi;
+        this.tanggalReservasi = tanggalReservasi;
+        this.status = status;
+    }
+
+    public ReservasiModel(int id, int userId, String tripType, int tripId, String kodeReservasi, LocalDate tanggalReservasi, String status) {
+        this.id = id;
+        this.userId = userId;
+        this.tripType = tripType;
+        this.tripId = tripId;
+        this.kodeReservasi = kodeReservasi;
+        this.tanggalReservasi = tanggalReservasi;
+        this.status = status;
+    }
 
     // Getter dan Setter
-
     public int getId() {
         return id;
     }
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId; 
     }
 
     public String getTripType() {
@@ -76,5 +109,39 @@ public class ReservasiModel {
 
     public void setCustomTrip(CustomTripModel customTrip) {
         this.customTrip = customTrip;
+    }
+
+    @Override
+    public String toString() {
+        return "ReservasiModel{" +
+                "id=" + id +
+                ", userId=" + userId +
+                ", tripType='" + tripType + '\'' +
+                ", tripId=" + tripId +
+                ", kodeReservasi='" + kodeReservasi + '\'' +
+                ", tanggalReservasi=" + tanggalReservasi +
+                ", status='" + status + '\'' +
+                ", paket=" + (paket != null ? paket.getNamaPaket() : "null") +
+                ", customTrip=" + (customTrip != null ? customTrip.getNamaTrip() : "null") +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ReservasiModel that = (ReservasiModel) o;
+        return id == that.id &&
+                userId == that.userId &&
+                tripId == that.tripId &&
+                Objects.equals(tripType, that.tripType) &&
+                Objects.equals(kodeReservasi, that.kodeReservasi) &&
+                Objects.equals(tanggalReservasi, that.tanggalReservasi) &&
+                Objects.equals(status, that.status);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, userId, tripType, tripId, kodeReservasi, tanggalReservasi, status);
     }
 }

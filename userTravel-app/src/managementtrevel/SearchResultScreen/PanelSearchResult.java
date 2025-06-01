@@ -37,7 +37,7 @@ import model.PaketPerjalananModel;
 public class PanelSearchResult extends JPanel {
 
     private MainAppFrame mainAppFrame;
-    private String namaKotaAtauDestinasi; 
+    public String namaKotaAtauDestinasi; 
     private String tanggalKeberangkatan;
     private PaketPerjalananController paketController; 
 
@@ -58,8 +58,7 @@ public class PanelSearchResult extends JPanel {
     private JPanel panelResultsContainer; 
     private JPanel resultsDisplayPanel; 
     private List<PaketPerjalananModel> allFetchedPackages; 
-    private List<PaketPerjalananModel> currentlyDisplayedPackages; 
-
+    private List<PaketPerjalananModel> currentlyDisplayedPackages;
 
     public PanelSearchResult(MainAppFrame mainAppFrame, String namaKotaAtauDestinasi, String tanggalKeberangkatan) { 
         this.mainAppFrame = mainAppFrame;
@@ -77,6 +76,14 @@ public class PanelSearchResult extends JPanel {
         System.out.println("Tanggal: " + this.tanggalKeberangkatan);
     }
 
+    // getter 
+    public String getNamaKotaAtauDestinasi() {
+        return namaKotaAtauDestinasi;
+    }
+
+    public String getTanggalKeberangkatan() {
+        return tanggalKeberangkatan;
+    }
     private void initializeUIProgrammatically() {
         this.setLayout(new BorderLayout(15, 0)); 
         this.setBorder(new EmptyBorder(15, 15, 15, 15)); 
@@ -304,9 +311,9 @@ public class PanelSearchResult extends JPanel {
             BorderFactory.createLineBorder(AppTheme.BORDER_COLOR),
             new EmptyBorder(10, 10, 10, 10)
         ));
-        cardPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 200)); 
+        cardPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 170)); 
         cardPanel.setMinimumSize(new Dimension(300, 140)); 
-        cardPanel.setPreferredSize(new Dimension(400, 160)); 
+        cardPanel.setPreferredSize(new Dimension(400, 145)); 
 
 
         JLabel imageLabel = new JLabel();
@@ -395,7 +402,13 @@ public class PanelSearchResult extends JPanel {
         JButton bookingButtonCard = new JButton();
         stylePrimaryButton(bookingButtonCard, "Booking Cepat");
          bookingButtonCard.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this, "Booking Cepat untuk: " + paket.getNamaPaket());
+            if (mainAppFrame != null) {
+                // Navigasi ke PanelBookingScreen dengan data paket yang sesuai
+                mainAppFrame.showPanel(MainAppFrame.PANEL_BOOKING_SCREEN, paket);
+            } else {
+                 System.err.println("MainAppFrame reference is null in PanelSearchResult card booking button.");
+                JOptionPane.showMessageDialog(this, "Tidak dapat melakukan booking saat ini.");
+            }
         });
         buttonPanelCard.add(detailButtonCard);
         buttonPanelCard.add(bookingButtonCard);
