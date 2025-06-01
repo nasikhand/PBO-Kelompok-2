@@ -501,9 +501,9 @@ public class PanelBeranda extends JPanel {
         cardPanel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                TripDetail tripDetailFrame = new TripDetail();
-                // tripDetailFrame.loadData(paket);
-                tripDetailFrame.setVisible(true); 
+                if (mainAppFrame != null) {
+                    mainAppFrame.showPanel(MainAppFrame.PANEL_TRIP_DETAIL, paket, null, null);
+                }
             }
         });
 
