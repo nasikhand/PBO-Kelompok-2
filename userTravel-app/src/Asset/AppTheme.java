@@ -40,6 +40,10 @@ public class AppTheme {
     public static final Font FONT_PRIMARY_DEFAULT = new Font(FONT_FAMILY_SANS_SERIF, Font.PLAIN, 13);
     public static final Font FONT_PRIMARY_MEDIUM = new Font(FONT_FAMILY_SANS_SERIF, Font.PLAIN, 14);
     public static final Font FONT_PRIMARY_BOLD = new Font(FONT_FAMILY_SANS_SERIF, Font.BOLD, 13);
+
+    public static final Font FONT_PRIMARY_MEDIUM_BOLD = new Font(FONT_FAMILY_SANS_SERIF, Font.BOLD, 14);
+    public static final Font FONT_LABEL_FORM_BOLD = new Font(FONT_FAMILY_SANS_SERIF, Font.BOLD, 14);
+    public static final Font FONT_TITLE_MEDIUM_BOLD = new Font(FONT_FAMILY_SANS_SERIF, Font.BOLD, 20);
     
     public static final Font FONT_TITLE_LARGE = new Font(FONT_FAMILY_SANS_SERIF, Font.BOLD, 24);
     public static final Font FONT_TITLE_MEDIUM = new Font(FONT_FAMILY_SANS_SERIF, Font.BOLD, 20);

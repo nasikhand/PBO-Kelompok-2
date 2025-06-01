@@ -1,18 +1,15 @@
 package managementtrevel.TripDetailScreen;
 
-import Asset.AppTheme; 
-import managementtrevel.MainAppFrame; 
-import model.PaketPerjalananModel; 
-import db.dao.KotaDAO; 
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
+import Asset.AppTheme;
+import db.dao.KotaDAO;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import javax.swing.border.MatteBorder;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import managementtrevel.MainAppFrame;
+import model.PaketPerjalananModel;
 
 public class PanelTripDetail extends JPanel {
 
@@ -516,8 +513,8 @@ public class PanelTripDetail extends JPanel {
     }                                           
     private void btn_bookActionPerformed(java.awt.event.ActionEvent evt) {                                         
         if (mainAppFrame != null && currentPaket != null) {
-            // mainAppFrame.showPanel(MainAppFrame.PANEL_BOOKING_SCREEN, currentPaket);
-            JOptionPane.showMessageDialog(this, "Navigasi ke Booking untuk: " + currentPaket.getNamaPaket() + " (Belum diimplementasikan di MainAppFrame)");
+            mainAppFrame.showPanel(MainAppFrame.PANEL_BOOKING_SCREEN, currentPaket);
+            // JOptionPane.showMessageDialog(this, "Navigasi ke Booking untuk: " + currentPaket.getNamaPaket() + " (Belum diimplementasikan di MainAppFrame)");
         } else if (currentPaket == null) {
             JOptionPane.showMessageDialog(this, "Data paket tidak tersedia untuk dibooking.", "Error", JOptionPane.ERROR_MESSAGE);
         } else {
