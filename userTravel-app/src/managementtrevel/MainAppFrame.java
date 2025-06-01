@@ -14,8 +14,10 @@ import managementtrevel.CustomTripBuilder.PanelTransportStep;
 import managementtrevel.HomeUser.PanelBeranda;
 import managementtrevel.HomeUser.PanelUserProfil;
 import managementtrevel.SearchResultScreen.PanelSearchResult;
+import managementtrevel.TripDetailScreen.PanelTripDetail;
 import managementtrevel.TripOrder.PanelOrderHistory;
 import managementtrevel.TripOrder.PanelUserOrder;
+import model.PaketPerjalananModel;
 import model.UserModel; 
 
 
@@ -31,7 +33,7 @@ public class MainAppFrame extends JFrame {
     public static final String PANEL_USER_PROFILE = "PanelUserProfile";
     public static final String PANEL_RIWAYAT_PESANAN = "PanelRiwayatPesanan";
     public static final String PANEL_PESANAN_SAYA = "PanelPesananSaya";
-    public static final String PANEL_SEARCH_RESULT = "TripDetailPanel";
+    public static final String PANEL_SEARCH_RESULT = "PanelSearcResult";
     
     // Tambahkan konstanta untuk panel placeholder lainnya jika masih digunakan
     public static final String PANEL_DESTINASI_PLACEHOLDER = "PanelDestinasiPlaceholder";
@@ -45,6 +47,7 @@ public class MainAppFrame extends JFrame {
     public static final String PANEL_ACCOMMODATION_STEP = "PanelAccommodationStep";
     public static final String PANEL_ACTIVITY_STEP = "PanelActivityStep"; 
     public static final String PANEL_FINAL_STEP = "PanelFinalStep";
+    public static final String PANEL_TRIP_DETAIL = "PanelTripDetail";
 
 
     public MainAppFrame(UserModel user) {
@@ -251,6 +254,23 @@ public class MainAppFrame extends JFrame {
             showPanel(panelName);
         }
         if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
+    }
+
+    public void showPanel(String panelName, PaketPerjalananModel paket, String originalSearchNamaKota, String originalSearchTanggal) {
+        if (panelName.equals(PANEL_TRIP_DETAIL)) {
+            removePanelIfExists(panelName);
+            PanelTripDetail panel = new PanelTripDetail(this, paket, originalSearchNamaKota, originalSearchTanggal); 
+            panel.setName(panelName);
+            mainPanelContainer.add(panel, panelName);
+            cardLayout.show(mainPanelContainer, panelName);
+            System.out.println("Menampilkan panel: " + panelName + " untuk paket: " + paket.getNamaPaket());
+        } else {
+            System.err.println("Peringatan: showPanel(String, PaketPerjalananModel, String, String) dipanggil untuk panel yang bukan PANEL_TRIP_DETAIL: " + panelName);
+            showPanel(panelName); 
+        }
+        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) {
+            sidebarPanel.collapsePublic();
+        }
     }
     
     // Metode baru untuk menampilkan PanelSearchResult dengan data pencarian
