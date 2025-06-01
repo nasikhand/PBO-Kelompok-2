@@ -4,16 +4,13 @@ import java.time.LocalDate;
 
 public class ReservasiModel {
     private int id;
-    private int userId;
-    private String namaTrip;
-    private LocalDate tanggalMulai;
-    private LocalDate tanggalAkhir;
-    private int jumlahPeserta;
-    private String status;
-    private double totalHarga;
-    private String catatanUser;
-    private String tripType; // "paket_perjalanan" atau "custom_trip"
+    private String tripType; // "custom_trip" atau "paket_perjalanan"
     private int tripId;
+    private String kodeReservasi;
+    private LocalDate tanggalReservasi; // Ganti dari Date ke LocalDate
+    private String status;
+    private PaketPerjalananModel paket;
+    private CustomTripModel customTrip;
 
     // Getter dan Setter
 
@@ -23,70 +20,6 @@ public class ReservasiModel {
 
     public void setId(int id) {
         this.id = id;
-    }
-
-    public int getUserId() {
-        return userId;
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
-
-    public String getNamaTrip() {
-        return namaTrip;
-    }
-
-    public void setNamaTrip(String namaTrip) {
-        this.namaTrip = namaTrip;
-    }
-
-    public LocalDate getTanggalMulai() {
-        return tanggalMulai;
-    }
-
-    public void setTanggalMulai(LocalDate tanggalMulai) {
-        this.tanggalMulai = tanggalMulai;
-    }
-
-    public LocalDate getTanggalAkhir() {
-        return tanggalAkhir;
-    }
-
-    public void setTanggalAkhir(LocalDate tanggalAkhir) {
-        this.tanggalAkhir = tanggalAkhir;
-    }
-
-    public int getJumlahPeserta() {
-        return jumlahPeserta;
-    }
-
-    public void setJumlahPeserta(int jumlahPeserta) {
-        this.jumlahPeserta = jumlahPeserta;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public double getTotalHarga() {
-        return totalHarga;
-    }
-
-    public void setTotalHarga(double totalHarga) {
-        this.totalHarga = totalHarga;
-    }
-
-    public String getCatatanUser() {
-        return catatanUser;
-    }
-
-    public void setCatatanUser(String catatanUser) {
-        this.catatanUser = catatanUser;
     }
 
     public String getTripType() {
@@ -103,5 +36,45 @@ public class ReservasiModel {
 
     public void setTripId(int tripId) {
         this.tripId = tripId;
+    }
+
+    public String getKodeReservasi() {
+        return kodeReservasi;
+    }
+
+    public void setKodeReservasi(String kodeReservasi) {
+        this.kodeReservasi = kodeReservasi;
+    }
+
+    public LocalDate getTanggalReservasi() {
+        return tanggalReservasi;
+    }
+
+    public void setTanggalReservasi(LocalDate tanggalReservasi) {
+        this.tanggalReservasi = tanggalReservasi;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public PaketPerjalananModel getPaket() {
+        return paket;
+    }
+
+    public void setPaket(PaketPerjalananModel paket) {
+        this.paket = paket;
+    }
+
+    public CustomTripModel getCustomTrip() {
+        return customTrip;
+    }
+
+    public void setCustomTrip(CustomTripModel customTrip) {
+        this.customTrip = customTrip;
     }
 }

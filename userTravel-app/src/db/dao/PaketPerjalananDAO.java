@@ -293,4 +293,36 @@ public class PaketPerjalananDAO {
         }
         return list;
     }
+
+    public List<PaketPerjalananModel> getPreviousTripsByUser(int userId) {
+    List<PaketPerjalananModel> list = new ArrayList<>();
+
+    String sql = "SELECT pp.* FROM paket_perjalanan pp " +
+                 "JOIN reservasi r ON pp.id = r.trip_id " +
+                 "WHERE r.trip_type = 'paket_perjalanan' " +
+                 "AND r.status = 'selesai' " +
+                 "AND r.user_id = ?";
+
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, userId);
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            PaketPerjalananModel paket = new PaketPerjalananModel();
+            paket.setId(rs.getInt("id"));
+            paket.setNamaPaket(rs.getString("nama_paket"));
+            paket.setDeskripsi(rs.getString("deskripsi"));
+            paket.setHarga(rs.getDouble("harga"));
+            paket.setTanggalMulai(rs.getString("tanggal_mulai"));
+            // tambahkan field lain jika ada
+
+            list.add(paket);
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+
+    return list;
+}
+
+    
 }

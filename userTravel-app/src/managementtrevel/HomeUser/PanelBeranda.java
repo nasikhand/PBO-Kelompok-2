@@ -7,11 +7,14 @@ import controller.CariCepatController;
 import controller.PaketPerjalananController;
 import db.Koneksi;
 import db.dao.KotaDAO;
+import db.dao.PaketPerjalananDAO;
+import db.dao.ReservasiDAO;
 import managementtrevel.MainAppFrame;
 import managementtrevel.SearchResultScreen.SearchResult;
 import managementtrevel.TripDetailScreen.TripDetail;
 import model.KotaModel; 
 import model.PaketPerjalananModel;
+import model.ReservasiModel;
 import model.Session;
 
 import javax.swing.*;
@@ -37,6 +40,7 @@ public class PanelBeranda extends JPanel {
     private Date tanggalDipilihCariCepat;
     // private String jumlahTravelerDipilihCariCepat = null; // Dihapus
     private PaketPerjalananController paketPerjalananController;
+    private PaketPerjalananDAO paketPerjalananDAO;
 
     private final String PLACEHOLDER_KOTA = "-- Pilih Kota --"; 
     // private final String PLACEHOLDER_TRAVELERS = "Travelers"; // Dihapus
@@ -62,6 +66,7 @@ public class PanelBeranda extends JPanel {
             System.err.println("Koneksi database gagal di PanelBeranda.");
         }
         this.paketPerjalananController = new PaketPerjalananController(conn);
+        this.paketPerjalananDAO = new PaketPerjalananDAO(conn);
 
         initializeUIProgrammatically(); 
         applyAppTheme();
@@ -265,16 +270,42 @@ public class PanelBeranda extends JPanel {
 
     private void loadPerjalananSebelumnya() {
         panelPerjalananSebelumnyaContentHolder.removeAll(); 
-        panelPerjalananSebelumnyaContentHolder.setLayout(new BorderLayout());
-        JLabel noDataLabel = new JLabel("Fitur Perjalanan Sebelumnya akan segera hadir.");
-        noDataLabel.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
-        noDataLabel.setForeground(AppTheme.TEXT_SECONDARY_DARK);
-        noDataLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        panelPerjalananSebelumnyaContentHolder.add(noDataLabel, BorderLayout.CENTER);
-        
+        panelPerjalananSebelumnyaContentHolder.setLayout(new GridLayout(1, 3, 15, 15)); // max 3 card sejajar
+
+        if (Session.currentUser == null) {
+            System.err.println("User belum login. Tidak bisa load perjalanan sebelumnya.");
+            return;
+        }
+
+        ReservasiDAO reservasiDAO = new ReservasiDAO(Koneksi.getConnection());
+        List<ReservasiModel> previousTrips = reservasiDAO.getHistoryReservasiByUser(Session.currentUser.getId());
+
+
+        if (previousTrips.isEmpty()) {
+            panelPerjalananSebelumnyaContentHolder.setLayout(new BorderLayout());
+            JLabel noDataLabel = new JLabel("Belum ada perjalanan sebelumnya.");
+            noDataLabel.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
+            noDataLabel.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+            noDataLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            panelPerjalananSebelumnyaContentHolder.add(noDataLabel, BorderLayout.CENTER);
+        } else {
+            int maxToShow = Math.min(3, previousTrips.size()); // tampilkan max 3 card
+            for (int i = 0; i < maxToShow; i++) {
+                ReservasiModel r = previousTrips.get(i);
+                if (r.getTripType().equals("paket_perjalanan")) {
+                    panelPerjalananSebelumnyaContentHolder.add(createTripPackageCard(r.getPaket(), true));
+                } // else {
+                //     panelPerjalananSebelumnyaContentHolder.add(createTripPackageCard(r.getCustomTrip(), true));
+                // }
+            }
+
+        }
+
         panelPerjalananSebelumnyaContentHolder.revalidate();
         panelPerjalananSebelumnyaContentHolder.repaint();
     }
+
+
 
     private void loadPenawaranSpesial() {
         panelPenawaranSpesialContentHolder.removeAll();
@@ -362,6 +393,7 @@ public class PanelBeranda extends JPanel {
                  setPlaceholderImage(lblImage, "Gbr Tdk Ada");
             }
         });
+        
         cardPanel.add(lblImage, BorderLayout.NORTH);
 
         JPanel detailsPanel = new JPanel();

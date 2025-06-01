@@ -1,54 +1,68 @@
 package db.dao;
 
-import java.util.List;
-import java.util.ArrayList;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Date;
 
-import model.ReservasiModel;   // Pastikan package ini sudah benar
+import java.util.List;
+import java.util.ArrayList;
+
+import model.ReservasiModel;
+import model.CustomTripModel;
+import model.PaketPerjalananModel;
 
 public class ReservasiDAO {
+    private Connection conn;
 
-    private Connection connection;
-
-    // Constructor yang menerima Connection
-    public ReservasiDAO(Connection connection) {
-        this.connection = connection;
+    public ReservasiDAO(Connection conn) {
+        this.conn = conn;
     }
 
-    public List<ReservasiModel> getReservasiSebelumnya(int userId) {
+    public List<ReservasiModel> getHistoryReservasiByUser(int userId) {
         List<ReservasiModel> list = new ArrayList<>();
-        String sql = "SELECT * FROM reservasi WHERE user_id = ? AND tanggal_akhir < CURRENT_DATE";
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setInt(1, userId);
-            ResultSet rs = stmt.executeQuery();
-
+        String sql = "SELECT * FROM reservasi WHERE status = 'selesai' AND user_id = ? " +
+                    "AND ((trip_type = 'paket_perjalanan' AND trip_id IN (SELECT id FROM paket_perjalanan)) " +
+                    "OR (trip_type = 'custom_trip' AND trip_id IN (SELECT id FROM custom_trip)))";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 ReservasiModel r = new ReservasiModel();
                 r.setId(rs.getInt("id"));
-                r.setUserId(rs.getInt("user_id"));
-                r.setNamaTrip(rs.getString("nama_trip"));
-                r.setTanggalMulai(rs.getDate("tanggal_mulai").toLocalDate());
-                r.setTanggalAkhir(rs.getDate("tanggal_akhir").toLocalDate());
-                r.setJumlahPeserta(rs.getInt("jumlah_peserta"));
+                r.setTripType(rs.getString("trip_type"));
+                r.setTripId(rs.getInt("trip_id"));
+                r.setKodeReservasi(rs.getString("kode_reservasi"));
+
+                java.sql.Date sqlDate = rs.getDate("tanggal_reservasi");
+                if (sqlDate != null) {
+                    r.setTanggalReservasi(sqlDate.toLocalDate());
+                }
+
                 r.setStatus(rs.getString("status"));
-                r.setTotalHarga(rs.getDouble("total_harga"));
-                r.setCatatanUser(rs.getString("catatan_user"));
-                
-                // Contoh pengisian manual
-                r.setTripType("custom_trip"); // bisa disesuaikan logika jenis trip
-                r.setTripId(rs.getInt("id")); // contoh: pakai id reservasi sebagai tripId
+
+                if (r.getTripType().equals("paket_perjalanan")) {
+                    r.setPaket(getPaketById(r.getTripId()));
+                } else {
+                    r.setCustomTrip(getCustomTripById(r.getTripId()));
+                }
 
                 list.add(r);
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
         return list;
+    }
+
+    private PaketPerjalananModel getPaketById(int id) {
+        PaketPerjalananDAO dao = new PaketPerjalananDAO(conn);
+        return dao.getById(id);
+    }
+
+    private CustomTripModel getCustomTripById(int id) {
+        CustomTripDAO dao = new CustomTripDAO();
+        return dao.getById(id);
     }
 }

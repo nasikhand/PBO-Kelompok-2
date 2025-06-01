@@ -1,20 +1,19 @@
 package controller;
 
-import db.dao.ReservasiDAO;
-import model.ReservasiModel;
-
 import java.sql.Connection;
 import java.util.List;
+
+import db.dao.ReservasiDAO;
+import model.ReservasiModel;
 
 public class ReservasiController {
     private ReservasiDAO reservasiDAO;
 
-    public ReservasiController(Connection connection) {
-        this.reservasiDAO = new ReservasiDAO(connection);
+    public ReservasiController(Connection conn) {
+        this.reservasiDAO = new ReservasiDAO(conn);
     }
 
-    // Method untuk ambil list reservasi sebelumnya user tertentu
-    public List<ReservasiModel> getReservasiSebelumnya(int userId) {
-        return reservasiDAO.getReservasiSebelumnya(userId);
+    public List<ReservasiModel> getHistoryUser(int userId) {
+        return reservasiDAO.getHistoryReservasiByUser(userId);
     }
 }
