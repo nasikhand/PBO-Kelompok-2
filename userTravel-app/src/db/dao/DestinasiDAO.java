@@ -67,8 +67,8 @@ public class DestinasiDAO {
 
     public List<DestinasiModel> getDestinasiByPaketId(int paketId) {
         List<DestinasiModel> list = new ArrayList<>();
-        String sql = "SELECT d.* FROM destinasi d "
-                + "JOIN rincian_paket_perjalanan rpp ON d.id = rpp.id_destinasi "
+        String sql = "SELECT d.*, rpp.durasi_jam, rpp.urutan_kunjungan FROM destinasi d "
+                + "JOIN rincian_paket_perjalanan rpp ON d.id = rpp.destinasi_id "
                 + "WHERE rpp.paket_perjalanan_id = ?";
         try (Connection con = Koneksi.getConnection();
             PreparedStatement ps = con.prepareStatement(sql)) {
@@ -82,6 +82,7 @@ public class DestinasiDAO {
                 d.setDeskripsi(rs.getString("deskripsi"));
                 d.setHarga(rs.getDouble("harga"));
                 d.setGambar(rs.getString("gambar"));
+                d.setDurasiJam(rs.getInt("durasi_jam"));  // ← ambil dari kolom tambahan
                 list.add(d);
             }
         } catch (SQLException e) {

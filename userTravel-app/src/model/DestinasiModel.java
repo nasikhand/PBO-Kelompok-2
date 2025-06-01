@@ -7,6 +7,10 @@ public class DestinasiModel {
     private String deskripsi;
     private double harga;
     private String gambar;
+    private int durasiJam;
+
+
+    
 
     // Getter & Setter
     public int getId() { return id; }
@@ -26,6 +30,14 @@ public class DestinasiModel {
 
     public String getGambar() { return gambar; }
     public void setGambar(String gambar) { this.gambar = gambar; }
+
+    public void setDurasiJam(int durasiJam) {
+    this.durasiJam = durasiJam;
+}
+
+    public int getDurasiJam() {
+        return durasiJam;
+    }
     @Override
     public String toString() {
         return namaDestinasi + " - " + kotaId;
