@@ -385,7 +385,12 @@ public class PanelSearchResult extends JPanel {
         JButton detailButtonCard = new JButton();
         styleLinkButton(detailButtonCard, "Detail");
         detailButtonCard.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this, "Lihat Detail untuk: " + paket.getNamaPaket());
+            if (mainAppFrame != null) {
+                mainAppFrame.showPanel(MainAppFrame.PANEL_TRIP_DETAIL, paket, this.namaKotaAtauDestinasi, this.tanggalKeberangkatan);
+            } else {
+                System.err.println("MainAppFrame reference is null in PanelSearchResult card detail button.");
+                JOptionPane.showMessageDialog(this, "Tidak dapat membuka detail saat ini.");
+            }
         });
         JButton bookingButtonCard = new JButton();
         stylePrimaryButton(bookingButtonCard, "Booking Cepat");
