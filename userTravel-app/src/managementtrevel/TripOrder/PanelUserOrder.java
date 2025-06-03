@@ -2,6 +2,8 @@ package managementtrevel.TripOrder;
 
 import Asset.AppTheme; // Impor AppTheme Anda
 import db.Koneksi;
+import db.dao.PembayaranDAO;
+import db.dao.PenumpangDAO;
 import db.dao.ReservasiDAO;
 import managementtrevel.MainAppFrame; // Impor MainAppFrame
 import model.PaketPerjalananModel;
@@ -53,15 +55,22 @@ public class PanelUserOrder extends JPanel {
 
     private ReservasiDAO reservasiDAO; 
     private static int userId;
+    private PenumpangDAO penumpangDAO;
+    private PembayaranDAO pembayaranDAO;
     public static int getUserId() {
         return userId;
     }
+
+    
 
     public PanelUserOrder(MainAppFrame mainAppFrame) {
         this.mainAppFrame = mainAppFrame;
         initComponents(); // PENTING: Pastikan ini adalah kode dari NetBeans Anda
 
+         // Inisialisasi DAO dulu
         reservasiDAO = new ReservasiDAO(Koneksi.getConnection());
+        penumpangDAO = new PenumpangDAO(Koneksi.getConnection());
+        pembayaranDAO = new PembayaranDAO(Koneksi.getConnection());
 
         loadDataReservasi();
         
@@ -102,19 +111,7 @@ public class PanelUserOrder extends JPanel {
             int userId = Session.currentUser.getId();  // pastikan method getId() ada di User class
             
             List<ReservasiModel> list = reservasiDAO.getReservasiAktifDenganTrip(userId);
-
-            System.out.println("Jumlah reservasi yang ditemukan: " + list.size());
-
-            for (ReservasiModel r : list) {
-                System.out.println("TripType: " + r.getTripType());
-                if (r.getPaket() != null) {
-                    System.out.println("Nama Kota: " + r.getPaket().getNamaKota());
-                    System.out.println("Rating: " + r.getPaket().getRating());
-                } else {
-                    System.out.println("PAKET NULL");
-                }
-            }
-    
+   
 
             if (!list.isEmpty()) {
                 ReservasiModel reservasi = list.get(0);  // contoh: ambil reservasi pertama
@@ -122,14 +119,33 @@ public class PanelUserOrder extends JPanel {
 
                 if (paket != null) {
                     tf_namakota.setText(paket.getNamaKota());
-                    tf_orang1.setText(String.valueOf(paket.getRating()));
+                    tf_orang1.setText(String.valueOf("rating " + paket.getRating()));
+                    tf_hari.setText(paket.getJumlahHari() + " Hari");
+                    status_pesanan.setText("Status Pesanan: " + reservasi.getStatus());
+        
+
+                    int jumlahPenumpang = penumpangDAO.getJumlahPenumpangByReservasiId(reservasi.getId());
+                    tf_orang.setText(jumlahPenumpang + " Orang");
+
+                    Double jumlahPembayaran = pembayaranDAO.getJumlahPembayaranByReservasiId(reservasi.getId());
+
+                    if (jumlahPembayaran != null) {
+                        String hargaFormatted = String.format("Rp %, .0f", jumlahPembayaran).replace(',', '.').replace(" ", "");
+                        tf_harga.setText(hargaFormatted);
+                    } 
+
+                    
+
                 } else {
                     tf_namakota.setText("Tidak ada data");
                     tf_orang1.setText("-");
+                    tf_hari.setText("-");
+                    status_pesanan.setText("-");
                 }
             } else {
                 tf_namakota.setText("Tidak ada reservasi");
                 tf_orang1.setText("-");
+                tf_hari.setText("-");
             }
 
 
@@ -329,7 +345,7 @@ public class PanelUserOrder extends JPanel {
         status_pesanan.setText("Status Pesanan:");
 
         tf_statusPesanan.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        tf_statusPesanan.setText(".....");
+        tf_statusPesanan.setText(" ");
         tf_statusPesanan.setBorder(null);
         tf_statusPesanan.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

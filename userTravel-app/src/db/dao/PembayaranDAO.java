@@ -27,19 +27,5 @@ public class PembayaranDAO {
         return total;
     }
 
-    public String getMetodePembayaranByReservasiId(int reservasiId) {
-        String metode = "";
-        String sql = "SELECT metode_pembayaran FROM pembayaran WHERE reservasi_id = ?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, reservasiId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                metode = rs.getString("metode_pembayaran");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return metode;
-    }
 }
 

@@ -13,6 +13,7 @@ public class ReservasiModel {
     private String status;
     private PaketPerjalananModel paket; 
     private CustomTripModel customTrip; 
+    private int jumlahHari;
 
     // Konstruktor default
     public ReservasiModel() {
@@ -54,6 +55,7 @@ public class ReservasiModel {
     public void setUserId(int userId) {
         this.userId = userId; 
     }
+    
 
     public String getTripType() {
         return tripType;
@@ -110,6 +112,8 @@ public class ReservasiModel {
     public void setCustomTrip(CustomTripModel customTrip) {
         this.customTrip = customTrip;
     }
+
+    
 
     @Override
     public String toString() {

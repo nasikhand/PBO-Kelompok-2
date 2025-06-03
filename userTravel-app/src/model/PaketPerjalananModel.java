@@ -83,6 +83,17 @@ public class PaketPerjalananModel {
     public String getTanggalAkhir() { return tanggalAkhir; }
     public void setTanggalAkhir(String tanggalAkhir) { this.tanggalAkhir = tanggalAkhir; }
 
+    private int jumlahHari;
+
+    public int getJumlahHari() {
+        return jumlahHari;
+    }
+
+    public void setJumlahHari(int jumlahHari) {
+        this.jumlahHari = jumlahHari;
+    }
+
+
     public int getKuota() { return kuota; }
     public void setKuota(int kuota) { this.kuota = kuota; }
 
