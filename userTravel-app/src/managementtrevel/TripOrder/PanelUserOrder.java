@@ -14,6 +14,7 @@ import javax.swing.JPanel;
 import java.awt.event.ActionEvent;
 import java.awt.BorderLayout; 
 import javax.swing.GroupLayout;
+import javax.swing.ImageIcon;
 import javax.swing.LayoutStyle.ComponentPlacement;
 import java.awt.Dimension; 
 import java.awt.Color; 
@@ -24,11 +25,14 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.JLabel; 
 import javax.swing.JButton; 
 import javax.swing.JTextField; 
-import javax.swing.SwingConstants; 
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.JOptionPane; 
 import java.awt.event.MouseAdapter; 
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.util.List;  
+import java.awt.Image;
 
 /**
  * PanelUserOrder class sebagai JPanel untuk diintegrasikan dengan CardLayout di MainAppFrame.
@@ -134,7 +138,53 @@ public class PanelUserOrder extends JPanel {
                         tf_harga.setText(hargaFormatted);
                     } 
 
-                    
+                     // --- Pastikan variabel gambarPath di deklarasi di sini ---
+                    String gambarPath = paket.getGambar();
+
+                    if (gambarPath != null && !gambarPath.isEmpty()) {
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        File baseDir = new File(System.getProperty("user.dir")).getParentFile();
+                        String gambarRelatif = gambarPath.startsWith("/") || gambarPath.startsWith("\\") ? gambarPath.substring(1) : gambarPath;
+                        File imageFile = new File(baseDir, gambarRelatif);
+
+                        System.out.println("Base Dir: " + baseDir.getAbsolutePath());
+                        System.out.println("Gambar relatif: " + gambarRelatif);
+                        System.out.println("Full path gambar: " + imageFile.getAbsolutePath());
+                        System.out.println("File exists: " + imageFile.exists());
+
+
+                        if (imageFile.exists()) {
+                            int width = foto_user.getWidth() > 0 ? foto_user.getWidth() : 600;
+                            int height = foto_user.getHeight() > 0 ? foto_user.getHeight() : 400;
+
+                            ImageIcon icon = new ImageIcon(
+                                new ImageIcon(imageFile.toURI().toURL())
+                                    .getImage()
+                                    .getScaledInstance(width, height, Image.SCALE_SMOOTH)
+                            );
+
+                            foto_user.setIcon(icon);
+                            foto_user.setText("");
+                            foto_user.setOpaque(false);
+                        } else {
+                            // gambar gak ada, kosongkan saja
+                            foto_user.setIcon(null);
+                            foto_user.setText("");
+                        }
+                    } catch (Exception e) {
+                        // error saat load gambar, kosongkan saja
+                        foto_user.setIcon(null);
+                        foto_user.setText("");
+                    }
+                });
+            } else {
+                // gambarPath null atau kosong, kosongkan saja
+                foto_user.setIcon(null);
+                foto_user.setText("");
+            }
+
+     
 
                 } else {
                     tf_namakota.setText("Tidak ada data");
