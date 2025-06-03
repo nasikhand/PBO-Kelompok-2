@@ -278,19 +278,19 @@ public class PanelPayment extends JPanel {
         lblBank.setAlignmentX(Component.LEFT_ALIGNMENT);
         cmbMetodeBank = new JComboBox<>(new String[]{"-- Pilih Bank --", "Bank BCA", "Bank BNI", "Bank BRI", "Bank Mandiri"});
         cmbMetodeBank.setAlignmentX(Component.LEFT_ALIGNMENT);
-        cmbMetodeBank.setMaximumSize(new Dimension(Integer.MAX_VALUE, cmbMetodeBank.getPreferredSize().height + 5));
+        cmbMetodeBank.setMaximumSize(new Dimension(Integer.MAX_VALUE, cmbMetodeBank.getPreferredSize().height + 10));
 
         JLabel lblEwallet = new JLabel("E-Wallet:"); // Index 3 in this panel
         lblEwallet.setAlignmentX(Component.LEFT_ALIGNMENT);
         cmbMetodeEwallet = new JComboBox<>(new String[]{"-- Pilih E-Wallet --", "GoPay", "OVO", "Dana", "ShopeePay"});
         cmbMetodeEwallet.setAlignmentX(Component.LEFT_ALIGNMENT);
-        cmbMetodeEwallet.setMaximumSize(new Dimension(Integer.MAX_VALUE, cmbMetodeEwallet.getPreferredSize().height + 5));
+        cmbMetodeEwallet.setMaximumSize(new Dimension(Integer.MAX_VALUE, cmbMetodeEwallet.getPreferredSize().height + 10));
 
         JLabel lblKartuKredit = new JLabel("Kartu Kredit/Debit:"); // Index 6 in this panel
         lblKartuKredit.setAlignmentX(Component.LEFT_ALIGNMENT);
         cmbMetodeKartuKredit = new JComboBox<>(new String[]{"-- Pilih Jenis Kartu --", "Visa", "Mastercard", "JCB"});
         cmbMetodeKartuKredit.setAlignmentX(Component.LEFT_ALIGNMENT);
-        cmbMetodeKartuKredit.setMaximumSize(new Dimension(Integer.MAX_VALUE, cmbMetodeKartuKredit.getPreferredSize().height + 5));
+        cmbMetodeKartuKredit.setMaximumSize(new Dimension(Integer.MAX_VALUE, cmbMetodeKartuKredit.getPreferredSize().height + 10));
 
         panel.add(lblBank);
         panel.add(cmbMetodeBank);
