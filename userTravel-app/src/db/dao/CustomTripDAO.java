@@ -37,7 +37,7 @@ public class CustomTripDAO {
             }
 
             // Ambil detail trip
-            String detailSql = "SELECT * FROM custom_trip_detail WHERE custom_trip_id = ? ORDER BY urutan_kunjungan ASC";
+            String detailSql = "SELECT * FROM rincian_custom_trip WHERE custom_trip_id = ? ORDER BY urutan_kunjungan ASC";
             try (PreparedStatement stmt = conn.prepareStatement(detailSql)) {
                 stmt.setInt(1, customTripId);
                 ResultSet rs = stmt.executeQuery();

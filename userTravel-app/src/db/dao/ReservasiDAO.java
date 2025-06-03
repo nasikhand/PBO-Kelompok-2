@@ -175,4 +175,49 @@ public class ReservasiDAO {
         return false;
     }
 
+    public List<ReservasiModel> getReservasiAktifDenganTrip(int userId) throws SQLException {
+        List<ReservasiModel> list = new ArrayList<>();
+
+        String sql = "SELECT r.id, r.user_id, r.trip_type, r.trip_id, " +
+                    "p.id AS paket_id, p.rating AS paket_rating, k1.nama_kota AS paket_nama_kota, " +
+                    "c.id AS custom_id, c.kota_id AS custom_kota_id, k2.nama_kota AS custom_nama_kota " +
+                    "FROM reservasi r " +
+                    "LEFT JOIN paket_perjalanan p ON r.trip_type = 'paket_perjalanan' AND r.trip_id = p.id " +
+                    "LEFT JOIN kota k1 ON p.kota_id = k1.id " +
+                    "LEFT JOIN custom_trip c ON r.trip_type = 'custom_trip' AND r.trip_id = c.id " +
+                    "LEFT JOIN kota k2 ON c.kota_id = k2.id " +
+                    "WHERE r.user_id = ? AND r.status IN ('pending', 'dibayar', 'selesai')";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ReservasiModel reservasi = new ReservasiModel();
+                    reservasi.setId(rs.getInt("id"));
+                    reservasi.setUserId(rs.getInt("user_id"));
+                    String tripType = rs.getString("trip_type");
+                    reservasi.setTripType(tripType);
+
+                    PaketPerjalananModel paket = new PaketPerjalananModel();
+
+                    if ("paket_perjalanan".equals(tripType)) {
+                        paket.setId(rs.getInt("paket_id"));
+                        paket.setNamaKota(rs.getString("paket_nama_kota"));
+                        paket.setRating(rs.getDouble("paket_rating"));
+                    } else if ("custom_trip".equals(tripType)) {
+                        paket.setId(rs.getInt("custom_id"));
+                        paket.setNamaKota(rs.getString("custom_nama_kota"));
+                        paket.setRating(0.0); // Atau sesuai kebutuhan
+                    }
+
+                    reservasi.setPaket(paket);
+
+                    list.add(reservasi);
+                }
+            }
+        }
+
+        return list;
+    }
+
 }

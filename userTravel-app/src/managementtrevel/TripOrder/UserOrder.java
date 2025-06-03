@@ -4,7 +4,17 @@
  */
 package managementtrevel.TripOrder;
 
+import java.util.List;
+
+import javax.swing.JOptionPane;
+
+import db.Koneksi;
+import db.dao.ReservasiDAO;
 import managementtrevel.HomeUser.UserProfile;
+import model.PaketPerjalananModel;
+import model.ReservasiModel;
+import model.Session;
+import db.dao.KotaDAO;
 
 /**
  *
@@ -12,13 +22,74 @@ import managementtrevel.HomeUser.UserProfile;
  */
 public class UserOrder extends javax.swing.JFrame {
 
+    private ReservasiDAO reservasiDAO; 
+    private static int userId;
+    public static int getUserId() {
+        return userId;
+    }
+
     /**
      * Creates new form UserOrder
      */
     public UserOrder() {
+        System.out.println("Constructor PanelUserOrder dijalankan");
         initComponents();
+
+        // Inisialisasi DAO (misal pakai koneksi dari class Koneksi)
+        reservasiDAO = new ReservasiDAO(Koneksi.getConnection());
+        System.out.println("DAO dibuat");
+
+        // Setelah komponen UI siap, panggil method untuk load data
+        loadDataReservasi();
     }
 
+    private void loadDataReservasi() {
+        try {
+            if (Session.currentUser == null) {
+                JOptionPane.showMessageDialog(this, "User belum login.");
+                return;
+            }
+            
+            int userId = Session.currentUser.getId();  // pastikan method getId() ada di User class
+            System.out.println("User ID sekarang: " + userId);
+            
+            List<ReservasiModel> list = reservasiDAO.getReservasiAktifDenganTrip(userId);
+
+            System.out.println("Jumlah reservasi yang ditemukan: " + list.size());
+
+            for (ReservasiModel r : list) {
+                System.out.println("TripType: " + r.getTripType());
+                if (r.getPaket() != null) {
+                    System.out.println("Nama Kota: " + r.getPaket().getNamaKota());
+                    System.out.println("Rating: " + r.getPaket().getRating());
+                } else {
+                    System.out.println("PAKET NULL");
+                }
+            }
+    
+
+            if (!list.isEmpty()) {
+                ReservasiModel reservasi = list.get(0);  // contoh: ambil reservasi pertama
+                PaketPerjalananModel paket = reservasi.getPaket();
+
+                if (paket != null) {
+                    tf_namakota.setText(paket.getNamaKota());
+                    tf_orang1.setText(String.valueOf(paket.getRating()));
+                } else {
+                    tf_namakota.setText("Tidak ada data");
+                    tf_orang1.setText("-");
+                }
+            } else {
+                tf_namakota.setText("Tidak ada reservasi");
+                tf_orang1.setText("-");
+            }
+
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Gagal mengambil data reservasi: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -205,7 +276,11 @@ public class UserOrder extends javax.swing.JFrame {
         this.dispose();
     }//GEN-LAST:event_btn_backActionPerformed
 
-    private void btn_detailPesananActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_detailPesananActionPerformed
+
+    private void btn_detailPesananActionPerformed(java.awt.event.ActionEvent evt) {
+        
+        
+        //GEN-FIRST:event_btn_detailPesananActionPerformed
         
     }//GEN-LAST:event_btn_detailPesananActionPerformed
 

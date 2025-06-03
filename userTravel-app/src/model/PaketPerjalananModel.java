@@ -18,6 +18,7 @@ public class PaketPerjalananModel {
     private String status; // ENUM('tersedia', 'penuh', 'selesai')
     private String gambar; // Path relatif ke gambar
     private double rating;
+    private String namaKota;
 
     // Konstruktor default
     public PaketPerjalananModel() {
@@ -63,6 +64,15 @@ public class PaketPerjalananModel {
 
     public int getKotaId() { return kotaId; }
     public void setKotaId(int kotaId) { this.kotaId = kotaId; }
+
+    // Tambahkan getter dan setter untuk namaKota
+    public String getNamaKota() {
+        return namaKota;
+    }
+
+    public void setNamaKota(String namaKota) {
+        this.namaKota = namaKota;
+    }
 
     public String getNamaPaket() { return namaPaket; }
     public void setNamaPaket(String namaPaket) { this.namaPaket = namaPaket; }

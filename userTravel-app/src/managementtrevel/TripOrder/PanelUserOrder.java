@@ -1,7 +1,12 @@
 package managementtrevel.TripOrder;
 
 import Asset.AppTheme; // Impor AppTheme Anda
+import db.Koneksi;
+import db.dao.ReservasiDAO;
 import managementtrevel.MainAppFrame; // Impor MainAppFrame
+import model.PaketPerjalananModel;
+import model.ReservasiModel;
+import model.Session;
 
 import javax.swing.JPanel; 
 import java.awt.event.ActionEvent;
@@ -20,7 +25,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants; 
 import javax.swing.JOptionPane; 
 import java.awt.event.MouseAdapter; 
-import java.awt.event.MouseEvent;  
+import java.awt.event.MouseEvent;
+import java.util.List;  
 
 /**
  * PanelUserOrder class sebagai JPanel untuk diintegrasikan dengan CardLayout di MainAppFrame.
@@ -45,9 +51,19 @@ public class PanelUserOrder extends JPanel {
     private javax.swing.JTextField tf_orang1; // "Rating"
     private javax.swing.JTextField tf_statusPesanan;
 
+    private ReservasiDAO reservasiDAO; 
+    private static int userId;
+    public static int getUserId() {
+        return userId;
+    }
+
     public PanelUserOrder(MainAppFrame mainAppFrame) {
         this.mainAppFrame = mainAppFrame;
         initComponents(); // PENTING: Pastikan ini adalah kode dari NetBeans Anda
+
+        reservasiDAO = new ReservasiDAO(Koneksi.getConnection());
+
+        loadDataReservasi();
         
         // Mengatur layout untuk JPanel utama ini (PanelUserOrder)
         // setelah initComponents() menginisialisasi komponen.
@@ -74,6 +90,53 @@ public class PanelUserOrder extends JPanel {
         
         applyAppTheme(); 
         setupActionListeners(); 
+    }
+
+    private void loadDataReservasi() {
+        try {
+            if (Session.currentUser == null) {
+                JOptionPane.showMessageDialog(this, "User belum login.");
+                return;
+            }
+            
+            int userId = Session.currentUser.getId();  // pastikan method getId() ada di User class
+            
+            List<ReservasiModel> list = reservasiDAO.getReservasiAktifDenganTrip(userId);
+
+            System.out.println("Jumlah reservasi yang ditemukan: " + list.size());
+
+            for (ReservasiModel r : list) {
+                System.out.println("TripType: " + r.getTripType());
+                if (r.getPaket() != null) {
+                    System.out.println("Nama Kota: " + r.getPaket().getNamaKota());
+                    System.out.println("Rating: " + r.getPaket().getRating());
+                } else {
+                    System.out.println("PAKET NULL");
+                }
+            }
+    
+
+            if (!list.isEmpty()) {
+                ReservasiModel reservasi = list.get(0);  // contoh: ambil reservasi pertama
+                PaketPerjalananModel paket = reservasi.getPaket();
+
+                if (paket != null) {
+                    tf_namakota.setText(paket.getNamaKota());
+                    tf_orang1.setText(String.valueOf(paket.getRating()));
+                } else {
+                    tf_namakota.setText("Tidak ada data");
+                    tf_orang1.setText("-");
+                }
+            } else {
+                tf_namakota.setText("Tidak ada reservasi");
+                tf_orang1.setText("-");
+            }
+
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Gagal mengambil data reservasi: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private void applyAppTheme() {
