@@ -1,6 +1,7 @@
 package managementtrevel.TripDetailScreen;
 
 import Asset.AppTheme;
+import controller.DestinasiController;
 import db.dao.KotaDAO;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -9,7 +10,9 @@ import java.io.File;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import managementtrevel.MainAppFrame;
+import model.DestinasiModel;
 import model.PaketPerjalananModel;
+import java.util.List;
 
 public class PanelTripDetail extends JPanel {
 
@@ -33,11 +36,16 @@ public class PanelTripDetail extends JPanel {
     private JButton btnBookSekarang;
     private JButton btnKembali;
 
+    private int paketId;
+
+
     public PanelTripDetail(MainAppFrame mainAppFrame, PaketPerjalananModel paket, String originalSearchNamaKota, String originalSearchTanggal) {
         this.mainAppFrame = mainAppFrame;
         this.currentPaket = paket;
         this.originalSearchNamaKota = originalSearchNamaKota;
         this.originalSearchTanggal = originalSearchTanggal;
+
+        this.paketId = paket.getId();
         
         initializeUIProgrammatically(); 
         applyAppTheme();
@@ -267,7 +275,7 @@ public class PanelTripDetail extends JPanel {
                 if (gambarPath != null && !gambarPath.isEmpty()) {
                     SwingUtilities.invokeLater(() -> { 
                         String userDir = System.getProperty("user.dir");
-                        File baseDir = new File(userDir);
+                        File baseDir = new File(System.getProperty("user.dir")).getParentFile();
                         String gambarRelatif = gambarPath;
                         if (gambarRelatif.startsWith("/") || gambarRelatif.startsWith("\\")) gambarRelatif = gambarRelatif.substring(1);
                         File imageFile = new File(baseDir, gambarRelatif);
@@ -294,7 +302,7 @@ public class PanelTripDetail extends JPanel {
             
             // Placeholder untuk galeri dan itinerary
             // loadGalleryImages();
-            loadItineraryItems();
+            loadItineraryItems(paketId);
 
         } else {
             if (lblNamaPaket != null) lblNamaPaket.setText("Data Paket Tidak Tersedia");
@@ -337,29 +345,55 @@ public class PanelTripDetail extends JPanel {
         }
     }
     
-    private void loadItineraryItems() {
+    private void loadItineraryItems(int paketId) {
         if (panelItineraryItems == null) return;
         panelItineraryItems.removeAll();
         // TODO: Ambil data itinerary dari database (tabel rincian_paket_perjalanan)
         // Untuk setiap item itinerary, panggil createItineraryItemPanel()
+
+         DestinasiController controller = new DestinasiController();
+         List<DestinasiModel> daftarDestinasi = controller.getDestinasiByPaketId(paketId);
         
-        // Contoh dummy itinerary item
-        for (int i=1; i <=2; i++) {
-            panelItineraryItems.add(createItineraryItemPanel("Destinasi Ke-" + i, "Deskripsi singkat kegiatan di destinasi ke-" + i + ". Kunjungi tempat menarik dan nikmati kuliner lokal.", "Durasi: " + (i+1) + " Jam", "Asset/images/default_itin.png"));
-            panelItineraryItems.add(Box.createRigidArea(new Dimension(0,10)));
-        }
-        // Jika tidak ada itinerary
-        if (panelItineraryItems.getComponentCount() == 0) {
-             JLabel noItin = new JLabel("Rencana perjalanan tidak tersedia untuk paket ini.");
-            styleFormLabel(noItin, "Rencana perjalanan tidak tersedia untuk paket ini.");
-            panelItineraryItems.add(noItin);
+        if (daftarDestinasi.isEmpty()) {
+        JLabel noItin = new JLabel("Rencana perjalanan tidak tersedia untuk paket ini.");
+        styleFormLabel(noItin, "Rencana perjalanan tidak tersedia untuk paket ini.");
+        panelItineraryItems.add(noItin);
+        } else {
+            for (DestinasiModel d : daftarDestinasi) {
+                String nama = d.getNamaDestinasi();
+                String deskripsi = d.getDeskripsi();
+                String durasi = "Durasi: " + d.getDurasiJam() + " Jam";
+
+                String userDir = System.getProperty("user.dir");
+                File baseDir = new File(userDir).getParentFile();
+
+                
+                String gambarRelatif = d.getGambar();
+                if (gambarRelatif.startsWith("/") || gambarRelatif.startsWith("\\")) {
+                    gambarRelatif = gambarRelatif.substring(1);
+                }
+
+                File imageFile = new File(baseDir, gambarRelatif);
+
+                ImageIcon icon = null;
+                if (imageFile.exists()) {
+
+                icon = new ImageIcon(imageFile.getAbsolutePath());
+                // gunakan icon ini pada label gambar itinerary 
+            } else {
+                System.out.println("Gambar tidak ditemukan: " + imageFile.getAbsolutePath());
+            }
+
+                panelItineraryItems.add(createItineraryItemPanel(nama, deskripsi, durasi, icon));
+                panelItineraryItems.add(Box.createRigidArea(new Dimension(0, 10)));
+            }
         }
 
         panelItineraryItems.revalidate();
         panelItineraryItems.repaint();
     }
 
-    private JPanel createItineraryItemPanel(String namaDestinasi, String deskSingkat, String durasi, String imagePath) {
+    private JPanel createItineraryItemPanel(String namaDestinasi, String deskSingkat, String durasi, ImageIcon gambarIcon) {
         JPanel itemPanel = new JPanel(new BorderLayout(10,5));
         itemPanel.setBackground(AppTheme.BACKGROUND_LIGHT_GRAY);
         itemPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -370,8 +404,17 @@ public class PanelTripDetail extends JPanel {
 
         JLabel imageItinLabel = new JLabel();
         imageItinLabel.setPreferredSize(new Dimension(100,75));
-        styleImagePlaceholder(imageItinLabel, "Gbr");
-        // TODO: Load actual image for imagePath (mirip loadUserPhoto/loadGambarUtama)
+        
+
+        if (gambarIcon != null) {
+        Image img = gambarIcon.getImage().getScaledInstance(100, 75, Image.SCALE_SMOOTH);
+        imageItinLabel.setIcon(new ImageIcon(img));
+        imageItinLabel.setText("");
+        imageItinLabel.setOpaque(false);
+        imageItinLabel.setBackground(null);
+        } else {
+            styleImagePlaceholder(imageItinLabel, "Gbr Tdk Ada");
+        }
 
         JPanel textItinPanel = new JPanel();
         textItinPanel.setOpaque(false);
