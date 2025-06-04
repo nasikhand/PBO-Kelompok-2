@@ -1,13 +1,21 @@
 package managementtrevel.TripOrder;
 
 import Asset.AppTheme; // Impor AppTheme Anda
+import db.Koneksi;
+import db.dao.PembayaranDAO;
+import db.dao.PenumpangDAO;
+import db.dao.ReservasiDAO;
 import managementtrevel.MainAppFrame; // Impor MainAppFrame
+import model.PaketPerjalananModel;
+import model.ReservasiModel;
+import model.Session;
 
 import javax.swing.JPanel;
 import java.awt.event.ActionEvent;
 // import java.awt.event.ActionListener; // Tidak diperlukan jika menggunakan method reference
 import java.awt.Dimension; 
-import javax.swing.GroupLayout; 
+import javax.swing.GroupLayout;
+import javax.swing.ImageIcon;
 import javax.swing.LayoutStyle.ComponentPlacement; 
 import java.awt.Color;
 import java.awt.Cursor;
@@ -18,9 +26,14 @@ import javax.swing.JLabel;
 import javax.swing.JButton;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.JOptionPane;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.util.List;  
+import java.awt.Image;
+
 
 
 public class PanelOrderHistory extends JPanel { 
@@ -43,12 +56,121 @@ public class PanelOrderHistory extends JPanel {
     private javax.swing.JTextField tf_orang;
     private javax.swing.JTextField tf_orang1; // "Rating"
 
+    private ReservasiDAO reservasiDAO; 
+    private static int userId;
+    private PenumpangDAO penumpangDAO;
+    private PembayaranDAO pembayaranDAO;
+    public static int getUserId() {
+        return userId;
+    }
+
     public PanelOrderHistory(MainAppFrame mainAppFrame) { 
         this.mainAppFrame = mainAppFrame;
         initComponents(); // PENTING: Pastikan ini adalah kode dari NetBeans Anda
         applyAppTheme();  // Terapkan tema setelah komponen diinisialisasi
         setupActionListeners(); // Atur listener jika belum diatur oleh initComponents
+
+         // Inisialisasi DAO dulu
+        reservasiDAO = new ReservasiDAO(Koneksi.getConnection());
+        penumpangDAO = new PenumpangDAO(Koneksi.getConnection());
+        pembayaranDAO = new PembayaranDAO(Koneksi.getConnection());
+
+        loadDataReservasi();
     }
+
+    private void loadDataReservasi() {
+    try {
+        if (Session.currentUser == null) {
+            JOptionPane.showMessageDialog(this, "User belum login.");
+            return;
+        }
+
+        int userId = Session.currentUser.getId();
+        List<ReservasiModel> list = reservasiDAO.getReservasiSelesaiDenganTrip(userId); // GANTI DI SINI
+
+        if (!list.isEmpty()) {
+                ReservasiModel reservasi = list.get(0);
+                PaketPerjalananModel paket = reservasi.getPaket();
+
+                if (paket != null) {
+                    tf_namakota.setText(paket.getNamaKota());
+                    tf_orang1.setText(String.valueOf("Rating " + paket.getRating()));
+                    tf_hari.setText(paket.getJumlahHari() + " Hari");
+
+                    int jumlahPenumpang = penumpangDAO.getJumlahPenumpangByReservasiId(reservasi.getId());
+                    tf_orang.setText(jumlahPenumpang + " Orang");
+
+                    Double jumlahPembayaran = pembayaranDAO.getJumlahPembayaranByReservasiId(reservasi.getId());
+                    if (jumlahPembayaran != null) {
+                        String hargaFormatted = String.format("Rp %, .0f", jumlahPembayaran).replace(',', '.').replace(" ", "");
+                        tf_harga.setText(hargaFormatted);
+                    }
+
+                    String gambarPath = paket.getGambar();
+                    if (gambarPath != null && !gambarPath.isEmpty()) {
+                        SwingUtilities.invokeLater(() -> {
+                            try {
+                                File baseDir = new File(System.getProperty("user.dir")).getParentFile();
+                                String gambarRelatif = gambarPath.startsWith("/") || gambarPath.startsWith("\\") ? gambarPath.substring(1) : gambarPath;
+                                File imageFile = new File(baseDir, gambarRelatif);
+
+                                System.out.println("Base Dir: " + baseDir.getAbsolutePath());
+                                System.out.println("Gambar relatif: " + gambarRelatif);
+                                System.out.println("Full path gambar: " + imageFile.getAbsolutePath());
+                                System.out.println("File exists: " + imageFile.exists());
+
+                                if (imageFile.exists()) {
+                                    int width = foto_user.getWidth() > 0 ? foto_user.getWidth() : 600;
+                                    int height = foto_user.getHeight() > 0 ? foto_user.getHeight() : 400;
+
+                                    ImageIcon icon = new ImageIcon(
+                                        new ImageIcon(imageFile.toURI().toURL())
+                                            .getImage()
+                                            .getScaledInstance(width, height, Image.SCALE_SMOOTH)
+                                    );
+
+                                    foto_user.setIcon(icon);
+                                    foto_user.setText("");
+                                    foto_user.setOpaque(false);
+                                } else {
+                                    foto_user.setIcon(null);
+                                    foto_user.setText("FOTO");
+                                }
+                            } catch (Exception e) {
+                                foto_user.setIcon(null);
+                                foto_user.setText("FOTO");
+                            }
+                        });
+                    } else {
+                        foto_user.setIcon(null);
+                        foto_user.setText("FOTO");
+                    }
+
+                } else {
+                    tf_namakota.setText("Tidak ada data");
+                    tf_orang1.setText("-");
+                    tf_hari.setText("-");
+                    tf_orang.setText("-");
+                    tf_harga.setText("-");
+                    foto_user.setIcon(null);
+                    foto_user.setText("FOTO");
+                }
+            } else {
+                tf_namakota.setText("Tidak ada reservasi");
+                tf_orang1.setText("-");
+                tf_hari.setText("-");
+                tf_orang.setText("-");
+                tf_harga.setText("-");
+                foto_user.setIcon(null);
+                foto_user.setText("FOTO");
+            }
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Gagal mengambil data reservasi: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
 
     private void applyAppTheme() {
         this.setBackground(AppTheme.PANEL_BACKGROUND);
