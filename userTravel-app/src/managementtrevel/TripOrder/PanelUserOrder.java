@@ -474,7 +474,7 @@ public class PanelUserOrder extends JPanel {
 
     private void btn_detailPesananActionPerformed(java.awt.event.ActionEvent evt) {                                                  
         if (mainAppFrame != null) {
-            JOptionPane.showMessageDialog(this, "Navigasi ke Detail Pesanan (Belum diimplementasikan di MainAppFrame)", "Info", JOptionPane.INFORMATION_MESSAGE);
+            mainAppFrame.showPanel(MainAppFrame.PANEL_ORDER_DETAIL);
         } else {
              System.err.println("MainAppFrame is null in PanelUserOrder (btn_detailPesanan)");
         }

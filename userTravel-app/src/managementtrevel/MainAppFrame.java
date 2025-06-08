@@ -17,6 +17,7 @@ import managementtrevel.HomeUser.PanelUserProfil;
 import managementtrevel.Payment.PanelPayment;
 import managementtrevel.SearchResultScreen.PanelSearchResult;
 import managementtrevel.TripDetailScreen.PanelTripDetail;
+import managementtrevel.TripOrder.PanelOrderDetail;
 import managementtrevel.TripOrder.PanelOrderHistory;
 import managementtrevel.TripOrder.PanelUserOrder;
 import model.PaketPerjalananModel;
@@ -42,6 +43,7 @@ public class MainAppFrame extends JFrame {
     public static final String PANEL_FINAL_STEP = "PanelFinalStep";
 
     public static final String PANEL_PESANAN_SAYA = "PanelUserOrder"; 
+    public static final String PANEL_ORDER_DETAIL = "PanelOrderDetail";
     public static final String PANEL_RIWAYAT_PESANAN = "PanelOrderHistory"; 
     public static final String PANEL_SEARCH_RESULT = "PanelSearchResult"; 
     public static final String PANEL_TRIP_DETAIL = "PanelTripDetail";     
@@ -85,6 +87,10 @@ public class MainAppFrame extends JFrame {
         PanelDestinationStep panelDestinationStep = new PanelDestinationStep(this);
         panelDestinationStep.setName(PANEL_DESTINATION_STEP); 
         mainPanelContainer.add(panelDestinationStep, PANEL_DESTINATION_STEP);
+        
+        PanelOrderDetail panelOrderDetail = new PanelOrderDetail(this, null, null);
+        panelDestinationStep.setName(PANEL_ORDER_DETAIL); 
+        mainPanelContainer.add(panelOrderDetail, PANEL_ORDER_DETAIL);
 
         add(sidebarPanel, BorderLayout.WEST);
         add(mainPanelContainer, BorderLayout.CENTER);
