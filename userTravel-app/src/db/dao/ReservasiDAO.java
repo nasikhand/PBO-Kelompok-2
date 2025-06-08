@@ -51,16 +51,22 @@ public class ReservasiDAO {
             int affectedRows = ps.executeUpdate();
 
             if (affectedRows > 0) {
-                try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        return generatedKeys.getInt(1); 
-                    }
+            try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    int idBaru = generatedKeys.getInt(1);
+                     // ✅ Tambahkan di sini:
+                
+                    System.out.println("✅ ID reservasi berhasil disimpan: " + idBaru);
+                    return idBaru;
                 }
             }
-        } catch (SQLException e) {
-            System.err.println("Error saat menyimpan reservasi: " + e.getMessage());
-            e.printStackTrace();
+        } else {
+            System.err.println("❌ Tidak ada baris yang disisipkan ke database.");
         }
+    } catch (SQLException e) {
+        System.err.println("❌ Error saat menyimpan reservasi: " + e.getMessage());
+        e.printStackTrace();
+    }
         return -1;
     }
 

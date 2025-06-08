@@ -18,6 +18,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -33,11 +35,18 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.DocumentEvent;
+
+
+
 import managementtrevel.MainAppFrame;
+import managementtrevel.Payment.PanelPayment;
 import managementtrevel.SearchResultScreen.PanelSearchResult;
 import model.PaketPerjalananModel;
 import model.ReservasiModel;
-import model.Session;    
+import model.Session;
+import model.UserModel;    
 
 
 public class PanelBookingScreen extends JPanel {
@@ -90,9 +99,14 @@ public class PanelBookingScreen extends JPanel {
 
         initializeUIProgrammatically(); 
         applyAppTheme();
-        setupActionListeners();
         loadBookingData(); 
+        setupActionListeners();  // untuk tombol dan checkbox
+        setupInputListeners();   // untuk teks input
+        validateFormSyarat();    // cek awal kondisi tombol
+        
+
     }
+
     
     private void initializeUIProgrammatically() {
         this.setLayout(new BorderLayout(0, 0)); // Gap 0 karena padding akan diatur manual
@@ -140,6 +154,15 @@ public class PanelBookingScreen extends JPanel {
         panelInputData.add(panelKontak);
         panelInputData.add(Box.createRigidArea(new Dimension(0,15)));
 
+        
+        // 👉 Set otomatis data dari session user yang login
+        if (Session.isLoggedIn() && Session.currentUser != null) {
+            UserModel user = Session.currentUser;
+            txtNamaKontak.setText(user.getNamaLengkap());
+            txtEmailKontak.setText(user.getEmail());
+            txtTeleponKontak.setText(user.getNomorTelepon());
+        }
+
         // Section Detail Penumpang (menggunakan field lama)
         JPanel panelPenumpang = createInputSectionPanel("Detail Penumpang");
         GridBagConstraints gbcPenumpang = new GridBagConstraints();
@@ -148,7 +171,7 @@ public class PanelBookingScreen extends JPanel {
         gbcPenumpang.insets = new Insets(5,5,5,5);
         gbcPenumpang.weightx = 1.0;
 
-        gbcPenumpang.gridy = 0; panelPenumpang.add(new JLabel("Jumlah Penumpang:"), gbcPenumpang);
+        gbcPenumpang.gridy = 0; panelPenumpang.add(new JLabel("Jumlah Penumpang (angka - maksimal 3 orang):"), gbcPenumpang);
         gbcPenumpang.gridy = 1; tf_jumlahpenumpang = new JTextField(5); panelPenumpang.add(tf_jumlahpenumpang, gbcPenumpang); // Ukuran lebih kecil
         gbcPenumpang.gridy = 2; panelPenumpang.add(new JLabel("Nama Penumpang 1:"), gbcPenumpang);
         gbcPenumpang.gridy = 3; tb_passangerdata = new JTextField(20); panelPenumpang.add(tb_passangerdata, gbcPenumpang);
@@ -158,6 +181,37 @@ public class PanelBookingScreen extends JPanel {
         gbcPenumpang.gridy = 7; tb_passangerdata2 = new JTextField(20); panelPenumpang.add(tb_passangerdata2, gbcPenumpang);
         panelInputData.add(panelPenumpang);
         panelInputData.add(Box.createVerticalGlue()); // Mendorong ke atas
+
+        tb_passangerdata.setEnabled(false);
+        tb_passangerdata1.setEnabled(false);
+        tb_passangerdata2.setEnabled(false);
+
+        // Tambahkan DocumentListener untuk tf_jumlahpenumpang
+        tf_jumlahpenumpang.getDocument().addDocumentListener(new DocumentListener() {
+            private void updateFieldPenumpang() {
+                try {
+                    int jumlah = Integer.parseInt(tf_jumlahpenumpang.getText().trim());
+
+                    tb_passangerdata.setEnabled(jumlah >= 1);
+                    tb_passangerdata1.setEnabled(jumlah >= 2);
+                    tb_passangerdata2.setEnabled(jumlah >= 3);
+
+                    if (jumlah < 1) tb_passangerdata.setText("");
+                    if (jumlah < 2) tb_passangerdata1.setText("");
+                    if (jumlah < 3) tb_passangerdata2.setText("");
+
+                } catch (NumberFormatException e) {
+                    tb_passangerdata.setEnabled(false);
+                    tb_passangerdata1.setEnabled(false);
+                    tb_passangerdata2.setEnabled(false);
+                }
+            }
+
+            @Override public void insertUpdate(DocumentEvent e) { updateFieldPenumpang(); }
+            @Override public void removeUpdate(DocumentEvent e) { updateFieldPenumpang(); }
+            @Override public void changedUpdate(DocumentEvent e) { updateFieldPenumpang(); }
+        });
+
 
 
         // Panel Kanan: Ringkasan dan Aksi
@@ -251,10 +305,10 @@ public class PanelBookingScreen extends JPanel {
         styleInputField(txtNamaKontak, "Nama Lengkap (Pemesanan)");
         styleInputField(txtEmailKontak, "Email (Pemesanan)");
         styleInputField(txtTeleponKontak, "No. Telepon (Pemesanan)");
-        styleInputField(tf_jumlahpenumpang, "Jumlah Penumpang (Angka)");
+        styleInputField(tf_jumlahpenumpang, "Jumlah Penumpang (Angka - maksimal 3 orang)");
         styleInputField(tb_passangerdata, "Nama Penumpang 1 (sesuai KTP)");
-        styleInputField(tb_passangerdata1, "Nama Penumpang 2 (opsional)");
-        styleInputField(tb_passangerdata2, "Nama Penumpang 3 (opsional)");
+        styleInputField(tb_passangerdata1, "Nama Penumpang 2 (sesuai KTP)");
+        styleInputField(tb_passangerdata2, "Nama Penumpang 3 (sesuai KTP)");
 
         // Panel Ringkasan
         Font ringkasanLabelFont = AppTheme.FONT_PRIMARY_DEFAULT;
@@ -359,6 +413,75 @@ public class PanelBookingScreen extends JPanel {
             }
         });
     }
+
+    private void setupInputListeners() {
+    addDocumentListener(txtNamaKontak);
+    addDocumentListener(txtEmailKontak);
+    addDocumentListener(txtTeleponKontak);
+    
+    addDocumentListener(tf_jumlahpenumpang);
+    addDocumentListener(tb_passangerdata);
+    addDocumentListener(tb_passangerdata1);
+    addDocumentListener(tb_passangerdata2);
+
+    if (cbox_syaratdanketentuan != null) {
+        cbox_syaratdanketentuan.addActionListener(e -> validateFormSyarat());
+    }
+}
+
+    private void addDocumentListener(JTextField textField) {
+        if (textField != null) {
+            textField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+                @Override
+                public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                    validateFormSyarat();
+                }
+
+                @Override
+                public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                    validateFormSyarat();
+                }
+
+                @Override
+                public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                    validateFormSyarat();
+                }
+            });
+        }
+    }
+
+
+    private boolean validateFormSyarat() {
+        boolean syaratCentang = cbox_syaratdanketentuan.isSelected();
+
+        boolean namaKontakIsi = !txtNamaKontak.getText().trim().isEmpty();
+        boolean emailKontakIsi = !txtEmailKontak.getText().trim().isEmpty();
+        boolean teleponKontakIsi = !txtTeleponKontak.getText().trim().isEmpty();
+        boolean semuaKontakIsi = namaKontakIsi && emailKontakIsi && teleponKontakIsi;
+
+        boolean penumpangValid = false;
+        try {
+            int jumlah = Integer.parseInt(tf_jumlahpenumpang.getText().trim());
+
+            if (jumlah >= 1 && tb_passangerdata.getText().trim().isEmpty()) {
+                penumpangValid = false;
+            } else if (jumlah >= 2 && tb_passangerdata1.getText().trim().isEmpty()) {
+                penumpangValid = false;
+            } else if (jumlah >= 3 && tb_passangerdata2.getText().trim().isEmpty()) {
+                penumpangValid = false;
+            } else {
+                penumpangValid = (jumlah >= 1);
+            }
+        } catch (NumberFormatException e) {
+            penumpangValid = false;
+        }
+
+        boolean isValid = syaratCentang && semuaKontakIsi && penumpangValid;
+
+        btnLanjutPembayaran.setEnabled(isValid);
+        return isValid;
+    }
+
     
     private void setupActionListeners() {
         if (btnKembali != null) btnKembali.addActionListener(this::btn_backActionPerformed);
@@ -384,17 +507,21 @@ public class PanelBookingScreen extends JPanel {
             // Set placeholder untuk input penumpang
             if (tf_jumlahpenumpang != null) styleInputField(tf_jumlahpenumpang, "Contoh: 1");
             if (tb_passangerdata != null) styleInputField(tb_passangerdata, "Nama Penumpang 1 (sesuai KTP)");
-            if (tb_passangerdata1 != null) styleInputField(tb_passangerdata1, "Nama Penumpang 2 (opsional)");
-            if (tb_passangerdata2 != null) styleInputField(tb_passangerdata2, "Nama Penumpang 3 (opsional)");
+            if (tb_passangerdata1 != null) styleInputField(tb_passangerdata1, "Nama Penumpang 2 (sesuai KTP)");
+            if (tb_passangerdata2 != null) styleInputField(tb_passangerdata2, "Nama Penumpang 3 (sesuai KTP)");
 
 
         } else {
             if (lblRingkasanNamaPaket != null) lblRingkasanNamaPaket.setText("Ringkasan Perjalanan (Data Paket Tidak Tersedia)");
         }
         if (btnLanjutPembayaran != null && cbox_syaratdanketentuan != null) {
-            btnLanjutPembayaran.setEnabled(cbox_syaratdanketentuan.isSelected());
+            validateFormSyarat();
         }
     }
+
+    
+
+    
 
     // Hapus metode initComponents() yang lama jika Anda sudah membuat UI secara programatik.
     private void initComponents() { 
@@ -450,18 +577,64 @@ public class PanelBookingScreen extends JPanel {
         } else {
              System.err.println("MainAppFrame is null in PanelBookingScreen (btn_back)");
         }
-    }                                        
-    private void btn_selanjutnyaActionPerformed(java.awt.event.ActionEvent evt) {                                                
+    } 
+
+    private void btn_selanjutnyaActionPerformed(java.awt.event.ActionEvent evt) {             
+        
+        // Validasi data kontak wajib isi
+        if (txtNamaKontak.getText().trim().isEmpty() ||
+            txtEmailKontak.getText().trim().isEmpty() ||
+            txtTeleponKontak.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Harap isi semua data kontak dengan lengkap.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int jumlahPenumpang = 0;
+        try {
+            jumlahPenumpang = Integer.parseInt(tf_jumlahpenumpang.getText().trim());
+            if (jumlahPenumpang < 1) {
+                JOptionPane.showMessageDialog(this, "Jumlah penumpang minimal 1.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Jumlah penumpang harus berupa angka valid.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Validasi nama penumpang sesuai jumlah penumpang
+        if (jumlahPenumpang >= 1 && tb_passangerdata.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Nama Penumpang 1 harus diisi.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (jumlahPenumpang >= 2 && tb_passangerdata1.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Nama Penumpang 2 harus diisi.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (jumlahPenumpang >= 3 && tb_passangerdata2.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Nama Penumpang 3 harus diisi.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Kumpulkan data penumpang ke list
+        List<String> penumpangList = new ArrayList<>();
+        if (jumlahPenumpang >= 1) penumpangList.add(tb_passangerdata.getText().trim());
+        if (jumlahPenumpang >= 2) penumpangList.add(tb_passangerdata1.getText().trim());
+        if (jumlahPenumpang >= 3) penumpangList.add(tb_passangerdata2.getText().trim());
+
         if (!cbox_syaratdanketentuan.isSelected()) {
             JOptionPane.showMessageDialog(this, "Silakan setujui syarat dan ketentuan yang berlaku terlebih dahulu.", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
+        
+
         
         if (mainAppFrame != null && currentPaket != null && Session.isLoggedIn() && Session.currentUser != null) {
-            // TODO: Kumpulkan data penumpang dari field input baru (txtNamaKontak, dll.)
-            // dan dari tf_jumlahpenumpang, tb_passangerdataX.
-            // Lakukan validasi input di sini.
+            String namaKontak = txtNamaKontak.getText().trim();
+            String emailKontak = txtEmailKontak.getText().trim();
+            String teleponKontak = txtTeleponKontak.getText().trim();
 
+            
             ReservasiModel reservasi = new ReservasiModel();
             reservasi.setUserId(Session.currentUser.getId());
             reservasi.setTripType("paket_perjalanan"); 
@@ -473,10 +646,14 @@ public class PanelBookingScreen extends JPanel {
             int idReservasiBaru = reservasiController.buatReservasi(reservasi);
 
             if (idReservasiBaru != -1) {
-                mainAppFrame.showPaymentPanel(idReservasiBaru);
-            } else {
-                JOptionPane.showMessageDialog(this, "Gagal membuat reservasi. Silakan coba lagi.", "Error Booking", JOptionPane.ERROR_MESSAGE);
-            }
+            PanelPayment panelPayment = new PanelPayment(mainAppFrame, idReservasiBaru, namaKontak, emailKontak, teleponKontak, penumpangList);
+            mainAppFrame.setContentPane(panelPayment);
+            mainAppFrame.revalidate();
+            mainAppFrame.repaint();
+        } else {
+            JOptionPane.showMessageDialog(this, "Gagal membuat reservasi. Silakan coba lagi.", "Error Booking", JOptionPane.ERROR_MESSAGE);
+        }
+
         } else {
             if (!Session.isLoggedIn() || Session.currentUser == null){
                  JOptionPane.showMessageDialog(this, "Anda harus login untuk melakukan booking.", "Info", JOptionPane.INFORMATION_MESSAGE);

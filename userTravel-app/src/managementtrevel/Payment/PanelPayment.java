@@ -1,23 +1,33 @@
 package managementtrevel.Payment;
 
 import Asset.AppTheme;
+import db.Koneksi;
 import db.dao.KotaDAO;
 import db.dao.PaketPerjalananDAO;
+import db.dao.PembayaranDAO;
+import db.dao.PenumpangDAO;
 import db.dao.ReservasiDAO;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.sql.Connection;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.Date;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import managementtrevel.MainAppFrame;
 import model.CustomTripModel;
 import model.PaketPerjalananModel;
+import model.PembayaranModel;
+import model.PenumpangModel;
 import model.ReservasiModel;
 import model.Session;
+import java.util.List;
+import java.util.ArrayList;
+
 
 
 public class PanelPayment extends JPanel {
@@ -69,25 +79,36 @@ public class PanelPayment extends JPanel {
     private JButton btnBayarSekarang;
 
 
-    public PanelPayment(MainAppFrame mainAppFrame, int reservasiId) {
+    private String namaKontak;
+    private String emailKontak;
+    private String teleponKontak;
+    private List<String> namaPenumpangList;
+    private int jumlahPenumpang;
+    private ReservasiModel reservasi;
+    private ReservasiModel reservasiSementara;
+
+
+    public PanelPayment(MainAppFrame mainAppFrame, int reservasiId, String namaKontak, String emailKontak, String teleponKontak, List<String> penumpangList) {
         this.mainAppFrame = mainAppFrame;
         this.reservasiId = reservasiId;
+        this.namaKontak = namaKontak;
+        this.emailKontak = emailKontak;
+        this.teleponKontak = teleponKontak;
+        this.namaPenumpangList = penumpangList;
+
+
         this.reservasiDAO = new ReservasiDAO();
         this.paketPerjalananDAO = new PaketPerjalananDAO();
         // this.customTripDAO = new CustomTripDAO();
         this.kotaDAO = new KotaDAO();
+
+        
 
         initializeUIProgrammatically();
         applyAppTheme();
         loadPaymentDetails();
         setupActionListeners();
     }
-
-    private PanelPayment() {
-        this(null, -1);
-        System.err.println("PERINGATAN: Konstruktor default PanelPayment dipanggil. Data tidak akan dimuat dengan benar.");
-    }
-
 
     private void initializeUIProgrammatically() {
         this.setLayout(new BorderLayout(0, 0));
@@ -131,7 +152,7 @@ public class PanelPayment extends JPanel {
 
         lblTitleDetailPembayaran = createSectionTitleLabel("Detail Pembayaran");
         panelKiri.add(lblTitleDetailPembayaran); // Index 4
-        txtIdReservasiDisplay = createDisplayTextField("ID Reservasi: -");
+        txtIdReservasiDisplay = createDisplayTextField("Kode Reservasi: -");
         panelKiri.add(txtIdReservasiDisplay); // Index 5
         txtTanggalPembayaranDisplay = createDisplayTextField("Tanggal Pembayaran: -");
         panelKiri.add(txtTanggalPembayaranDisplay); // Index 6
@@ -176,7 +197,7 @@ public class PanelPayment extends JPanel {
         panelKanan.add(lblRingkasanHargaDasar);
         panelKanan.add(Box.createRigidArea(new Dimension(0,5)));
 
-        lblRincianBiayaLayanan = createRincianBiayaLabel("Biaya Layanan:");
+        lblRincianBiayaLayanan = createRincianBiayaLabel("Biaya Layanan (5%):");
         panelKanan.add(lblRincianBiayaLayanan);
         lblBiayaAdminValue = createRincianBiayaValueLabel("Rp 0");
         panelKanan.add(lblBiayaAdminValue);
@@ -188,7 +209,7 @@ public class PanelPayment extends JPanel {
         panelKanan.add(lblBiayaAsuransiValue);
         panelKanan.add(Box.createRigidArea(new Dimension(0,5)));
 
-        lblRincianBiayaPajak = createRincianBiayaLabel("Pajak & Biaya Lain:");
+        lblRincianBiayaPajak = createRincianBiayaLabel("Pajak & Biaya Lain (11%):");
         panelKanan.add(lblRincianBiayaPajak);
         lblBiayaPajakValue = createRincianBiayaValueLabel("Rp 0");
         panelKanan.add(lblBiayaPajakValue);
@@ -300,6 +321,9 @@ public class PanelPayment extends JPanel {
         panel.add(Box.createRigidArea(new Dimension(0,10))); // Index 5
         panel.add(lblKartuKredit);
         panel.add(cmbMetodeKartuKredit);
+
+        // Pasang listener setelah komponen dibuat
+        setupMetodePembayaranListener();
         return panel;
     }
 
@@ -362,11 +386,11 @@ public class PanelPayment extends JPanel {
 
         styleFormLabel(lblRincianHargaDasar, "Harga Dasar Paket/Trip:");
         if (lblRingkasanHargaDasar != null) styleRincianValueLabel(lblRingkasanHargaDasar);
-        styleFormLabel(lblRincianBiayaLayanan, "Biaya Layanan:");
+        styleFormLabel(lblRincianBiayaLayanan, "Biaya Layanan (5%):");
         if (lblBiayaAdminValue != null) styleRincianValueLabel(lblBiayaAdminValue);
         styleFormLabel(lblRincianBiayaAsuransi, "Biaya Asuransi (Opsional):");
         if (lblBiayaAsuransiValue != null) styleRincianValueLabel(lblBiayaAsuransiValue);
-        styleFormLabel(lblRincianBiayaPajak, "Pajak & Biaya Lain:");
+        styleFormLabel(lblRincianBiayaPajak, "Pajak & Biaya Lain (11%):");
         if (lblBiayaPajakValue != null) styleRincianValueLabel(lblBiayaPajakValue);
 
         if(lblTitleTotalPembayaran != null) {
@@ -513,24 +537,35 @@ public class PanelPayment extends JPanel {
         if (btnBayarSekarang != null) btnBayarSekarang.addActionListener(this::btn_bayarActionPerformed);
     }
 
+    private String generateKodeReservasi() {
+        String prefix = "RSV";
+        String tanggal = new SimpleDateFormat("yyyyMMdd").format(new Date());
+        int angkaRandom = (int)(Math.random() * 900) + 100; // hasil 3 digit: 100-999
+        return prefix + tanggal + angkaRandom;
+    }
+
+
+
     private void loadPaymentDetails() {
+
+        // Selalu buat reservasi baru
+        buatReservasiSementaraBaru();
+    
+
         if (txtIdReservasiDisplay != null) {
-            txtIdReservasiDisplay.setText("ID Reservasi: " + (this.reservasiId > 0 ? String.valueOf(this.reservasiId) : "N/A"));
+            String kodeReservasi = generateKodeReservasi();
+            txtIdReservasiDisplay.setText("Kode Reservasi: " + kodeReservasi);
         }
         if (txtTanggalPembayaranDisplay != null ) {
             txtTanggalPembayaranDisplay.setText("Tanggal Pembayaran: " + new SimpleDateFormat("dd MMMM yyyy").format(new Date()));
         }
-        if (txtStatusPembayaranDisplay != null ) {
+        if (txtStatusPembayaranDisplay != null) {
             txtStatusPembayaranDisplay.setText("Status Pembayaran: Pending");
         }
 
-        if (Session.isLoggedIn() && Session.currentUser != null) {
-            if (txtNamaPenumpangDisplay != null) txtNamaPenumpangDisplay.setText("Nama Pemesan: " + Session.currentUser.getNamaLengkap());
-            if (txtNoTeleponDisplay != null) txtNoTeleponDisplay.setText("No. Telepon: " + Session.currentUser.getNomorTelepon());
-        } else {
-            if (txtNamaPenumpangDisplay != null) txtNamaPenumpangDisplay.setText("Nama Pemesan: -");
-            if (txtNoTeleponDisplay != null) txtNoTeleponDisplay.setText("No. Telepon: -");
-        }
+        if (txtNamaPenumpangDisplay != null) txtNamaPenumpangDisplay.setText("Nama Pemesan: " + namaKontak);
+
+        if (txtNoTeleponDisplay != null) txtNoTeleponDisplay.setText("No. Telepon: " + teleponKontak);
 
         // TODO: Ambil detail reservasi dari DAO untuk mendapatkan tripId dan tripType
         ReservasiModel reservasi = reservasiDAO.getReservasiById(this.reservasiId);
@@ -540,6 +575,7 @@ public class PanelPayment extends JPanel {
             } else if ("custom_trip".equals(reservasi.getTripType())) {
                 // this.customTripDipesan = customTripDAO.getById(reservasi.getTripId());
             }
+            
         }
 
         if (this.paketDipesan == null && this.customTripDipesan == null) {
@@ -550,21 +586,92 @@ public class PanelPayment extends JPanel {
             if(lblRingkasanHargaDasar != null) lblRingkasanHargaDasar.setText("Rp 0");
             if(lblTotalPembayaranValue != null) lblTotalPembayaranValue.setText("Rp 0");
 
+            updateHargaDasarDanPajak(0);
+
         } else if (this.paketDipesan != null) {
             if(lblRingkasanNamaTrip != null) lblRingkasanNamaTrip.setText(paketDipesan.getNamaPaket());
             if(lblRingkasanKota != null && kotaDAO != null) lblRingkasanKota.setText("Kota Tujuan: " + kotaDAO.getNamaKotaById(paketDipesan.getKotaId()));
             if(lblRingkasanTanggalTrip != null) lblRingkasanTanggalTrip.setText("Tanggal: " + paketDipesan.getTanggalMulai() + " s/d " + paketDipesan.getTanggalAkhir());
             if(lblRingkasanDurasi != null) lblRingkasanDurasi.setText("Durasi: " + paketDipesan.getDurasi() + " Hari");
-            if(lblRingkasanHargaDasar != null) lblRingkasanHargaDasar.setText("Rp " + String.format("%,.0f", paketDipesan.getHarga()));
-            if(lblTotalPembayaranValue != null) lblTotalPembayaranValue.setText("Rp " + String.format("%,.0f", paketDipesan.getHarga())); // TODO: Hitung total sebenarnya
+            // Panggil updateHargaDasarDanPajak dengan harga dasar paket
+            updateHargaDasarDanPajak(paketDipesan.getHarga());
+
+            // if(lblRingkasanHargaDasar != null) lblRingkasanHargaDasar.setText("Rp " + String.format("%,.0f", paketDipesan.getHarga()));
+
+            // if(lblTotalPembayaranValue != null) lblTotalPembayaranValue.setText("Rp " + String.format("%,.0f", paketDipesan.getHarga())); // TODO: Hitung total sebenarnya
+
         } else if (this.customTripDipesan != null) {
             // TODO: Logika untuk mengisi ringkasan dari customTripDipesan
+
+            updateHargaDasarDanPajak(0);
         }
 
-        if(lblBiayaAdminValue != null) lblBiayaAdminValue.setText("Rp 0");
-        if(lblBiayaAsuransiValue != null) lblBiayaAsuransiValue.setText("Rp 0");
-        if(lblBiayaPajakValue != null) lblBiayaPajakValue.setText("Rp 0");
+        // if(lblBiayaAdminValue != null) lblBiayaAdminValue.setText("Rp 0");
+        // if(lblBiayaAsuransiValue != null) lblBiayaAsuransiValue.setText("Rp 0");
+        // if(lblBiayaPajakValue != null) lblBiayaPajakValue.setText("Rp 0");
     }
+
+    private void updateHargaDasarDanPajak(double hargaDasar) {
+        // Set harga dasar
+        if (lblRingkasanHargaDasar != null) {
+            lblRingkasanHargaDasar.setText("Rp " + String.format("%,.0f", hargaDasar));
+        }
+
+        // Hitung pajak 11% dari harga dasar
+        double pajak = hargaDasar * 0.11;
+        if (lblBiayaPajakValue != null) {
+            lblBiayaPajakValue.setText("Rp " + String.format("%,.0f", pajak));
+        }
+
+        // Hitung biaya layanan 5% dari harga dasar
+        double biayaLayanan = hargaDasar * 0.05;
+        if (lblBiayaAdminValue != null) {
+            lblBiayaAdminValue.setText("Rp " + String.format("%,.0f", biayaLayanan));
+        }
+
+        // Biaya asuransi tetap 0 (jika belum ada ketentuan lain)
+        double biayaAsuransi = 0;
+        if (lblBiayaAsuransiValue != null) {
+            lblBiayaAsuransiValue.setText("Rp " + String.format("%,.0f", biayaAsuransi));
+        }
+
+        // Hitung total
+        double totalPembayaran = hargaDasar + pajak + biayaLayanan + biayaAsuransi;
+        if (lblTotalPembayaranValue != null) {
+            lblTotalPembayaranValue.setText("Rp " + String.format("%,.0f", totalPembayaran));
+        }
+    }
+
+    private void buatReservasiSementaraBaru() {
+        reservasiSementara = new ReservasiModel();
+
+        reservasiSementara.setKodeReservasi(generateKodeReservasi());
+
+        if (paketDipesan != null) {
+            reservasiSementara.setTripId(paketDipesan.getId());
+            reservasiSementara.setTripType("paket_perjalanan");
+            
+        } else if (customTripDipesan != null) {
+            reservasiSementara.setTripId(customTripDipesan.getId());
+            reservasiSementara.setTripType("custom_trip");
+            // set harga custom trip jika ada
+        } else {
+            reservasiSementara.setTripId(0);
+            reservasiSementara.setTripType(null);
+
+        }
+
+        // Tanggal reservasi harus LocalDate, bukan java.util.Date
+        reservasiSementara.setTanggalReservasi(LocalDate.now());
+        reservasiSementara.setStatus("pending");
+
+        // UserId harus di-set saat user sudah login
+        if (Session.isLoggedIn() && Session.currentUser != null) {
+            reservasiSementara.setUserId(Session.currentUser.getId());
+        }
+
+    }
+
 
     private void initComponents() {
         // KOSONGKAN ATAU HAPUS METODE INI
@@ -581,16 +688,116 @@ public class PanelPayment extends JPanel {
         }
     }
 
-    private void btn_bayarActionPerformed(java.awt.event.ActionEvent evt) {
-        String metodeBank = cmbMetodeBank.getSelectedIndex() > 0 ? (String) cmbMetodeBank.getSelectedItem() : null;
-        String metodeEwallet = cmbMetodeEwallet.getSelectedIndex() > 0 ? (String) cmbMetodeEwallet.getSelectedItem() : null;
-        String metodeKartuKredit = cmbMetodeKartuKredit.getSelectedIndex() > 0 ? (String) cmbMetodeKartuKredit.getSelectedItem() : null;
+    private void setupMetodePembayaranListener() {
+        // Listener untuk cmbMetodeBank
+        cmbMetodeBank.addActionListener(e -> {
+            boolean isSelected = cmbMetodeBank.getSelectedIndex() > 0; // index 0 = "-- Pilih Bank --"
+            cmbMetodeEwallet.setEnabled(!isSelected);
+            cmbMetodeKartuKredit.setEnabled(!isSelected);
+        });
 
-        if (metodeBank == null && metodeEwallet == null && metodeKartuKredit == null) {
-            JOptionPane.showMessageDialog(this, "Pilih salah satu metode pembayaran.", "Input Error", JOptionPane.WARNING_MESSAGE);
-            return;
+        // Listener untuk cmbMetodeEwallet
+        cmbMetodeEwallet.addActionListener(e -> {
+            boolean isSelected = cmbMetodeEwallet.getSelectedIndex() > 0;
+            cmbMetodeBank.setEnabled(!isSelected);
+            cmbMetodeKartuKredit.setEnabled(!isSelected);
+        });
+
+        // Listener untuk cmbMetodeKartuKredit
+        cmbMetodeKartuKredit.addActionListener(e -> {
+            boolean isSelected = cmbMetodeKartuKredit.getSelectedIndex() > 0;
+            cmbMetodeBank.setEnabled(!isSelected);
+            cmbMetodeEwallet.setEnabled(!isSelected);
+        });
+    }
+
+    
+
+    private void btn_bayarActionPerformed(java.awt.event.ActionEvent evt) {
+        // Buat data reservasi sementara
+        buatReservasiSementaraBaru();
+
+        // Ambil index pilihan dari masing-masing combo
+        int idxBank = cmbMetodeBank.getSelectedIndex();
+        int idxEwallet = cmbMetodeEwallet.getSelectedIndex();
+        int idxKartuKredit = cmbMetodeKartuKredit.getSelectedIndex();
+
+        String metodePembayaran = null;
+
+        if ((idxBank > 0 && idxEwallet == 0 && idxKartuKredit == 0) ||
+            (idxBank == 0 && idxEwallet > 0 && idxKartuKredit == 0) ||
+            (idxBank == 0 && idxEwallet == 0 && idxKartuKredit > 0)) {
+
+            if (idxBank > 0) {
+                metodePembayaran = (String) cmbMetodeBank.getSelectedItem();
+            } else if (idxEwallet > 0) {
+                metodePembayaran = (String) cmbMetodeEwallet.getSelectedItem();
+            } else if (idxKartuKredit > 0) {
+                metodePembayaran = (String) cmbMetodeKartuKredit.getSelectedItem();
+            }
+
+        } else {
+            JOptionPane.showMessageDialog(this, "Pilih **hanya satu** metode pembayaran.", "Input Error", JOptionPane.WARNING_MESSAGE);
+            return;  // Berhenti proses jika validasi gagal
         }
 
-        JOptionPane.showMessageDialog(this, "Tombol Bayar Sekarang diklik! Metode: " + (metodeBank != null ? metodeBank : metodeEwallet != null ? metodeEwallet : metodeKartuKredit) + " (Logika pembayaran belum diimplementasikan sepenuhnya)");
+        if (Session.isLoggedIn() && Session.currentUser != null && reservasiSementara != null) {
+            reservasiSementara.setUserId(Session.currentUser.getId());
+
+            int idReservasiBaru = reservasiDAO.save(reservasiSementara);
+
+            if (idReservasiBaru != -1) {
+                this.reservasiId = idReservasiBaru;
+
+                Connection conn = Koneksi.getConnection();
+                PenumpangDAO penumpangDAO = new PenumpangDAO(conn);
+                boolean semuaBerhasil = true;
+
+                for (String namaPenumpang : namaPenumpangList) {
+                    PenumpangModel penumpang = new PenumpangModel();
+                    penumpang.setReservasiId(idReservasiBaru);
+                    penumpang.setNamaPenumpang(namaPenumpang);
+                    // Set data lainnya jika ada
+
+                    boolean success = penumpangDAO.insertPenumpang(penumpang);
+                    if (!success) {
+                        System.err.println("❌ Gagal menyimpan data penumpang: " + namaPenumpang);
+                        semuaBerhasil = false;
+                    }
+                }
+
+                if (semuaBerhasil) {
+                    double hargaDasar = paketDipesan != null ? paketDipesan.getHarga() : 0;
+                    double pajak = hargaDasar * 0.11;
+                    double biayaLayanan = hargaDasar * 0.05;
+                    double biayaAsuransi = 0; // default 0
+                    double totalPembayaran = hargaDasar + pajak + biayaLayanan + biayaAsuransi;
+
+                    PembayaranModel pembayaran = new PembayaranModel();
+                    pembayaran.setReservasiId(idReservasiBaru);
+                    pembayaran.setMetodePembayaran(metodePembayaran);
+                    pembayaran.setJumlahPembayaran(totalPembayaran);
+                    pembayaran.setTanggalPembayaran(new Date());
+                    pembayaran.setStatusPembayaran("lunas");
+
+                    PembayaranDAO pembayaranDAO = new PembayaranDAO(Koneksi.getConnection());
+                    boolean berhasilSimpanPembayaran = pembayaranDAO.insertPembayaran(pembayaran);
+
+                    if (berhasilSimpanPembayaran) {
+                        JOptionPane.showMessageDialog(this, "✅ Pembayaran berhasil disimpan.");
+                    } else {
+                        JOptionPane.showMessageDialog(this, "⚠️ Gagal menyimpan data pembayaran.");
+                    }
+
+                    JOptionPane.showMessageDialog(this, "Pembayaran berhasil. Kode Reservasi: " + reservasiSementara.getKodeReservasi());
+                } else {
+                    JOptionPane.showMessageDialog(this, "Beberapa data penumpang gagal disimpan.");
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Gagal menyimpan data reservasi.");
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Data reservasi belum tersedia atau user belum login.");
+        }
     }
 }
