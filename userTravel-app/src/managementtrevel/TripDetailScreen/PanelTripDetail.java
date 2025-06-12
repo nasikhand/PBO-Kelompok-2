@@ -7,12 +7,12 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import managementtrevel.MainAppFrame;
 import model.DestinasiModel;
 import model.PaketPerjalananModel;
-import java.util.List;
 
 public class PanelTripDetail extends JPanel {
 
@@ -369,22 +369,27 @@ public class PanelTripDetail extends JPanel {
 
                 
                 String gambarRelatif = d.getGambar();
-                if (gambarRelatif.startsWith("/") || gambarRelatif.startsWith("\\")) {
-                    gambarRelatif = gambarRelatif.substring(1);
+                if (gambarRelatif != null && !gambarRelatif.trim().isEmpty()) { // Add null and empty check
+                    if (gambarRelatif.startsWith("/") || gambarRelatif.startsWith("\\")) {
+                        gambarRelatif = gambarRelatif.substring(1);
+                    }
+
+                    File imageFile = new File(baseDir, gambarRelatif);
+                    ImageIcon icon = null;
+                    if (imageFile.exists()) {
+                        icon = new ImageIcon(imageFile.getAbsolutePath());
+                    } else {
+                        System.out.println("Gambar tidak ditemukan: " + imageFile.getAbsolutePath());
+                        // Optionally set a default icon here if the file doesn't exist
+                        // icon = new ImageIcon(getClass().getResource("/path/to/default/itin_placeholder.png"));
+                    }
+                    panelItineraryItems.add(createItineraryItemPanel(nama, deskripsi, durasi, icon));
+                } else {
+                    // Handle case where gambarRelatif is null or empty
+                    System.out.println("Gambar destinasi kosong atau null untuk: " + nama);
+                    panelItineraryItems.add(createItineraryItemPanel(nama, deskripsi, durasi, null)); // Pass null icon
                 }
-
-                File imageFile = new File(baseDir, gambarRelatif);
-
-                ImageIcon icon = null;
-                if (imageFile.exists()) {
-
-                icon = new ImageIcon(imageFile.getAbsolutePath());
-                // gunakan icon ini pada label gambar itinerary 
-            } else {
-                System.out.println("Gambar tidak ditemukan: " + imageFile.getAbsolutePath());
-            }
-
-                panelItineraryItems.add(createItineraryItemPanel(nama, deskripsi, durasi, icon));
+                
                 panelItineraryItems.add(Box.createRigidArea(new Dimension(0, 10)));
             }
         }

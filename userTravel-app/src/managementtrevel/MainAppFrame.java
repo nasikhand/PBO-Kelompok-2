@@ -188,9 +188,10 @@ public class MainAppFrame extends JFrame {
     }
     
     // Untuk PanelPayment, reservasiId sekarang bertipe int
-    public void showPaymentPanel(int reservasiId ) { 
+    public void showPaymentPanel(int reservasiId, String namaKontak, String emailKontak, String teleponKontak, List<String> penumpangList) {
         removePanelIfExists(PANEL_PAYMENT);
-        PanelPayment panel = new PanelPayment(this, reservasiId ); 
+        // Now pass all the arguments
+        PanelPayment panel = new PanelPayment(this, reservasiId, namaKontak, emailKontak, teleponKontak, penumpangList);
         panel.setName(PANEL_PAYMENT);
         mainPanelContainer.add(panel, PANEL_PAYMENT);
         cardLayout.show(mainPanelContainer, PANEL_PAYMENT);
