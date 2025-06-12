@@ -100,7 +100,10 @@ public class ReservasiDAO {
                     r.setTanggalReservasi(sqlDate.toLocalDate());
                 }
                 r.setStatus(rs.getString("status"));
-
+                
+                // --- NEW DEBUGGING HERE (if record found) ---
+                System.out.println("DEBUG ReservasiDAO.getReservasiById: Found reservasi - ID: " + r.getId() + ", Code: " + r.getKodeReservasi());
+                // --- END NEW DEBUGGING ---
                 if ("paket_perjalanan".equals(r.getTripType())) {
                     r.setPaket(getPaketById(r.getTripId()));
                 } else if ("custom_trip".equals(r.getTripType())) {
@@ -128,10 +131,10 @@ public class ReservasiDAO {
     }
 
     public ReservasiModel getReservasiById(int reservasiId) {
-        if (this.conn == null) {
-            System.err.println("Tidak ada koneksi database untuk getReservasiById.");
-            return null;
-        }
+    if (this.conn == null) {
+        System.err.println("ERROR ReservasiDAO.getReservasiById: Connection is NULL!");
+        return null; 
+    }
         String sql = "SELECT * FROM reservasi WHERE id = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, reservasiId);
@@ -156,7 +159,7 @@ public class ReservasiDAO {
                     r.setCustomTrip(getCustomTripById(r.getTripId()));
                 }
                 return r;
-            }
+            } 
         } catch (SQLException e) {
             System.err.println("Error saat mengambil reservasi by ID: " + e.getMessage());
             e.printStackTrace();

@@ -7,19 +7,20 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.net.URL;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import managementtrevel.MainAppFrame;
 import model.DestinasiModel;
-import model.PaketPerjalananModel;
+import model.PaketPerjalananModel; // Added for resource loading
 
 public class PanelTripDetail extends JPanel {
 
     private MainAppFrame mainAppFrame;
-    private PaketPerjalananModel currentPaket; 
-    private String originalSearchNamaKota;    
-    private String originalSearchTanggal; 
+    private PaketPerjalananModel currentPaket;
+    private String originalSearchNamaKota;
+    private String originalSearchTanggal;
 
     // Komponen Utama UI (dibuat programatik)
     private JLabel lblNamaPaket;
@@ -46,15 +47,15 @@ public class PanelTripDetail extends JPanel {
         this.originalSearchTanggal = originalSearchTanggal;
 
         this.paketId = paket.getId();
-        
-        initializeUIProgrammatically(); 
+
+        initializeUIProgrammatically();
         applyAppTheme();
-        loadTripData(); 
+        loadTripData();
         setupActionListeners();
     }
-    
-    private PanelTripDetail() { 
-        this(null, null, null, null); 
+
+    private PanelTripDetail() {
+        this(null, null, null, null);
         System.err.println("PERINGATAN: Konstruktor default PanelTripDetail dipanggil. Data tidak akan dimuat dengan benar.");
     }
 
@@ -93,7 +94,8 @@ public class PanelTripDetail extends JPanel {
 
         // 2a. Gambar Utama Paket
         lblGambarUtamaPaket = new JLabel("Memuat Gambar...", SwingConstants.CENTER);
-        lblGambarUtamaPaket.setPreferredSize(new Dimension(600, 300)); // Ukuran gambar utama
+        // Set preferred size here for the main image
+        lblGambarUtamaPaket.setPreferredSize(new Dimension(600, 300));
         lblGambarUtamaPaket.setOpaque(true); // Agar background placeholder terlihat
         mainContent.add(lblGambarUtamaPaket, gbc);
         gbc.gridy++;
@@ -103,14 +105,12 @@ public class PanelTripDetail extends JPanel {
         shortInfoPanel.setOpaque(false);
         lblKotaTujuan = createInfoLabel("Kota Tujuan: ");
         lblTanggalTrip = createInfoLabel("Tanggal: ");
-        // lblDurasiPaket = createInfoLabel("Durasi: "); // Akan di-set di loadTripData
         lblKuota = createInfoLabel("Kuota: ");
         lblStatusPaket = createInfoLabel("Status: ");
         lblRatingPaket = createInfoLabel("Rating: ");
-        
+
         shortInfoPanel.add(lblKotaTujuan);
         shortInfoPanel.add(lblTanggalTrip);
-        // shortInfoPanel.add(lblDurasiPaket);
         shortInfoPanel.add(lblKuota);
         shortInfoPanel.add(lblStatusPaket);
         shortInfoPanel.add(lblRatingPaket);
@@ -123,7 +123,6 @@ public class PanelTripDetail extends JPanel {
         // 2c. Panel Galeri (Opsional)
         panelGallery = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         panelGallery.setOpaque(false);
-        // Nanti di loadTripData, kita tambahkan gambar-gambar kecil ke sini
         gbc.fill = GridBagConstraints.NONE; gbc.anchor = GridBagConstraints.CENTER;
         mainContent.add(panelGallery, gbc);
         gbc.gridy++;
@@ -147,7 +146,6 @@ public class PanelTripDetail extends JPanel {
         panelItineraryItems = new JPanel();
         panelItineraryItems.setLayout(new BoxLayout(panelItineraryItems, BoxLayout.Y_AXIS));
         panelItineraryItems.setOpaque(false);
-        // Nanti di loadTripData, kita tambahkan item-item itinerary ke sini
         itineraryPanel.add(new JScrollPane(panelItineraryItems), BorderLayout.CENTER); // Buat itinerary scrollable
         mainContent.add(itineraryPanel, gbc);
         gbc.gridy++;
@@ -171,7 +169,7 @@ public class PanelTripDetail extends JPanel {
 
         lblHargaPaket = new JLabel("Rp 0");
         btnBookSekarang = new JButton("Book Sekarang");
-        
+
         footerPanel.add(lblHargaPaket, BorderLayout.CENTER);
         footerPanel.add(btnBookSekarang, BorderLayout.EAST);
 
@@ -179,7 +177,7 @@ public class PanelTripDetail extends JPanel {
         this.add(mainScrollPane, BorderLayout.CENTER);
         this.add(footerPanel, BorderLayout.SOUTH);
     }
-    
+
     private JLabel createInfoLabel(String prefix) {
         JLabel label = new JLabel(prefix + "-");
         return label;
@@ -187,11 +185,11 @@ public class PanelTripDetail extends JPanel {
 
     private JPanel createTitledSection(String title) {
         JPanel panel = new JPanel(new BorderLayout(0, 5));
-        panel.setOpaque(false); // Agar background mainContent terlihat
+        panel.setOpaque(false);
         JLabel titleLabel = new JLabel(title);
         titleLabel.setFont(AppTheme.FONT_SUBTITLE);
         titleLabel.setForeground(AppTheme.PRIMARY_BLUE_DARK);
-        titleLabel.setBorder(new EmptyBorder(0,0,5,0)); // Margin bawah untuk judul section
+        titleLabel.setBorder(new EmptyBorder(0,0,5,0));
         panel.add(titleLabel, BorderLayout.NORTH);
         return panel;
     }
@@ -199,7 +197,7 @@ public class PanelTripDetail extends JPanel {
 
     private void applyAppTheme() {
         this.setBackground(AppTheme.PANEL_BACKGROUND);
-        
+
         // Header
         if (btnKembali != null) styleSecondaryButton(btnKembali, "< Kembali");
         if (lblNamaPaket != null) {
@@ -226,7 +224,7 @@ public class PanelTripDetail extends JPanel {
         if (taDeskripsiPaket != null) {
             taDeskripsiPaket.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
             taDeskripsiPaket.setForeground(AppTheme.TEXT_DARK);
-            taDeskripsiPaket.setBackground(AppTheme.INPUT_BACKGROUND); 
+            taDeskripsiPaket.setBackground(AppTheme.INPUT_BACKGROUND);
             taDeskripsiPaket.setBorder(new EmptyBorder(5,8,5,8));
             JScrollPane parentScrollPane = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, taDeskripsiPaket);
             if (parentScrollPane != null) {
@@ -234,22 +232,20 @@ public class PanelTripDetail extends JPanel {
                 parentScrollPane.getViewport().setBackground(AppTheme.INPUT_BACKGROUND);
             }
         }
-        
-        // Itinerary - styling untuk panelItineraryItems dan item-item di dalamnya akan di handle saat item dibuat
 
         // Footer
         if (lblHargaPaket != null) {
-            lblHargaPaket.setFont(AppTheme.FONT_TITLE_MEDIUM); // FONT_TITLE_MEDIUM_BOLD perlu ada di AppTheme
+            lblHargaPaket.setFont(AppTheme.FONT_TITLE_MEDIUM);
             lblHargaPaket.setForeground(AppTheme.ACCENT_ORANGE);
         }
         if (btnBookSekarang != null) stylePrimaryButton(btnBookSekarang, "Book Sekarang");
     }
-    
+
     private void loadTripData() {
         if (currentPaket != null) {
             if (lblNamaPaket != null) lblNamaPaket.setText(currentPaket.getNamaPaket());
-            
-            KotaDAO kotaDAO = new KotaDAO(); // Sebaiknya di-inject atau field
+
+            KotaDAO kotaDAO = new KotaDAO();
             String namaKota = currentPaket.getKotaId() > 0 ? kotaDAO.getNamaKotaById(currentPaket.getKotaId()) : "N/A";
             long durasi = currentPaket.getDurasi();
 
@@ -257,12 +253,11 @@ public class PanelTripDetail extends JPanel {
             if (lblTanggalTrip != null) lblTanggalTrip.setText(String.format("<html><b>Tanggal:</b> %s s/d %s (%d hari)</html>", currentPaket.getTanggalMulai(), currentPaket.getTanggalAkhir(), durasi));
             if (lblKuota != null) lblKuota.setText("<html><b>Kuota:</b> " + currentPaket.getKuota() + " orang</html>");
             if (lblStatusPaket != null) {
-                 lblStatusPaket.setText("<html><b>Status:</b> " + currentPaket.getStatus() + "</html>");
-                 // Beri warna berdasarkan status
+                lblStatusPaket.setText("<html><b>Status:</b> " + currentPaket.getStatus() + "</html>");
                 if ("tersedia".equalsIgnoreCase(currentPaket.getStatus())) {
-                    lblStatusPaket.setForeground(AppTheme.TEXT_DARK); // Perlu TEXT_SUCCESS di AppTheme (misal: hijau)
+                    lblStatusPaket.setForeground(AppTheme.TEXT_DARK);
                 } else if ("penuh".equalsIgnoreCase(currentPaket.getStatus()) || "selesai".equalsIgnoreCase(currentPaket.getStatus())) {
-                    lblStatusPaket.setForeground(AppTheme.TEXT_DARK); // Perlu TEXT_ERROR di AppTheme (misal: merah)
+                    lblStatusPaket.setForeground(AppTheme.TEXT_DARK);
                 }
             }
             if (lblRatingPaket != null) lblRatingPaket.setText("<html><b>Rating:</b> " + currentPaket.getRating() + "/5.0</html>");
@@ -270,94 +265,81 @@ public class PanelTripDetail extends JPanel {
             if (taDeskripsiPaket != null) taDeskripsiPaket.setText(currentPaket.getDeskripsi());
 
 
-            if (lblGambarUtamaPaket != null) { 
+            if (lblGambarUtamaPaket != null) {
                 String gambarPath = currentPaket.getGambar();
                 if (gambarPath != null && !gambarPath.isEmpty()) {
-                    SwingUtilities.invokeLater(() -> { 
+                    SwingUtilities.invokeLater(() -> {
                         String userDir = System.getProperty("user.dir");
-                        File baseDir = new File(System.getProperty("user.dir")).getParentFile();
+                        File baseDir = new File(userDir).getParentFile();
                         String gambarRelatif = gambarPath;
-                        if (gambarRelatif.startsWith("/") || gambarRelatif.startsWith("\\")) gambarRelatif = gambarRelatif.substring(1);
+
+                        if (gambarRelatif.startsWith("/") || gambarRelatif.startsWith("\\")) {
+                            gambarRelatif = gambarRelatif.substring(1);
+                        }
+
                         File imageFile = new File(baseDir, gambarRelatif);
-                         System.out.println("[PanelTripDetail] Mencoba memuat gambar utama: " + imageFile.getAbsolutePath());
+                        System.out.println("[PanelTripDetail] Mencoba memuat gambar utama: " + imageFile.getAbsolutePath());
+
                         if (imageFile.exists()) {
                             try {
-                                ImageIcon icon = new ImageIcon(new ImageIcon(imageFile.toURI().toURL()).getImage().getScaledInstance(lblGambarUtamaPaket.getWidth() > 0 ? lblGambarUtamaPaket.getWidth() : 600, lblGambarUtamaPaket.getHeight() > 0 ? lblGambarUtamaPaket.getHeight() : 300, Image.SCALE_SMOOTH));
+                                int targetWidth = lblGambarUtamaPaket.getPreferredSize().width; // 600
+                                int targetHeight = lblGambarUtamaPaket.getPreferredSize().height; // 300
+
+                                Image img = new ImageIcon(imageFile.toURI().toURL()).getImage();
+                                Image scaledImg = img.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
+                                ImageIcon icon = new ImageIcon(scaledImg);
+
                                 lblGambarUtamaPaket.setIcon(icon);
                                 lblGambarUtamaPaket.setText("");
                                 lblGambarUtamaPaket.setOpaque(false);
+                                lblGambarUtamaPaket.setBackground(null);
                             } catch (Exception e) {
                                 System.err.println("Error saat memuat gambar utama: " + e.getMessage());
+                                // Use the general image placeholder method with an error message
                                 styleImagePlaceholder(lblGambarUtamaPaket, "Gbr Error");
                             }
                         } else {
-                             System.err.println("File gambar utama tidak ditemukan: " + imageFile.getAbsolutePath());
-                             styleImagePlaceholder(lblGambarUtamaPaket, "Gambar Tidak Tersedia");
+                            System.err.println("File gambar utama tidak ditemukan: " + imageFile.getAbsolutePath());
+                            // Call the placeholder with the default image path
+                            styleImagePlaceholder(lblGambarUtamaPaket, "/resources/images/default_package.png"); // Path to your default image
                         }
+                        lblGambarUtamaPaket.revalidate();
+                        lblGambarUtamaPaket.repaint();
                     });
                 } else {
-                     styleImagePlaceholder(lblGambarUtamaPaket, "Gambar Tidak Tersedia");
+                    // Call the placeholder with the default image path when gambarPath is null/empty
+                    styleImagePlaceholder(lblGambarUtamaPaket, "/resources/images/default_package.png"); // Path to your default image
                 }
             }
-            
-            // Placeholder untuk galeri dan itinerary
-            // loadGalleryImages();
+
             loadItineraryItems(paketId);
 
         } else {
             if (lblNamaPaket != null) lblNamaPaket.setText("Data Paket Tidak Tersedia");
-            // Kosongkan field lain atau tampilkan pesan
         }
     }
-
-    // private void loadGalleryImages() {
-    //     if (panelGallery == null) return;
-    //     panelGallery.removeAll();
-    //     // TODO: Ambil path gambar galeri dari database (jika ada tabel terpisah atau kolom multiple)
-    //     // Untuk sekarang, tampilkan placeholder jika tidak ada gambar utama
-    //     if (currentPaket == null || currentPaket.getGambar() == null || currentPaket.getGambar().isEmpty()) {
-    //         JLabel noGallery = new JLabel("Tidak ada gambar galeri tambahan.");
-    //         styleFormLabel(noGallery, "Tidak ada gambar galeri tambahan.");
-    //         panelGallery.add(noGallery);
-    //     } else {
-    //         // Contoh jika ada beberapa gambar di field 'gambar' dipisah koma (TIDAK DIREKOMENDASIKAN, lebih baik tabel terpisah)
-    //         // String[] imagePaths = currentPaket.getGambar().split(","); 
-    //         // For now, just add one or two placeholders
-    //         for (int i=0; i < 3; i++) { // Buat 3 placeholder galeri
-    //              JLabel galleryImg = new JLabel();
-    //              galleryImg.setPreferredSize(new Dimension(100,75));
-    //              styleImagePlaceholder(galleryImg, "Foto " + (i+1));
-    //              panelGallery.add(galleryImg);
-    //         }
-    //     }
-    //     panelGallery.revalidate();
-    //     panelGallery.repaint();
-    // }
 
     private void styleFormLabel(JLabel label, String defaultText) {
         if (label != null) {
-            // Biarkan teks dari Netbeans jika sudah ada, kecuali jika default "jLabelX"
             if(label.getText() == null || label.getText().isEmpty() || label.getText().matches("jLabel\\d+")){
-                 label.setText(defaultText);
+                label.setText(defaultText);
             }
-            label.setFont(AppTheme.FONT_LABEL_FORM); // Gunakan FONT_LABEL_FORM atau FONT_PRIMARY_DEFAULT
+            label.setFont(AppTheme.FONT_LABEL_FORM);
             label.setForeground(AppTheme.TEXT_SECONDARY_DARK);
         }
     }
-    
+
     private void loadItineraryItems(int paketId) {
         if (panelItineraryItems == null) return;
         panelItineraryItems.removeAll();
-        // TODO: Ambil data itinerary dari database (tabel rincian_paket_perjalanan)
-        // Untuk setiap item itinerary, panggil createItineraryItemPanel()
 
-         DestinasiController controller = new DestinasiController();
-         List<DestinasiModel> daftarDestinasi = controller.getDestinasiByPaketId(paketId);
-        
+        DestinasiController controller = new DestinasiController();
+        List<DestinasiModel> daftarDestinasi = controller.getDestinasiByPaketId(paketId);
+
         if (daftarDestinasi.isEmpty()) {
-        JLabel noItin = new JLabel("Rencana perjalanan tidak tersedia untuk paket ini.");
-        styleFormLabel(noItin, "Rencana perjalanan tidak tersedia untuk paket ini.");
-        panelItineraryItems.add(noItin);
+            JLabel noItin = new JLabel("Rencana perjalanan tidak tersedia untuk paket ini.");
+            styleFormLabel(noItin, "Rencana perjalanan tidak tersedia untuk paket ini.");
+            panelItineraryItems.add(noItin);
         } else {
             for (DestinasiModel d : daftarDestinasi) {
                 String nama = d.getNamaDestinasi();
@@ -367,29 +349,29 @@ public class PanelTripDetail extends JPanel {
                 String userDir = System.getProperty("user.dir");
                 File baseDir = new File(userDir).getParentFile();
 
-                
                 String gambarRelatif = d.getGambar();
-                if (gambarRelatif != null && !gambarRelatif.trim().isEmpty()) { // Add null and empty check
+
+                ImageIcon iconUntukItem = null;
+
+                if (gambarRelatif != null && !gambarRelatif.trim().isEmpty()) {
                     if (gambarRelatif.startsWith("/") || gambarRelatif.startsWith("\\")) {
                         gambarRelatif = gambarRelatif.substring(1);
                     }
 
                     File imageFile = new File(baseDir, gambarRelatif);
-                    ImageIcon icon = null;
                     if (imageFile.exists()) {
-                        icon = new ImageIcon(imageFile.getAbsolutePath());
+                        iconUntukItem = new ImageIcon(imageFile.getAbsolutePath());
                     } else {
                         System.out.println("Gambar tidak ditemukan: " + imageFile.getAbsolutePath());
-                        // Optionally set a default icon here if the file doesn't exist
-                        // icon = new ImageIcon(getClass().getResource("/path/to/default/itin_placeholder.png"));
+                        // Pass the default image path to styleImagePlaceholder
+                        iconUntukItem = null; // Ensure iconUntukItem is null so placeholder can be drawn
                     }
-                    panelItineraryItems.add(createItineraryItemPanel(nama, deskripsi, durasi, icon));
                 } else {
-                    // Handle case where gambarRelatif is null or empty
                     System.out.println("Gambar destinasi kosong atau null untuk: " + nama);
-                    panelItineraryItems.add(createItineraryItemPanel(nama, deskripsi, durasi, null)); // Pass null icon
+                    iconUntukItem = null; // iconUntukItem remains null here
                 }
-                
+
+                panelItineraryItems.add(createItineraryItemPanel(nama, deskripsi, durasi, iconUntukItem));
                 panelItineraryItems.add(Box.createRigidArea(new Dimension(0, 10)));
             }
         }
@@ -405,20 +387,27 @@ public class PanelTripDetail extends JPanel {
             BorderFactory.createLineBorder(AppTheme.BORDER_COLOR.brighter()),
             new EmptyBorder(10,10,10,10)
         ));
-        itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120)); // Agar tidak terlalu tinggi
+        itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
 
         JLabel imageItinLabel = new JLabel();
         imageItinLabel.setPreferredSize(new Dimension(100,75));
-        
+        imageItinLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        imageItinLabel.setVerticalAlignment(SwingConstants.CENTER);
 
         if (gambarIcon != null) {
-        Image img = gambarIcon.getImage().getScaledInstance(100, 75, Image.SCALE_SMOOTH);
-        imageItinLabel.setIcon(new ImageIcon(img));
-        imageItinLabel.setText("");
-        imageItinLabel.setOpaque(false);
-        imageItinLabel.setBackground(null);
+            Image img = gambarIcon.getImage();
+            Image scaledImg = img.getScaledInstance(
+                imageItinLabel.getPreferredSize().width,
+                imageItinLabel.getPreferredSize().height,
+                Image.SCALE_SMOOTH
+            );
+            imageItinLabel.setIcon(new ImageIcon(scaledImg));
+            imageItinLabel.setText("");
+            imageItinLabel.setOpaque(false);
+            imageItinLabel.setBackground(null);
         } else {
-            styleImagePlaceholder(imageItinLabel, "Gbr Tdk Ada");
+            // If gambarIcon is null, use the default itinerary image placeholder
+            styleImagePlaceholder(imageItinLabel, "/resources/images/default_itinerary.png"); // Path to your default itinerary image
         }
 
         JPanel textItinPanel = new JPanel();
@@ -440,7 +429,7 @@ public class PanelTripDetail extends JPanel {
         textItinPanel.add(deskItinArea);
 
         JLabel durasiItinLabel = new JLabel(durasi);
-        durasiItinLabel.setFont(AppTheme.FONT_PRIMARY_DEFAULT); // Perlu FONT_PRIMARY_SMALL di AppTheme
+        durasiItinLabel.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
         durasiItinLabel.setForeground(AppTheme.TEXT_SECONDARY_DARK);
         textItinPanel.add(durasiItinLabel);
 
@@ -448,32 +437,65 @@ public class PanelTripDetail extends JPanel {
         itemPanel.add(textItinPanel, BorderLayout.CENTER);
         return itemPanel;
     }
-    
-    private void styleImagePlaceholder(JLabel label, String text) {
+
+    // --- MODIFIED styleImagePlaceholder METHOD ---
+    private void styleImagePlaceholder(JLabel label, String imagePathOrText) {
         if (label == null) return;
-        label.setText(text);
+
+        // Reset previous icon/text settings
+        label.setIcon(null);
+        label.setText("");
+
+        // Attempt to load image from resources first
+        URL imageUrl = getClass().getResource(imagePathOrText);
+        if (imageUrl != null) {
+            try {
+                ImageIcon originalIcon = new ImageIcon(imageUrl);
+                Image img = originalIcon.getImage();
+
+                // Scale to fit the label's preferred size
+                int targetWidth = label.getPreferredSize().width > 0 ? label.getPreferredSize().width : 100; // Fallback default if preferred size is 0
+                int targetHeight = label.getPreferredSize().height > 0 ? label.getPreferredSize().height : 75; // Fallback default
+
+                Image scaledImg = img.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
+                label.setIcon(new ImageIcon(scaledImg));
+                label.setOpaque(false); // No need for opaque background if image fills
+                label.setBackground(null);
+            } catch (Exception e) {
+                System.err.println("Error loading placeholder image from resources: " + e.getMessage());
+                // Fallback to text if resource image loading fails
+                label.setText(imagePathOrText.contains("/") ? "Gbr Gagal" : imagePathOrText); // Display "Gbr Gagal" or original text
+                label.setOpaque(true);
+                label.setBackground(AppTheme.BACKGROUND_LIGHT_GRAY);
+            }
+        } else {
+            // If not a resource path or resource not found, treat as plain text placeholder
+            label.setText(imagePathOrText);
+            label.setOpaque(true);
+            label.setBackground(AppTheme.BACKGROUND_LIGHT_GRAY);
+        }
+
         label.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
         label.setForeground(AppTheme.TEXT_SECONDARY_DARK);
-        label.setBackground(AppTheme.BACKGROUND_LIGHT_GRAY);
-        label.setOpaque(true);
         label.setHorizontalAlignment(SwingConstants.CENTER);
         label.setVerticalAlignment(SwingConstants.CENTER);
     }
-    
+    // --- END MODIFIED styleImagePlaceholder METHOD ---
+
     private void styleDisplayTextField(JTextField textField, Font font, Color foregroundColor) {
         if (textField != null) {
             textField.setFont(font);
             textField.setForeground(foregroundColor);
             textField.setEditable(false);
-            textField.setBorder(null); 
-            textField.setOpaque(false); 
-            textField.setBackground(new Color(0,0,0,0)); 
+            textField.setBorder(null);
+            textField.setOpaque(false);
+            textField.setBackground(new Color(0,0,0,0));
         }
     }
 
     private void stylePrimaryButton(JButton button, String text) {
         if (button == null) return;
-        button.setText(text); 
+        button.setText(text);
         button.setFont(AppTheme.FONT_BUTTON);
         button.setBackground(AppTheme.BUTTON_PRIMARY_BACKGROUND);
         button.setForeground(AppTheme.BUTTON_PRIMARY_TEXT);
@@ -481,13 +503,13 @@ public class PanelTripDetail extends JPanel {
         button.setBorderPainted(false);
         button.setFocusPainted(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setBorder(new EmptyBorder(10, 25, 10, 25)); // Padding lebih besar untuk tombol utama
+        button.setBorder(new EmptyBorder(10, 25, 10, 25));
         addHoverEffect(button, AppTheme.BUTTON_PRIMARY_BACKGROUND.darker(), AppTheme.BUTTON_PRIMARY_BACKGROUND);
     }
 
     private void styleSecondaryButton(JButton button, String text) {
         if (button == null) return;
-        button.setText(text); 
+        button.setText(text);
         button.setFont(AppTheme.FONT_BUTTON);
         button.setBackground(AppTheme.BUTTON_SECONDARY_BACKGROUND);
         button.setForeground(AppTheme.BUTTON_SECONDARY_TEXT);
@@ -498,21 +520,21 @@ public class PanelTripDetail extends JPanel {
         button.setBorder(new EmptyBorder(8, 15, 8, 15));
         addHoverEffect(button, AppTheme.BUTTON_SECONDARY_BACKGROUND.darker(), AppTheme.BUTTON_SECONDARY_BACKGROUND);
     }
-    
+
     private void addHoverEffect(JButton button, Color hoverColor, Color originalColor) {
         if (button == null) return;
-        button.addMouseListener(new MouseAdapter() { 
+        button.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseEntered(MouseEvent e) { 
+            public void mouseEntered(MouseEvent e) {
                 button.setBackground(hoverColor);
             }
             @Override
-            public void mouseExited(MouseEvent e) { 
+            public void mouseExited(MouseEvent e) {
                 button.setBackground(originalColor);
             }
         });
     }
-    
+
     private void setupActionListeners() {
         if (btnKembali != null) {
             btnKembali.addActionListener(this::btn_back_TDActionPerformed);
@@ -522,51 +544,29 @@ public class PanelTripDetail extends JPanel {
         }
     }
 
-    // Metode initComponents() HARUS ANDA SALIN DARI FILE TripDetail.java LAMA ANDA
-    // DAN SESUAIKAN JIKA ADA PERBEDAAN NAMA VARIABEL KOMPONEN.
-    // Kode di bawah ini adalah placeholder yang SANGAT MINIMAL.
     @SuppressWarnings("unchecked")
     private void initComponents() {
-        // ===== AWAL PLACEHOLDER initComponents() =====
-        // ANDA HARUS MENGGANTI BAGIAN INI DENGAN KODE initComponents() ASLI ANDA
-        // DARI NETBEANS, LALU HAPUS BAGIAN YANG MENGATUR FRAME (setDefaultCloseOperation, dll.)
-        // DAN PASTIKAN SEMUA VARIABEL FIELD KELAS DIINISIALISASI DI SINI.
-        JPanel jPanel1 = new JPanel(); // Panel utama
-        // Inisialisasi komponen lain yang dideklarasikan sebagai field jika ada di design Anda
-        // Misalnya:
-        // tf_namapaket = new JTextField();
-        // tf_kotatujuan = new JTextField();
-        // ... dan seterusnya untuk semua komponen yang dirujuk di applyAppTheme dan loadTripData
-        // ... panel galeri jPanel2-5, label foto lbl_foto1-4
-        // ... panel tentang jPanel6, lbl_tentangpkt, ta_deskripsi, jScrollPane1, tf_kuota, tf_status
-        // ... panel itinerary jPanel7, lbl_destinasi, jPanel8, jLabel1 (foto itin), tf_namadestinasi, ta_desksingkat, jScrollPane2, tf_durasi
-        // Jika initComponents() Anda mengatur layout untuk this (JPanel), maka itu akan dipakai.
-        // Jika tidak, layout BorderLayout diatur di konstruktor PanelTripDetail.
-        // Untuk contoh ini, saya asumsikan initComponents() akan mengurus layout internal jPanel1.
-        // ===== AKHIR PLACEHOLDER initComponents() =====
-    }                                         
+        JPanel jPanel1 = new JPanel();
+    }
 
-    private void btn_back_TDActionPerformed(java.awt.event.ActionEvent evt) {                                            
+    private void btn_back_TDActionPerformed(java.awt.event.ActionEvent evt) {
         if (mainAppFrame != null) {
-            // Kembali ke panel hasil pencarian dengan kriteria yang sama
             if (this.originalSearchNamaKota != null || this.originalSearchTanggal != null) {
-                 mainAppFrame.showSearchResultPanel(this.originalSearchNamaKota, this.originalSearchTanggal);
+                mainAppFrame.showSearchResultPanel(this.originalSearchNamaKota, this.originalSearchTanggal);
             } else {
-                // Fallback jika tidak ada kriteria pencarian, kembali ke beranda
-                mainAppFrame.showPanel(MainAppFrame.PANEL_BERANDA); 
+                mainAppFrame.showPanel(MainAppFrame.PANEL_BERANDA);
             }
         } else {
-             System.err.println("MainAppFrame reference is null in PanelTripDetail (btn_back_TD)");
+            System.err.println("MainAppFrame reference is null in PanelTripDetail (btn_back_TD)");
         }
-    }                                           
-    private void btn_bookActionPerformed(java.awt.event.ActionEvent evt) {                                         
+    }
+    private void btn_bookActionPerformed(java.awt.event.ActionEvent evt) {
         if (mainAppFrame != null && currentPaket != null) {
             mainAppFrame.showPanel(MainAppFrame.PANEL_BOOKING_SCREEN, currentPaket);
-            // JOptionPane.showMessageDialog(this, "Navigasi ke Booking untuk: " + currentPaket.getNamaPaket() + " (Belum diimplementasikan di MainAppFrame)");
         } else if (currentPaket == null) {
             JOptionPane.showMessageDialog(this, "Data paket tidak tersedia untuk dibooking.", "Error", JOptionPane.ERROR_MESSAGE);
         } else {
             System.err.println("MainAppFrame is null in PanelTripDetail (btn_book)");
         }
-    }                                        
+    }
 }
