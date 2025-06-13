@@ -14,19 +14,30 @@ public class PembayaranDAO {
         this.conn = conn;
     }
 
-    public double getJumlahPembayaranByReservasiId(int reservasiId) {
-        double total = 0;
-        String sql = "SELECT jumlah_pembayaran FROM pembayaran WHERE reservasi_id = ?";
+    public Double getJumlahPembayaranByReservasiId(int reservasiId) {
+        Double jumlahPembayaran = null;
+        if (this.conn == null) {
+            System.err.println("Tidak ada koneksi database untuk getJumlahPembayaranByReservasiId.");
+            return null;
+        }
+        // Ambil jumlah pembayaran yang berstatus 'lunas'
+        String sql = "SELECT SUM(jumlah_pembayaran) AS total_lunas FROM pembayaran WHERE reservasi_id = ? AND status_pembayaran = 'lunas'";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, reservasiId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                total = rs.getDouble("jumlah_pembayaran");
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    // Pastikan membaca sebagai Double, dan cek jika hasilnya null (tidak ada pembayaran lunas)
+                    double total = rs.getDouble("total_lunas");
+                    if (!rs.wasNull()) { // Cek apakah nilai dari DB bukan NULL
+                        jumlahPembayaran = total;
+                    }
+                }
             }
         } catch (SQLException e) {
+            System.err.println("Error saat mengambil jumlah pembayaran: " + e.getMessage());
             e.printStackTrace();
         }
-        return total;
+        return jumlahPembayaran;
     }
 
     // di PembayaranDAO

@@ -666,7 +666,67 @@ public class PanelBookingScreen extends JPanel {
     }   
     
     private void btnSimpanDrafActionPerformed(ActionEvent evt) {
-        // TODO: Implementasi logika simpan draf reservasi
-        JOptionPane.showMessageDialog(this, "Fitur Simpan Draf belum diimplementasikan.", "Info", JOptionPane.INFORMATION_MESSAGE);
+        // Basic validation before saving as draft
+        if (!Session.isLoggedIn() || Session.currentUser == null) {
+            JOptionPane.showMessageDialog(this, "Anda harus login untuk menyimpan draf.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        if (currentPaket == null) {
+            JOptionPane.showMessageDialog(this, "Tidak ada paket perjalanan yang dipilih untuk disimpan sebagai draf.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        // Ensure minimum contact info for a draft
+        if (txtNamaKontak.getText().trim().isEmpty() || txtEmailKontak.getText().trim().isEmpty() || txtTeleponKontak.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Harap isi setidaknya Nama, Email, dan Telepon kontak untuk draf.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Gather contact data
+        String namaKontak = txtNamaKontak.getText().trim();
+        String emailKontak = txtEmailKontak.getText().trim();
+        String teleponKontak = txtTeleponKontak.getText().trim();
+        
+        // Gather passenger names for the draft, even if not fully validated yet
+        List<String> penumpangList = new ArrayList<>();
+        try {
+            int jumlah = Integer.parseInt(tf_jumlahpenumpang.getText().trim());
+            // Cap at 3 for draft, even if user typed more
+            if (jumlah > 3) jumlah = 3; 
+
+            if (jumlah >= 1 && !tb_passangerdata.getText().trim().equals("Nama Penumpang 1 (sesuai KTP)")) penumpangList.add(tb_passangerdata.getText().trim());
+            if (jumlah >= 2 && !tb_passangerdata1.getText().trim().equals("Nama Penumpang 2 (sesuai KTP)")) penumpangList.add(tb_passangerdata1.getText().trim());
+            if (jumlah >= 3 && !tb_passangerdata2.getText().trim().equals("Nama Penumpang 3 (sesuai KTP)")) penumpangList.add(tb_passangerdata2.getText().trim());
+        } catch (NumberFormatException e) { 
+            // Do nothing, no passengers will be added for draft if input is invalid
+            System.out.println("No valid passenger count for draft, skipping passenger save.");
+        }
+
+        ReservasiModel reservasiDraf = new ReservasiModel();
+        reservasiDraf.setUserId(Session.currentUser.getId());
+        reservasiDraf.setTripType("paket_perjalanan");
+        reservasiDraf.setTripId(currentPaket.getId());
+        reservasiDraf.setKodeReservasi("DRF-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase()); // Distinct code for drafts
+        reservasiDraf.setTanggalReservasi(LocalDate.now());
+        reservasiDraf.setStatus("pending"); // Using 'pending' status for drafts in 'reservasi' table
+
+        int idDrafBaru = reservasiController.buatReservasi(reservasiDraf); // Use existing controller method to save
+
+        if (idDrafBaru != -1) {
+            // Save passengers linked to this draft reservation
+            for (String penumpangNama : penumpangList) {
+                if (!penumpangNama.isEmpty()) { // Only save non-empty passenger names
+                    if (!reservasiController.tambahPenumpang(idDrafBaru, penumpangNama)) {
+                        JOptionPane.showMessageDialog(this, "Draf reservasi berhasil disimpan, tetapi gagal menyimpan beberapa data penumpang. Silakan cek detail reservasi Anda.", "Peringatan Draf", JOptionPane.WARNING_MESSAGE);
+                        // Continue to redirect even if passenger saving partially fails for a draft
+                    }
+                }
+            }
+
+            JOptionPane.showMessageDialog(this, "Draf pesanan berhasil disimpan dengan ID: " + idDrafBaru + ". Anda akan dialihkan ke halaman Pesanan Saya.", "Draf Disimpan", JOptionPane.INFORMATION_MESSAGE);
+            // After saving draft, redirect to PanelUserOrder to see the draft
+            mainAppFrame.showPanel(MainAppFrame.PANEL_PESANAN_SAYA);
+        } else {
+            JOptionPane.showMessageDialog(this, "Gagal menyimpan draf pesanan. Silakan coba lagi.", "Error Draf", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }

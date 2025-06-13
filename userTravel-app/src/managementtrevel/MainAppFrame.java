@@ -1,6 +1,6 @@
 package managementtrevel;
 
-import Asset.AppTheme; 
+import Asset.AppTheme;
 import Asset.SidebarPanel;
 import java.awt.*;
 import java.util.List;
@@ -17,10 +17,11 @@ import managementtrevel.HomeUser.PanelUserProfil;
 import managementtrevel.Payment.PanelPayment;
 import managementtrevel.SearchResultScreen.PanelSearchResult;
 import managementtrevel.TripDetailScreen.PanelTripDetail;
-import managementtrevel.TripOrder.PanelOrderDetail;
+import managementtrevel.TripOrder.PanelOrderDetail; // Import PanelOrderDetail
 import managementtrevel.TripOrder.PanelOrderHistory;
 import managementtrevel.TripOrder.PanelUserOrder;
 import model.PaketPerjalananModel;
+import model.ReservasiModel; // Import ReservasiModel
 import model.UserModel; 
 
 
@@ -88,9 +89,9 @@ public class MainAppFrame extends JFrame {
         panelDestinationStep.setName(PANEL_DESTINATION_STEP); 
         mainPanelContainer.add(panelDestinationStep, PANEL_DESTINATION_STEP);
         
-        PanelOrderDetail panelOrderDetail = new PanelOrderDetail(this, null, null);
-        panelDestinationStep.setName(PANEL_ORDER_DETAIL); 
-        mainPanelContainer.add(panelOrderDetail, PANEL_ORDER_DETAIL);
+        // PanelOrderDetail panelOrderDetail = new PanelOrderDetail(this, null, null); // Hapus atau sesuaikan inisialisasi ini
+        // panelDestinationStep.setName(PANEL_ORDER_DETAIL); 
+        // mainPanelContainer.add(panelOrderDetail, PANEL_ORDER_DETAIL);
 
         add(sidebarPanel, BorderLayout.WEST);
         add(mainPanelContainer, BorderLayout.CENTER);
@@ -190,13 +191,30 @@ public class MainAppFrame extends JFrame {
     // Untuk PanelPayment, reservasiId sekarang bertipe int
     public void showPaymentPanel(int reservasiId, String namaKontak, String emailKontak, String teleponKontak, List<String> penumpangList) {
         removePanelIfExists(PANEL_PAYMENT);
-        // Now pass all the arguments
         PanelPayment panel = new PanelPayment(this, reservasiId, namaKontak, emailKontak, teleponKontak, penumpangList);
         panel.setName(PANEL_PAYMENT);
         mainPanelContainer.add(panel, PANEL_PAYMENT);
         cardLayout.show(mainPanelContainer, PANEL_PAYMENT);
         System.out.println("Menampilkan panel: " + PANEL_PAYMENT + " untuk reservasi ID: " + reservasiId);
         if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
+    }
+
+    // OVERLOAD BARU UNTUK PanelOrderDetail
+    public void showPanel(String panelName, ReservasiModel reservasi) { // <--- OVERLOAD BARU
+        if (panelName.equals(PANEL_ORDER_DETAIL)) {
+            removePanelIfExists(panelName); // Hapus instance lama
+            PanelOrderDetail panel = new PanelOrderDetail(this, reservasi); // Buat instance baru dengan data reservasi
+            panel.setName(panelName);
+            mainPanelContainer.add(panel, panelName);
+            cardLayout.show(mainPanelContainer, panelName);
+            System.out.println("Menampilkan panel: " + panelName + " untuk reservasi Kode: " + reservasi.getKodeReservasi());
+        } else {
+            System.err.println("Peringatan: showPanel(String, ReservasiModel) dipanggil untuk panel yang tidak sesuai: " + panelName);
+            showPanel(panelName); // Kembali ke overload umum jika nama panel tidak cocok
+        }
+        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) {
+            sidebarPanel.collapsePublic();
+        }
     }
 
 
@@ -227,7 +245,7 @@ public class MainAppFrame extends JFrame {
     }
 
     public void showPanel(String panelName, List<String> destinations, String startDate, String endDate, 
-                          String transportMode, String transportDetails) {
+                            String transportMode, String transportDetails) {
         if (panelName.equals(PANEL_ACCOMMODATION_STEP)) {
             removePanelIfExists(panelName);
             PanelAccommodationStep panel = new PanelAccommodationStep(this, destinations, startDate, endDate, transportMode, transportDetails);
@@ -241,8 +259,8 @@ public class MainAppFrame extends JFrame {
     }
     
     public void showPanel(String panelName, List<String> destinations, String startDate, String endDate, 
-                          String transportMode, String transportDetails, String accommodationName, 
-                          String roomType, String accommodationNotes) {
+                            String transportMode, String transportDetails, String accommodationName, 
+                            String roomType, String accommodationNotes) {
         if (panelName.equals(PANEL_ACTIVITY_STEP)) {
             removePanelIfExists(panelName);
             PanelActivityStep panel = new PanelActivityStep(this, destinations, startDate, endDate, transportMode, transportDetails, accommodationName, roomType, accommodationNotes);
@@ -256,8 +274,8 @@ public class MainAppFrame extends JFrame {
     }
  
     public void showPanel(String panelName, List<String> destinations, String startDate, String endDate, 
-                          String transportMode, String transportDetails, String accommodationName, 
-                          String roomType, String accommodationNotes, List<String> activities) {
+                            String transportMode, String transportDetails, String accommodationName, 
+                            String roomType, String accommodationNotes, List<String> activities) {
         if (panelName.equals(PANEL_FINAL_STEP)) {
             removePanelIfExists(panelName);
             PanelFinalStep panel = new PanelFinalStep(this, destinations, startDate, endDate, transportMode, transportDetails, accommodationName, roomType, accommodationNotes, activities);

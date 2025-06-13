@@ -1,5 +1,6 @@
 package db.dao;
 
+import static com.mysql.cj.util.TimeUtil.DATE_FORMATTER;
 import db.Koneksi;
 import java.sql.*; // Untuk mendapatkan koneksi jika tidak di-inject
 import java.time.LocalDate;
@@ -7,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import model.PaketPerjalananModel;
+import java.time.format.DateTimeFormatter;
 
 public class PaketPerjalananDAO {
     private Connection conn;
@@ -323,6 +325,62 @@ public class PaketPerjalananDAO {
 
     return list;
 }
+
+ public PaketPerjalananModel getPaketPerjalananById(int id) { // Metode ini menerima 'int'
+        if (this.conn == null) {
+            System.err.println("Tidak ada koneksi database untuk operasi getPaketPerjalananById.");
+            return null;
+        }
+
+        PaketPerjalananModel paket = null;
+        String sql = "SELECT pp.*, k.nama_kota FROM paket_perjalanan pp " +
+                     "JOIN kota k ON pp.kota_id = k.id WHERE pp.id = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    paket = new PaketPerjalananModel();
+                    paket.setId(rs.getInt("id"));
+                    paket.setKotaId(rs.getInt("kota_id"));
+                    paket.setNamaPaket(rs.getString("nama_paket"));
+
+                    java.sql.Date sqlTanggalMulai = rs.getDate("tanggal_mulai");
+                    if (sqlTanggalMulai != null) {
+                        // Konversi java.sql.Date ke LocalDate lalu format ke String
+                        paket.setTanggalMulai(sqlTanggalMulai.toLocalDate().format(DATE_FORMATTER));
+                    } else {
+                        paket.setTanggalMulai(null); // Penting: set null jika memang null dari DB
+                    }
+
+                    java.sql.Date sqlTanggalAkhir = rs.getDate("tanggal_akhir");
+                    if (sqlTanggalAkhir != null) {
+                        // Konversi java.sql.Date ke LocalDate lalu format ke String
+                        paket.setTanggalAkhir(sqlTanggalAkhir.toLocalDate().format(DATE_FORMATTER));
+                    } else {
+                        paket.setTanggalAkhir(null); // Penting: set null jika memang null dari DB
+                    }
+
+                    paket.setKuota(rs.getInt("kuota"));
+                    paket.setHarga(rs.getDouble("harga"));
+                    paket.setDeskripsi(rs.getString("deskripsi"));
+                    paket.setStatus(rs.getString("status"));
+                    paket.setGambar(rs.getString("gambar"));
+                    paket.setRating(rs.getDouble("rating"));
+
+                    paket.setNamaKota(rs.getString("nama_kota"));
+                    
+                    // Jumlah hari dihitung di PaketPerjalananModel.getDurasi()
+                    paket.setJumlahHari((int) paket.getDurasi());
+
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error saat mengambil paket perjalanan dengan ID " + id + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+        return paket;
+    }
 
     
 }

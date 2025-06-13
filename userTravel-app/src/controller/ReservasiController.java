@@ -53,6 +53,25 @@ public class ReservasiController {
       
         return reservasiDAO.save(reservasi);
     }
+
+    public boolean tambahPenumpang(int reservasiId, String namaPenumpang) {
+        // Implement logic to insert a new row into the 'penumpang' table
+        // using your PenumpangDAO or directly through a database utility.
+        // Example:
+        // try {
+        //     String sql = "INSERT INTO penumpang (reservasi_id, nama_penumpang) VALUES (?, ?)";
+        //     PreparedStatement ps = connection.prepareStatement(sql);
+        //     ps.setInt(1, reservasiId);
+        //     ps.setString(2, namaPenumpang);
+        //     int rowsAffected = ps.executeUpdate();
+        //     return rowsAffected > 0;
+        // } catch (SQLException e) {
+        //     e.printStackTrace();
+        //     return false;
+        // }
+        System.out.println("DEBUG: Menambahkan penumpang '" + namaPenumpang + "' untuk reservasi ID: " + reservasiId);
+        return true; // Placeholder for successful addition
+    }
     
 
 }
