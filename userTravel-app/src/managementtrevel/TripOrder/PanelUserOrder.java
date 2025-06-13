@@ -227,13 +227,14 @@ public class PanelUserOrder extends JPanel {
 
         String namaTrip = "N/A";
         String detailText = "";
-        String hargaText = NumberFormat.getCurrencyInstance(new Locale("id", "ID")).format(0.0); // Default ke Rp 0
+        String hargaText = NumberFormat.getCurrencyInstance(new Locale("id", "ID")).format(0.0);
         int jumlahOrang = 0;
         double rating = 0.0;
-        double currentTotalHarga = 0.0; // Variabel untuk menyimpan total harga sebelum diformat
+        double currentTotalHarga = 0.0;
 
-        // Mengambil jumlah penumpang dari PenumpangDAO
+        // Debug prints untuk penumpang
         jumlahOrang = penumpangDAO.getJumlahPenumpangByReservasiId(reservasi.getId());
+        System.out.println("DEBUG PanelUserOrder - Reservasi ID: " + reservasi.getId() + ", Jumlah Penumpang: " + jumlahOrang);
 
 
         if ("paket_perjalanan".equals(reservasi.getTripType()) && reservasi.getPaket() != null) {
@@ -242,7 +243,13 @@ public class PanelUserOrder extends JPanel {
             rating = paket.getRating();
             detailText = paket.getJumlahHari() + " Hari | " + jumlahOrang + " Orang | Rating " + String.format("%.1f", rating);
             
+            // Debug print: harga paket dasar
+            System.out.println("DEBUG PanelUserOrder - Paket Harga Dasar: " + paket.getHarga());
+
             Double hargaPembayaranLunas = pembayaranDAO.getJumlahPembayaranByReservasiId(reservasi.getId());
+            // Debug print: pembayaran lunas
+            System.out.println("DEBUG PanelUserOrder - Pembayaran Lunas: " + hargaPembayaranLunas);
+
             if (hargaPembayaranLunas != null && hargaPembayaranLunas > 0) {
                 currentTotalHarga = hargaPembayaranLunas;
             } else {
@@ -250,6 +257,8 @@ public class PanelUserOrder extends JPanel {
             }
             hargaText = NumberFormat.getCurrencyInstance(new Locale("id", "ID")).format(currentTotalHarga);
             
+            // Debug print: final harga text paket
+            System.out.println("DEBUG PanelUserOrder - Final Harga Paket: " + hargaText);
 
         } else if ("custom_trip".equals(reservasi.getTripType()) && reservasi.getCustomTrip() != null) {
             CustomTripModel customTrip = reservasi.getCustomTrip();
@@ -257,13 +266,16 @@ public class PanelUserOrder extends JPanel {
             if (customTrip.getJumlahPeserta() > 0) {
                 jumlahOrang = customTrip.getJumlahPeserta();
             } else {
-                // Fallback: Jika jumlah peserta di CustomTripModel kosong, ambil dari jumlah penumpang di reservasi
                 jumlahOrang = penumpangDAO.getJumlahPenumpangByReservasiId(reservasi.getId());
             }
             detailText = customTrip.getJumlahHari() + " Hari | " + jumlahOrang + " Orang";
             
             currentTotalHarga = customTrip.getTotalHarga(); // Mengambil total harga dari CustomTripModel
             hargaText = NumberFormat.getCurrencyInstance(new Locale("id", "ID")).format(currentTotalHarga);
+
+            // Debug print: final harga text custom trip
+            System.out.println("DEBUG PanelUserOrder - Custom Trip Total Harga: " + customTrip.getTotalHarga());
+            System.out.println("DEBUG PanelUserOrder - Final Harga Custom Trip: " + hargaText);
         }
 
         lblNamaTrip.setText(namaTrip);

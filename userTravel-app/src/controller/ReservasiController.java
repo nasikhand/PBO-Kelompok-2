@@ -2,76 +2,52 @@ package controller;
 
 import db.Koneksi;
 import db.dao.ReservasiDAO;
+import db.dao.PenumpangDAO; // Import PenumpangDAO
+import model.ReservasiModel;
+import model.PenumpangModel; // Import PenumpangModel
+
 import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.List;
-import model.ReservasiModel; 
+import java.sql.SQLException;
+import java.time.LocalDate;
 
 public class ReservasiController {
     private ReservasiDAO reservasiDAO;
-    private Connection connection; 
-
-
-    public ReservasiController(Connection conn) {
-        this.connection = conn;
-        if (this.connection != null) {
-            this.reservasiDAO = new ReservasiDAO(this.connection);
-        } else {
-            System.err.println("Koneksi null di konstruktor ReservasiController. DAO tidak dapat diinisialisasi dengan benar.");
-            this.reservasiDAO = new ReservasiDAO(); 
-        }
-    }
+    private PenumpangDAO penumpangDAO; // Deklarasikan PenumpangDAO
 
     public ReservasiController() {
-        this.connection = Koneksi.getConnection();
-        if (this.connection == null) {
-            System.err.println("Gagal mendapatkan koneksi database di ReservasiController (konstruktor default).");
-            this.reservasiDAO = new ReservasiDAO(); 
-        } else {
-            this.reservasiDAO = new ReservasiDAO(this.connection);
+        // Pastikan koneksi didapatkan dan DAO diinisialisasi di sini
+        Connection conn = Koneksi.getConnection();
+        if (conn == null) {
+            System.err.println("ERROR: Koneksi database NULL di ReservasiController constructor.");
+            // Handle error: mungkin throw exception atau set flag
         }
+        this.reservasiDAO = new ReservasiDAO(conn);
+        this.penumpangDAO = new PenumpangDAO(conn); // <--- Pastikan inisialisasi di sini
     }
 
-    public List<ReservasiModel> getHistoryUser(int userId) {
-        if (reservasiDAO == null) {
-             System.err.println("ReservasiDAO tidak diinisialisasi di controller (getHistoryUser).");
-            return new ArrayList<>();
-        }
-        return reservasiDAO.getHistoryReservasiByUser(userId);
-    }
+    // Jika Anda memiliki konstruktor lain yang menerima Connection,
+    // pastikan juga penumpangDAO diinisialisasi di sana.
+    // public ReservasiController(Connection existingConn) {    
+    //     this.reservasiDAO = new ReservasiDAO(existingConn);
+    //     this.penumpangDAO = new PenumpangDAO(existingConn);
+    // }
 
 
     public int buatReservasi(ReservasiModel reservasi) {
-        if (reservasiDAO == null) {
-            System.err.println("ReservasiDAO tidak diinisialisasi di controller (buatReservasi).");
-            return -1;
-        }
-        if (reservasi == null) {
-            System.err.println("Objek reservasi tidak boleh null untuk disimpan.");
-            return -1;
-        }
-      
         return reservasiDAO.save(reservasi);
     }
 
     public boolean tambahPenumpang(int reservasiId, String namaPenumpang) {
-        // Implement logic to insert a new row into the 'penumpang' table
-        // using your PenumpangDAO or directly through a database utility.
-        // Example:
-        // try {
-        //     String sql = "INSERT INTO penumpang (reservasi_id, nama_penumpang) VALUES (?, ?)";
-        //     PreparedStatement ps = connection.prepareStatement(sql);
-        //     ps.setInt(1, reservasiId);
-        //     ps.setString(2, namaPenumpang);
-        //     int rowsAffected = ps.executeUpdate();
-        //     return rowsAffected > 0;
-        // } catch (SQLException e) {
-        //     e.printStackTrace();
-        //     return false;
-        // }
-        System.out.println("DEBUG: Menambahkan penumpang '" + namaPenumpang + "' untuk reservasi ID: " + reservasiId);
-        return true; // Placeholder for successful addition
+        // Lakukan null check tambahan untuk penumpangDAO jika khawatir
+        if (this.penumpangDAO == null) {
+            System.err.println("ERROR: PenumpangDAO belum diinisialisasi di ReservasiController.tambahPenumpang.");
+            return false;
+        }
+        System.out.println("DEBUG ReservasiController - Memanggil PenumpangDAO.tambahPenumpang...");
+        return penumpangDAO.tambahPenumpang(reservasiId, namaPenumpang);
     }
-    
 
+    public boolean deleteReservasi(int reservasiId) {
+        return reservasiDAO.deleteReservasi(reservasiId);
+    }
 }

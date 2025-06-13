@@ -75,6 +75,69 @@ public class ReservasiDAO {
         return -1;
     }
 
+    /**
+     * Menghapus reservasi dan data terkait (penumpang, pembayaran) dari database.
+     * @param reservasiId ID reservasi yang akan dihapus.
+     * @return true jika berhasil menghapus, false jika gagal.
+     */
+    public boolean deleteReservasi(int reservasiId) {
+        if (this.conn == null) {
+            System.err.println("Tidak ada koneksi database untuk operasi delete Reservasi.");
+            return false;
+        }
+        try {
+            conn.setAutoCommit(false); // Mulai transaksi
+
+            // 1. Hapus data di tabel 'pembayaran' terkait reservasi ini
+            String sqlDeletePembayaran = "DELETE FROM pembayaran WHERE reservasi_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sqlDeletePembayaran)) {
+                ps.setInt(1, reservasiId);
+                ps.executeUpdate();
+                System.out.println("DEBUG ReservasiDAO - Dihapus pembayaran untuk reservasi ID: " + reservasiId);
+            }
+
+            // 2. Hapus data di tabel 'penumpang' terkait reservasi ini
+            String sqlDeletePenumpang = "DELETE FROM penumpang WHERE reservasi_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sqlDeletePenumpang)) {
+                ps.setInt(1, reservasiId);
+                ps.executeUpdate();
+                System.out.println("DEBUG ReservasiDAO - Dihapus penumpang untuk reservasi ID: " + reservasiId);
+            }
+
+            // 3. Hapus reservasi itu sendiri
+            String sqlDeleteReservasi = "DELETE FROM reservasi WHERE id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sqlDeleteReservasi)) {
+                ps.setInt(1, reservasiId);
+                int affectedRows = ps.executeUpdate();
+                if (affectedRows > 0) {
+                    conn.commit(); // Commit transaksi jika berhasil
+                    System.out.println("✅ Reservasi ID: " + reservasiId + " berhasil dihapus.");
+                    return true;
+                } else {
+                    conn.rollback(); // Rollback jika tidak ada baris yang terpengaruh (reservasi tidak ditemukan)
+                    System.err.println("❌ Reservasi ID: " + reservasiId + " tidak ditemukan atau tidak dapat dihapus.");
+                    return false;
+                }
+            }
+        } catch (SQLException e) {
+            try {
+                if (conn != null) conn.rollback(); // Rollback jika ada error
+            } catch (SQLException ex) {
+                System.err.println("Error saat rollback: " + ex.getMessage());
+            }
+            System.err.println("❌ Error saat menghapus reservasi: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                if (conn != null) conn.setAutoCommit(true); // Kembalikan auto-commit ke true
+            } catch (SQLException ex) {
+                System.err.println("Error saat mengembalikan auto-commit: " + ex.getMessage());
+            }
+        }
+    }
+
+
     public List<ReservasiModel> getHistoryReservasiByUser(int userId) {
         List<ReservasiModel> list = new ArrayList<>();
         if (this.conn == null) {
@@ -106,8 +169,6 @@ public class ReservasiDAO {
                     r.setTanggalReservasi(sqlDate.toLocalDate());
                 }
                 r.setStatus(rs.getString("status"));
-
-                System.out.println("DEBUG ReservasiDAO.getHistoryReservasiByUser: Found reservasi - ID: " + r.getId() + ", Code: " + r.getKodeReservasi() + ", TripType: " + r.getTripType() + ", TripId: " + r.getTripId());
 
                 if ("paket_perjalanan".equals(r.getTripType()) && r.getTripId() != null) {
                     r.setPaket(getPaketById(r.getTripId()));
@@ -193,10 +254,10 @@ public class ReservasiDAO {
         List<ReservasiModel> list = new ArrayList<>();
 
         String sql = "SELECT r.id, r.user_id, r.trip_type, r.trip_id, r.kode_reservasi, r.tanggal_reservasi, r.status AS status_reservasi, " +
-                    "p.id AS paket_id, p.nama_paket, p.rating AS paket_rating, k1.nama_kota AS paket_nama_kota, " +
+                    "p.id AS paket_id, p.nama_paket, p.rating AS paket_rating, k1.nama_kota AS paket_nama_kota, p.harga AS paket_harga, " +
                     "p.tanggal_mulai AS paket_mulai, p.tanggal_akhir AS paket_akhir, p.gambar AS paket_gambar, " +
                     "c.tanggal_mulai AS custom_mulai, c.tanggal_akhir AS custom_akhir, " +
-                    "c.id AS custom_id, c.nama_trip AS custom_nama_trip " +
+                    "c.id AS custom_id, c.nama_trip AS custom_nama_trip, c.jumlah_peserta AS custom_jumlah_peserta, c.total_harga AS custom_total_harga, c.status AS custom_status " +
                     "FROM reservasi r " +
                     "LEFT JOIN paket_perjalanan p ON r.trip_type = 'paket_perjalanan' AND r.trip_id = p.id " +
                     "LEFT JOIN kota k1 ON p.kota_id = k1.id " +
@@ -226,10 +287,10 @@ public class ReservasiDAO {
                         PaketPerjalananModel paket = new PaketPerjalananModel();
                         paket.setId(rs.getInt("paket_id"));
                         paket.setNamaPaket(rs.getString("nama_paket"));
-                        // Set nama kota paket di sini
-                        paket.setNamaKota(rs.getString("paket_nama_kota")); // <--- PASTIKAN INI ADA
+                        paket.setNamaKota(rs.getString("paket_nama_kota"));
                         paket.setRating(rs.getDouble("paket_rating"));
                         paket.setGambar(rs.getString("paket_gambar"));
+                        paket.setHarga(rs.getDouble("paket_harga"));
 
                         java.sql.Date mulai = rs.getDate("paket_mulai");
                         java.sql.Date akhir = rs.getDate("paket_akhir");
@@ -240,12 +301,18 @@ public class ReservasiDAO {
 
                         reservasi.setPaket(paket);
 
+                        System.out.println("DEBUG ReservasiDAO - Paket: " + paket.getNamaPaket() + 
+                                           ", Harga: " + paket.getHarga());
+
                     } else if ("custom_trip".equals(tripType) && reservasi.getTripId() != null) {
                         CustomTripModel customTrip = new CustomTripModel();
                         customTrip.setId(rs.getInt("custom_id"));
                         customTrip.setNamaTrip(rs.getString("custom_nama_trip"));
-                        // Untuk custom_trip, set namaKota dari nama_trip karena tidak ada kolom kota_id di tabelnya
-                        customTrip.setNamaKota(rs.getString("custom_nama_trip")); // <--- PASTIKAN INI ADA
+                        customTrip.setNamaKota(rs.getString("custom_nama_trip"));
+
+                        customTrip.setJumlahPeserta(rs.getInt("custom_jumlah_peserta"));
+                        customTrip.setTotalHarga(rs.getDouble("custom_total_harga"));
+                        customTrip.setStatus(rs.getString("custom_status"));
 
                         java.sql.Date customMulai = rs.getDate("custom_mulai");
                         java.sql.Date customAkhir = rs.getDate("custom_akhir");
@@ -259,6 +326,9 @@ public class ReservasiDAO {
                             customTrip.setJumlahHari((int) jumlahHari);
                         }
                         reservasi.setCustomTrip(customTrip);
+
+                        System.out.println("DEBUG ReservasiDAO - Custom Trip: " + customTrip.getNamaTrip() + 
+                                           ", Total Harga: " + customTrip.getTotalHarga());
                     }
                     list.add(reservasi);
                 }
@@ -272,10 +342,10 @@ public class ReservasiDAO {
         List<ReservasiModel> list = new ArrayList<>();
 
         String sql = "SELECT r.id, r.user_id, r.trip_type, r.trip_id, r.kode_reservasi, r.tanggal_reservasi, r.status AS status_reservasi, " +
-                    "p.id AS paket_id, p.nama_paket, p.rating AS paket_rating, k1.nama_kota AS paket_nama_kota, " +
+                    "p.id AS paket_id, p.nama_paket, p.rating AS paket_rating, k1.nama_kota AS paket_nama_kota, p.harga AS paket_harga, " +
                     "p.tanggal_mulai AS paket_mulai, p.tanggal_akhir AS paket_akhir, p.gambar AS paket_gambar, " +
                     "c.tanggal_mulai AS custom_mulai, c.tanggal_akhir AS custom_akhir, " +
-                    "c.id AS custom_id, c.nama_trip AS custom_nama_trip " +
+                    "c.id AS custom_id, c.nama_trip AS custom_nama_trip, c.jumlah_peserta AS custom_jumlah_peserta, c.total_harga AS custom_total_harga, c.status AS custom_status " +
                     "FROM reservasi r " +
                     "LEFT JOIN paket_perjalanan p ON r.trip_type = 'paket_perjalanan' AND r.trip_id = p.id " +
                     "LEFT JOIN kota k1 ON p.kota_id = k1.id " +
@@ -305,9 +375,10 @@ public class ReservasiDAO {
                         PaketPerjalananModel paket = new PaketPerjalananModel();
                         paket.setId(rs.getInt("paket_id"));
                         paket.setNamaPaket(rs.getString("nama_paket"));
-                        paket.setNamaKota(rs.getString("paket_nama_kota")); // <--- PASTIKAN INI ADA
+                        paket.setNamaKota(rs.getString("paket_nama_kota"));
                         paket.setRating(rs.getDouble("paket_rating"));
                         paket.setGambar(rs.getString("paket_gambar"));
+                        paket.setHarga(rs.getDouble("paket_harga"));
 
                         java.sql.Date mulai = rs.getDate("paket_mulai");
                         java.sql.Date akhir = rs.getDate("paket_akhir");
@@ -321,7 +392,11 @@ public class ReservasiDAO {
                         CustomTripModel customTrip = new CustomTripModel();
                         customTrip.setId(rs.getInt("custom_id"));
                         customTrip.setNamaTrip(rs.getString("custom_nama_trip"));
-                        customTrip.setNamaKota(rs.getString("custom_nama_trip")); // <--- PASTIKAN INI ADA
+                        customTrip.setNamaKota(rs.getString("custom_nama_trip"));
+
+                        customTrip.setJumlahPeserta(rs.getInt("custom_jumlah_peserta"));
+                        customTrip.setTotalHarga(rs.getDouble("custom_total_harga"));
+                        customTrip.setStatus(rs.getString("custom_status"));
 
                         java.sql.Date customMulai = rs.getDate("custom_mulai");
                         java.sql.Date customAkhir = rs.getDate("custom_akhir");

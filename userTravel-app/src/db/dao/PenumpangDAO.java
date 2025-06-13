@@ -5,16 +5,15 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate; // Import untuk LocalDate jika PenumpangModel menggunakannya
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import model.PenumpangModel; // Pastikan model ini sudah ada
+import model.PenumpangModel;
 
 public class PenumpangDAO {
     private Connection conn;
 
-    // Konstruktor default: mendapatkan koneksi dari Koneksi.getConnection()
     public PenumpangDAO() {
         this.conn = Koneksi.getConnection();
         if (this.conn == null) {
@@ -22,7 +21,6 @@ public class PenumpangDAO {
         }
     }
 
-    // Konstruktor yang menerima objek Connection
     public PenumpangDAO(Connection conn) {
         this.conn = conn;
         if (this.conn == null) {
@@ -30,11 +28,6 @@ public class PenumpangDAO {
         }
     }
 
-    /**
-     * Mengambil jumlah penumpang untuk reservasi tertentu.
-     * @param reservasiId ID reservasi.
-     * @return Jumlah penumpang, atau 0 jika tidak ada atau terjadi error.
-     */
     public int getJumlahPenumpangByReservasiId(int reservasiId) {
         int count = 0;
         if (this.conn == null) {
@@ -53,14 +46,10 @@ public class PenumpangDAO {
             System.err.println("Error saat mengambil jumlah penumpang: " + e.getMessage());
             e.printStackTrace();
         }
+        System.out.println("DEBUG PenumpangDAO - getJumlahPenumpangByReservasiId(" + reservasiId + ") returns: " + count);
         return count;
     }
 
-    /**
-     * Mengambil daftar nama penumpang untuk reservasi tertentu.
-     * @param reservasiId ID reservasi.
-     * @return List String nama penumpang.
-     */
     public List<String> getNamaPenumpangByReservasiId(int reservasiId) {
         List<String> penumpangNames = new ArrayList<>();
         if (this.conn == null) {
@@ -79,27 +68,21 @@ public class PenumpangDAO {
             System.err.println("Error saat mengambil nama penumpang: " + e.getMessage());
             e.printStackTrace();
         }
+        System.out.println("DEBUG PenumpangDAO - getNamaPenumpangByReservasiId(" + reservasiId + ") returns: " + penumpangNames);
         return penumpangNames;
     }
 
-    /**
-     * Menambahkan penumpang baru ke reservasi.
-     * Metode ini bernama `tambahPenumpang` untuk konsistensi dengan Controller/BookingScreen.
-     * @param reservasiId ID reservasi terkait.
-     * @param namaPenumpang Nama lengkap penumpang.
-     * @return true jika berhasil, false jika gagal.
-     */
     public boolean tambahPenumpang(int reservasiId, String namaPenumpang) {
         if (this.conn == null) {
             System.err.println("Tidak ada koneksi database untuk tambahPenumpang.");
             return false;
         }
-        // Menggunakan SQL dasar karena BookingScreen hanya memberikan nama penumpang
         String sql = "INSERT INTO penumpang (reservasi_id, nama_penumpang) VALUES (?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, reservasiId);
             ps.setString(2, namaPenumpang);
             int rowsAffected = ps.executeUpdate();
+            System.out.println("DEBUG PenumpangDAO - tambahPenumpang(" + reservasiId + ", " + namaPenumpang + "): Rows Affected = " + rowsAffected);
             return rowsAffected > 0;
         } catch (SQLException e) {
             System.err.println("Error saat menambahkan penumpang: " + e.getMessage());
@@ -108,12 +91,6 @@ public class PenumpangDAO {
         }
     }
 
-    /**
-     * Metode insert penumpang lengkap menggunakan PenumpangModel.
-     * Anda bisa menggunakan ini jika Anda mengumpulkan semua detail penumpang.
-     * @param penumpang Objek PenumpangModel yang akan diinsert.
-     * @return true jika berhasil, false jika gagal.
-     */
     public boolean insertPenumpang(PenumpangModel penumpang) {
         if (this.conn == null) {
             System.err.println("Tidak ada koneksi database untuk insertPenumpang (model).");
@@ -125,9 +102,8 @@ public class PenumpangDAO {
             ps.setString(2, penumpang.getNamaPenumpang());
             ps.setString(3, penumpang.getJenisKelamin());
 
-            // Konversi java.util.Date ke java.sql.Date
             if (penumpang.getTanggalLahir() != null) {
-                ps.setDate(4, new java.sql.Date(penumpang.getTanggalLahir().getTime())); // <--- Perbaikan di sini
+                ps.setDate(4, new java.sql.Date(penumpang.getTanggalLahir().getTime()));
             } else {
                 ps.setNull(4, java.sql.Types.DATE);
             }
@@ -135,6 +111,7 @@ public class PenumpangDAO {
             ps.setString(5, penumpang.getNomorTelepon());
             ps.setString(6, penumpang.getEmail());
             int result = ps.executeUpdate();
+            System.out.println("DEBUG PenumpangDAO - insertPenumpang(model): Rows Affected = " + result);
             return result > 0;
         } catch (SQLException e) {
             System.err.println("Error saat insert penumpang (model): " + e.getMessage());

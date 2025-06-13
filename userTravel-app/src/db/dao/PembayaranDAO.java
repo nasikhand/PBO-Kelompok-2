@@ -26,7 +26,6 @@ public class PembayaranDAO {
             ps.setInt(1, reservasiId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    // Pastikan membaca sebagai Double, dan cek jika hasilnya null (tidak ada pembayaran lunas)
                     double total = rs.getDouble("total_lunas");
                     if (!rs.wasNull()) { // Cek apakah nilai dari DB bukan NULL
                         jumlahPembayaran = total;

@@ -1,16 +1,16 @@
 package managementtrevel.TripOrder;
 
 import Asset.AppTheme;
-import db.Koneksi; // Import Koneksi untuk inisialisasi DAO
-import db.dao.KotaDAO; // Hanya jika diperlukan, tapi sepertinya sudah di-join di ReservasiDAO
-import db.dao.PembayaranDAO; // Tambahkan import ini
-import db.dao.PenumpangDAO; // Tambahkan import ini
+import db.Koneksi;
+import db.dao.PembayaranDAO;
+import db.dao.PenumpangDAO;
+import db.dao.ReservasiDAO;
 import managementtrevel.MainAppFrame;
 import model.PaketPerjalananModel;
 import model.ReservasiModel;
-import model.Session; // Untuk mendapatkan data user yang login
-import model.CustomTripModel; // Tambahkan import ini
-import db.dao.ReservasiDAO; // Mungkin diperlukan untuk mengambil reservasi by ID jika tidak passing objek penuh
+import model.Session;
+import model.CustomTripModel;
+import model.UserModel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,27 +18,28 @@ import java.awt.event.ActionEvent;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.util.List;
-import java.time.format.DateTimeFormatter; // Untuk format tanggal
-import java.text.NumberFormat; // Untuk format mata uang
-import java.util.Locale; // Untuk format mata uang
+import java.time.format.DateTimeFormatter;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 public class PanelOrderDetail extends JPanel {
 
     private MainAppFrame mainAppFrame;
     private ReservasiModel displayedReservasi;
-    // private PaketPerjalananModel displayedPaket; // Tidak diperlukan lagi, karena sudah di dalam displayedReservasi
 
     // DAO instances
     private PenumpangDAO penumpangDAO;
     private PembayaranDAO pembayaranDAO;
-    private ReservasiDAO reservasiDAO; // Jika perlu mengambil ulang reservasi dari ID
+    private ReservasiDAO reservasiDAO;
 
-    // Komponen UI Utama (dibuat programatik)
+    // UI Components
     private JLabel lblTitle;
     private JButton btnKembali;
+    private JButton btnLanjutkanBooking;
+    private JButton btnBayar;
+    private JButton btnBatalkanPesanan; // <--- Tombol baru
 
-    // Panel Kiri (Data Detail: Kontak & Penumpang)
-    private JPanel panelDataDetail;
+    // Detail Labels
     private JLabel lblNamaKontak;
     private JLabel lblEmailKontak;
     private JLabel lblTeleponKontak;
@@ -47,49 +48,38 @@ public class PanelOrderDetail extends JPanel {
     private JLabel lblNamaPenumpang2;
     private JLabel lblNamaPenumpang3;
 
-    // Panel Kanan (Ringkasan Final & Informasi Reservasi)
-    private JPanel panelRingkasanFinal;
     private JLabel lblKodeReservasi;
     private JLabel lblStatusReservasi;
     private JLabel lblTanggalReservasi;
-    private JLabel lblNamaTrip; // Diubah dari lblNamaPaket agar lebih umum
+    private JLabel lblNamaTrip;
     private JLabel lblKotaTujuan;
     private JLabel lblTanggalPerjalanan;
     private JLabel lblHargaPerOrang;
     private JLabel lblTotalHargaFinal;
-    private JLabel lblRating; // Tambahan untuk rating paket jika ada
+    private JLabel lblRating;
 
-    // Formatter untuk tanggal dan mata uang
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd MMMM yyyy");
-    private static final NumberFormat CURRENCY_FORMATTER = NumberFormat.getCurrencyInstance(new Locale("id", "ID")); // IDR
+    // Formatter for date and currency
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd MMMMyyyy");
+    private static final NumberFormat CURRENCY_FORMATTER = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
 
-    /**
-     * Konstruktor untuk PanelOrderDetail.
-     * Menerima MainAppFrame dan objek ReservasiModel yang sudah lengkap.
-     * @param mainAppFrame Referensi ke MainAppFrame.
-     * @param reservasi Model Reservasi yang akan ditampilkan detailnya.
-     */
     public PanelOrderDetail(MainAppFrame mainAppFrame, ReservasiModel reservasi) {
         this.mainAppFrame = mainAppFrame;
         this.displayedReservasi = reservasi;
-        // this.displayedPaket = paket; // Tidak perlu lagi
 
-        // Inisialisasi DAO
         this.penumpangDAO = new PenumpangDAO(Koneksi.getConnection());
         this.pembayaranDAO = new PembayaranDAO(Koneksi.getConnection());
-        this.reservasiDAO = new ReservasiDAO(Koneksi.getConnection()); // Untuk jaga-jaga jika perlu fetch ulang
+        this.reservasiDAO = new ReservasiDAO(Koneksi.getConnection());
 
         initializeUI();
         applyAppTheme();
         setupActionListeners();
-        loadOrderDetailData(); // Panggil metode untuk mengisi data
+        loadOrderDetailData();
     }
 
     private void initializeUI() {
         this.setLayout(new BorderLayout(0, 0));
         this.setBorder(new EmptyBorder(15, 20, 15, 20));
 
-        // 1. Header Panel
         JPanel headerPanel = new JPanel(new BorderLayout(10, 0));
         headerPanel.setOpaque(false);
         headerPanel.setBorder(new EmptyBorder(0, 0, 15, 0));
@@ -105,107 +95,102 @@ public class PanelOrderDetail extends JPanel {
         dummyEast.setPreferredSize(btnKembali.getPreferredSize());
         headerPanel.add(dummyEast, BorderLayout.EAST);
 
-        // 2. Main Content Area (Split Pane)
-        panelDataDetail = new JPanel();
-        panelDataDetail.setLayout(new BoxLayout(panelDataDetail, BoxLayout.Y_AXIS));
-        panelDataDetail.setOpaque(false);
-        panelDataDetail.setBorder(new EmptyBorder(0, 0, 0, 10));
+        this.add(headerPanel, BorderLayout.NORTH);
 
-        JPanel panelKontak = createSectionPanel("Informasi Kontak Pemesan");
-        panelKontak.setLayout(new BoxLayout(panelKontak, BoxLayout.Y_AXIS));
-        lblNamaKontak = new JLabel("Nama Kontak: -");
-        lblEmailKontak = new JLabel("Email Kontak: -");
-        lblTeleponKontak = new JLabel("No. Telepon Kontak: -");
-        addLabelToPanel(panelKontak, lblNamaKontak);
-        addLabelToPanel(panelKontak, lblEmailKontak);
-        addLabelToPanel(panelKontak, lblTeleponKontak);
-        panelDataDetail.add(panelKontak);
-        panelDataDetail.add(Box.createRigidArea(new Dimension(0, 15)));
+        JPanel mainContentArea = new JPanel(new GridBagLayout());
+        mainContentArea.setOpaque(false);
+        JScrollPane scrollableContent = new JScrollPane(mainContentArea);
+        scrollableContent.setBorder(null);
+        scrollableContent.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollableContent.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollableContent.getVerticalScrollBar().setUnitIncrement(16);
+        scrollableContent.setOpaque(false);
+        scrollableContent.getViewport().setOpaque(false);
 
-        JPanel panelPenumpang = createSectionPanel("Detail Penumpang");
-        panelPenumpang.setLayout(new BoxLayout(panelPenumpang, BoxLayout.Y_AXIS));
-        lblJumlahPenumpang = new JLabel("Jumlah Penumpang: -");
-        lblNamaPenumpang1 = new JLabel("Nama Penumpang 1: -");
-        lblNamaPenumpang2 = new JLabel("Nama Penumpang 2: -");
-        lblNamaPenumpang3 = new JLabel("Nama Penumpang 3: -");
-        addLabelToPanel(panelPenumpang, lblJumlahPenumpang);
-        panelPenumpang.add(Box.createRigidArea(new Dimension(0, 5)));
-        addLabelToPanel(panelPenumpang, lblNamaPenumpang1);
-        addLabelToPanel(panelPenumpang, lblNamaPenumpang2);
-        addLabelToPanel(panelPenumpang, lblNamaPenumpang3);
-        panelDataDetail.add(panelPenumpang);
-        panelDataDetail.add(Box.createVerticalGlue());
 
-        panelRingkasanFinal = new JPanel();
-        panelRingkasanFinal.setLayout(new BoxLayout(panelRingkasanFinal, BoxLayout.Y_AXIS));
-        panelRingkasanFinal.setOpaque(false);
-        panelRingkasanFinal.setBorder(new EmptyBorder(0, 10, 0, 0));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.weightx = 0.5;
+        gbc.weighty = 0.1;
 
-        JPanel panelReservasiInfo = createSectionPanel("Informasi Reservasi");
-        panelReservasiInfo.setLayout(new BoxLayout(panelReservasiInfo, BoxLayout.Y_AXIS));
-        lblKodeReservasi = new JLabel("Kode Reservasi: -");
-        lblStatusReservasi = new JLabel("Status: -");
-        lblTanggalReservasi = new JLabel("Tanggal Reservasi: -");
-        addLabelToPanel(panelReservasiInfo, lblKodeReservasi);
-        addLabelToPanel(panelReservasiInfo, lblStatusReservasi);
-        addLabelToPanel(panelReservasiInfo, lblTanggalReservasi);
-        panelRingkasanFinal.add(panelReservasiInfo);
-        panelRingkasanFinal.add(Box.createRigidArea(new Dimension(0, 15)));
+        lblNamaKontak = new JLabel(); lblEmailKontak = new JLabel(); lblTeleponKontak = new JLabel();
+        lblJumlahPenumpang = new JLabel(); lblNamaPenumpang1 = new JLabel(); lblNamaPenumpang2 = new JLabel(); lblNamaPenumpang3 = new JLabel();
+        lblKodeReservasi = new JLabel(); lblStatusReservasi = new JLabel(); lblTanggalReservasi = new JLabel();
+        lblNamaTrip = new JLabel(); lblKotaTujuan = new JLabel(); lblTanggalPerjalanan = new JLabel();
+        lblHargaPerOrang = new JLabel(); lblRating = new JLabel();
+        lblTotalHargaFinal = new JLabel();
 
-        JPanel panelRingkasan = createSectionPanel("Ringkasan Perjalanan");
-        panelRingkasan.setLayout(new BoxLayout(panelRingkasan, BoxLayout.Y_AXIS));
-        lblNamaTrip = new JLabel("Nama Perjalanan: -"); // Diubah
-        lblKotaTujuan = new JLabel("Kota Tujuan: -");
-        lblTanggalPerjalanan = new JLabel("Tanggal Perjalanan: -");
-        lblHargaPerOrang = new JLabel("Harga per Orang: -");
-        lblRating = new JLabel("Rating: -"); // Label baru untuk rating
-        addLabelToPanel(panelRingkasan, lblNamaTrip);
-        addLabelToPanel(panelRingkasan, lblKotaTujuan);
-        addLabelToPanel(panelRingkasan, lblTanggalPerjalanan);
-        addLabelToPanel(panelRingkasan, lblHargaPerOrang);
-        addLabelToPanel(panelRingkasan, lblRating); // Tambahkan rating
-        panelRingkasanFinal.add(panelRingkasan);
-        panelRingkasanFinal.add(Box.createVerticalGlue());
 
+        JPanel kontakPanel = createSectionPanel("Informasi Kontak Pemesan");
+        kontakPanel.setLayout(new BoxLayout(kontakPanel, BoxLayout.Y_AXIS));
+        addLabelToBoxLayoutPanel(kontakPanel, lblNamaKontak);
+        addLabelToBoxLayoutPanel(kontakPanel, lblEmailKontak);
+        addLabelToBoxLayoutPanel(kontakPanel, lblTeleponKontak);
+        gbc.gridx = 0; gbc.gridy = 0;
+        mainContentArea.add(kontakPanel, gbc);
+
+        JPanel reservasiInfoPanel = createSectionPanel("Informasi Reservasi");
+        reservasiInfoPanel.setLayout(new BoxLayout(reservasiInfoPanel, BoxLayout.Y_AXIS));
+        addLabelToBoxLayoutPanel(reservasiInfoPanel, lblKodeReservasi);
+        addLabelToBoxLayoutPanel(reservasiInfoPanel, lblStatusReservasi);
+        addLabelToBoxLayoutPanel(reservasiInfoPanel, lblTanggalReservasi);
+        gbc.gridx = 1; gbc.gridy = 0;
+        mainContentArea.add(reservasiInfoPanel, gbc);
+
+        JPanel penumpangPanel = createSectionPanel("Detail Penumpang");
+        penumpangPanel.setLayout(new BoxLayout(penumpangPanel, BoxLayout.Y_AXIS));
+        addLabelToBoxLayoutPanel(penumpangPanel, lblJumlahPenumpang);
+        penumpangPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        addLabelToBoxLayoutPanel(penumpangPanel, lblNamaPenumpang1);
+        addLabelToBoxLayoutPanel(penumpangPanel, lblNamaPenumpang2);
+        addLabelToBoxLayoutPanel(penumpangPanel, lblNamaPenumpang3);
+        gbc.gridx = 0; gbc.gridy = 1;
+        mainContentArea.add(penumpangPanel, gbc);
+
+        JPanel ringkasanPerjalananPanel = createSectionPanel("Ringkasan Perjalanan");
+        ringkasanPerjalananPanel.setLayout(new BoxLayout(ringkasanPerjalananPanel, BoxLayout.Y_AXIS));
+        addLabelToBoxLayoutPanel(ringkasanPerjalananPanel, lblNamaTrip);
+        addLabelToBoxLayoutPanel(ringkasanPerjalananPanel, lblKotaTujuan);
+        addLabelToBoxLayoutPanel(ringkasanPerjalananPanel, lblTanggalPerjalanan);
+        addLabelToBoxLayoutPanel(ringkasanPerjalananPanel, lblHargaPerOrang);
+        addLabelToBoxLayoutPanel(ringkasanPerjalananPanel, lblRating);
+        gbc.gridx = 1; gbc.gridy = 1;
+        mainContentArea.add(ringkasanPerjalananPanel, gbc);
+        
         JPanel totalHargaPanel = new JPanel();
         totalHargaPanel.setOpaque(false);
         totalHargaPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-        lblTotalHargaFinal = new JLabel("Total Harga: Rp 0");
         totalHargaPanel.add(lblTotalHargaFinal);
-        panelRingkasanFinal.add(totalHargaPanel);
+        gbc.gridx = 0; gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        gbc.weighty = 0.05;
+        mainContentArea.add(totalHargaPanel, gbc);
 
-        JScrollPane scrollPanelDataDetail = new JScrollPane(panelDataDetail);
-        scrollPanelDataDetail.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPanelDataDetail.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPanelDataDetail.setOpaque(false);
-        scrollPanelDataDetail.getViewport().setOpaque(false);
-        scrollPanelDataDetail.setBorder(null);
+        // --- Action Buttons Panel (Bottom) ---
+        JPanel actionButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        actionButtonPanel.setOpaque(false);
+        
+        btnLanjutkanBooking = new JButton("Lanjutkan Booking");
+        btnBayar = new JButton("Bayar Sekarang");
+        btnBatalkanPesanan = new JButton("Batalkan Pesanan"); // <--- Inisialisasi tombol baru
 
-        JScrollPane scrollPanelRingkasanFinal = new JScrollPane(panelRingkasanFinal);
-        scrollPanelRingkasanFinal.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPanelRingkasanFinal.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPanelRingkasanFinal.setOpaque(false);
-        scrollPanelRingkasanFinal.getViewport().setOpaque(false);
-        scrollPanelRingkasanFinal.setBorder(null);
+        actionButtonPanel.add(btnLanjutkanBooking);
+        actionButtonPanel.add(btnBayar);
+        actionButtonPanel.add(btnBatalkanPesanan); // <--- Tambahkan tombol baru ke panel
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPanelDataDetail, scrollPanelRingkasanFinal);
-        splitPane.setDividerLocation(0.5);
-        splitPane.setResizeWeight(0.5);
-        splitPane.setOpaque(false);
-        splitPane.setBorder(null);
-
-        this.add(headerPanel, BorderLayout.NORTH);
-        this.add(splitPane, BorderLayout.CENTER);
+        this.add(scrollableContent, BorderLayout.CENTER);
+        this.add(actionButtonPanel, BorderLayout.SOUTH);
     }
 
-    private void addLabelToPanel(JPanel panel, JLabel label) {
+    private void addLabelToBoxLayoutPanel(JPanel panel, JLabel label) {
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.add(label);
         panel.add(Box.createRigidArea(new Dimension(0, 5)));
     }
 
     private JPanel createSectionPanel(String title) {
-        JPanel panel = new JPanel(new GridBagLayout());
+        JPanel panel = new JPanel();
         panel.setOpaque(false);
         panel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(AppTheme.BORDER_COLOR.darker()),
@@ -227,29 +212,55 @@ public class PanelOrderDetail extends JPanel {
         }
         if (btnKembali != null) styleSecondaryButton(btnKembali, "< Kembali");
 
-        Font detailLabelFont = AppTheme.FONT_PRIMARY_DEFAULT;
-        Color detailTextColor = AppTheme.TEXT_SECONDARY_DARK;
+        stylePrimaryButton(btnLanjutkanBooking, "Lanjutkan Booking");
+        stylePrimaryButton(btnBayar, "Bayar Sekarang");
+        styleSecondaryButton(btnBatalkanPesanan, "Batalkan Pesanan"); // <--- Style tombol baru
 
         JLabel[] detailLabels = {
             lblKodeReservasi, lblStatusReservasi, lblTanggalReservasi,
             lblNamaTrip, lblKotaTujuan, lblTanggalPerjalanan,
-            lblHargaPerOrang, lblJumlahPenumpang, lblRating, // Tambahkan lblRating
-            lblNamaKontak, lblEmailKontak, lblTeleponKontak,
+            lblJumlahPenumpang, lblNamaKontak, lblEmailKontak, lblTeleponKontak,
             lblNamaPenumpang1, lblNamaPenumpang2, lblNamaPenumpang3
         };
         for (JLabel label : detailLabels) {
             if (label != null) {
-                label.setFont(detailLabelFont);
-                label.setForeground(detailTextColor);
+                label.setFont(AppTheme.FONT_LABEL_FORM);
+                label.setForeground(AppTheme.TEXT_SECONDARY_DARK);
             }
+        }
+        
+        if (lblHargaPerOrang != null) {
+            lblHargaPerOrang.setFont(AppTheme.FONT_PRIMARY_MEDIUM_BOLD);
+            lblHargaPerOrang.setForeground(AppTheme.TEXT_DARK);
+        }
+        if (lblRating != null) {
+            lblRating.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
+            lblRating.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+        }
+        if (lblNamaTrip != null) {
+            lblNamaTrip.setFont(AppTheme.FONT_SUBTITLE);
+            lblNamaTrip.setForeground(AppTheme.PRIMARY_BLUE_DARK);
         }
 
         if (lblTotalHargaFinal != null) {
-            Font totalHargaFont = AppTheme.FONT_TITLE_MEDIUM != null ? AppTheme.FONT_TITLE_MEDIUM.deriveFont(Font.BOLD) : new Font("Segoe UI", Font.BOLD, 18);
-            lblTotalHargaFinal.setFont(totalHargaFont);
+            lblTotalHargaFinal.setFont(AppTheme.FONT_TITLE_MEDIUM_BOLD);
             lblTotalHargaFinal.setForeground(AppTheme.ACCENT_ORANGE);
             lblTotalHargaFinal.setBorder(new EmptyBorder(10, 0, 0, 0));
         }
+    }
+
+    private void stylePrimaryButton(JButton button, String text) {
+        if (button == null) return;
+        button.setText(text);
+        button.setFont(AppTheme.FONT_BUTTON);
+        button.setBackground(AppTheme.BUTTON_PRIMARY_BACKGROUND);
+        button.setForeground(AppTheme.BUTTON_PRIMARY_TEXT);
+        button.setOpaque(true);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setBorder(new EmptyBorder(10, 25, 10, 25));
+        addHoverEffect(button, AppTheme.BUTTON_PRIMARY_BACKGROUND.darker(), AppTheme.BUTTON_PRIMARY_BACKGROUND);
     }
 
     private void styleSecondaryButton(JButton button, String text) {
@@ -284,6 +295,15 @@ public class PanelOrderDetail extends JPanel {
         if (btnKembali != null) {
             btnKembali.addActionListener(this::btnKembaliActionPerformed);
         }
+        if (btnLanjutkanBooking != null) {
+            btnLanjutkanBooking.addActionListener(this::btnLanjutkanBookingActionPerformed);
+        }
+        if (btnBayar != null) {
+            btnBayar.addActionListener(this::btnBayarActionPerformed);
+        }
+        if (btnBatalkanPesanan != null) { // <--- Tambahkan listener untuk tombol baru
+            btnBatalkanPesanan.addActionListener(this::btnBatalkanPesananActionPerformed);
+        }
     }
 
     /**
@@ -295,18 +315,19 @@ public class PanelOrderDetail extends JPanel {
             return;
         }
 
-        // Isi Informasi Kontak Pemesan
-        if (Session.isLoggedIn() && Session.currentUser != null) {
-            lblNamaKontak.setText("Nama Kontak: " + Session.currentUser.getNamaLengkap());
-            lblEmailKontak.setText("Email Kontak: " + Session.currentUser.getEmail());
-            lblTeleponKontak.setText("No. Telepon Kontak: " + Session.currentUser.getNomorTelepon());
+        // --- Populate Contact Information ---
+        UserModel currentUser = Session.currentUser;
+        if (currentUser != null) {
+            lblNamaKontak.setText("Nama Kontak: " + (currentUser.getNamaLengkap() != null ? currentUser.getNamaLengkap() : "-"));
+            lblEmailKontak.setText("Email Kontak: " + (currentUser.getEmail() != null ? currentUser.getEmail() : "-"));
+            lblTeleponKontak.setText("No. Telepon Kontak: " + (currentUser.getNomorTelepon() != null ? currentUser.getNomorTelepon() : "-"));
         } else {
             lblNamaKontak.setText("Nama Kontak: N/A (belum login)");
             lblEmailKontak.setText("Email Kontak: N/A (belum login)");
             lblTeleponKontak.setText("No. Telepon Kontak: N/A (belum login)");
         }
 
-        // Isi Informasi Reservasi
+        // --- Populate Reservation Information ---
         lblKodeReservasi.setText("Kode Reservasi: " + displayedReservasi.getKodeReservasi());
         lblStatusReservasi.setText("Status: " + displayedReservasi.getStatus());
         if (displayedReservasi.getTanggalReservasi() != null) {
@@ -315,8 +336,8 @@ public class PanelOrderDetail extends JPanel {
             lblTanggalReservasi.setText("Tanggal Reservasi: N/A");
         }
 
-        // Isi Ringkasan Perjalanan & Detail Penumpang
-        double totalHarga = 0.0;
+        // --- Populate Trip Summary & Passenger Details ---
+        double totalHargaUntukTampilan = 0.0;
         int jumlahPenumpang = penumpangDAO.getJumlahPenumpangByReservasiId(displayedReservasi.getId());
         lblJumlahPenumpang.setText("Jumlah Penumpang: " + jumlahPenumpang);
 
@@ -328,35 +349,34 @@ public class PanelOrderDetail extends JPanel {
 
         if ("paket_perjalanan".equals(displayedReservasi.getTripType()) && displayedReservasi.getPaket() != null) {
             PaketPerjalananModel paket = displayedReservasi.getPaket();
-            lblNamaTrip.setText("Nama Paket: " + paket.getNamaPaket());
-            lblKotaTujuan.setText("Kota Tujuan: " + paket.getNamaKota());
-            lblTanggalPerjalanan.setText("Tanggal: " + paket.getTanggalMulai() + " s/d " + paket.getTanggalAkhir());
+            lblNamaTrip.setText("Nama Paket: " + (paket.getNamaPaket() != null ? paket.getNamaPaket() : "-"));
+            lblKotaTujuan.setText("Kota Tujuan: " + (paket.getNamaKota() != null ? paket.getNamaKota() : "-"));
+            lblTanggalPerjalanan.setText("Tanggal: " + (paket.getTanggalMulai() != null ? paket.getTanggalMulai() : "-") + " s/d " + (paket.getTanggalAkhir() != null ? paket.getTanggalAkhir() : "-"));
             lblHargaPerOrang.setText("Harga per Orang: " + CURRENCY_FORMATTER.format(paket.getHarga()));
             lblRating.setText("Rating: " + String.format("%.1f", paket.getRating()));
-            lblRating.setVisible(true); // Tampilkan rating untuk paket
+            lblRating.setVisible(true);
 
-            // Hitung total harga paket
             Double pembayaranLunas = pembayaranDAO.getJumlahPembayaranByReservasiId(displayedReservasi.getId());
             if (pembayaranLunas != null && pembayaranLunas > 0) {
-                totalHarga = pembayaranLunas; // Jika sudah ada pembayaran, gunakan itu
+                totalHargaUntukTampilan = pembayaranLunas;
             } else {
-                totalHarga = paket.getHarga() * jumlahPenumpang; // Jika belum, hitung dari harga per orang * jumlah penumpang
+                totalHargaUntukTampilan = paket.getHarga() * jumlahPenumpang;
             }
 
 
         } else if ("custom_trip".equals(displayedReservasi.getTripType()) && displayedReservasi.getCustomTrip() != null) {
             CustomTripModel customTrip = displayedReservasi.getCustomTrip();
-            lblNamaTrip.setText("Nama Trip Kustom: " + customTrip.getNamaTrip());
-            lblKotaTujuan.setText("Kota Tujuan: " + customTrip.getNamaKota()); // Nama kota dari CustomTripModel
-            if (customTrip.getTanggalMulai() != null && customTrip.getTanggalAkhir() != null) {
-                lblTanggalPerjalanan.setText("Tanggal: " + customTrip.getTanggalMulai().format(DATE_FORMATTER) + " s/d " + customTrip.getTanggalAkhir().format(DATE_FORMATTER));
-            } else {
-                lblTanggalPerjalanan.setText("Tanggal: N/A");
-            }
-            lblHargaPerOrang.setText("Harga Perjalanan: " + CURRENCY_FORMATTER.format(customTrip.getTotalHarga())); // Harga total untuk custom trip
-            lblRating.setVisible(false); // Sembunyikan rating untuk custom trip
+            lblNamaTrip.setText("Nama Trip Kustom: " + (customTrip.getNamaTrip() != null ? customTrip.getNamaTrip() : "-"));
+            lblKotaTujuan.setText("Kota Tujuan: " + (customTrip.getNamaKota() != null ? customTrip.getNamaKota() : "-"));
+            
+            String tanggalMulaiStr = (customTrip.getTanggalMulai() != null ? customTrip.getTanggalMulai().format(DATE_FORMATTER) : "-");
+            String tanggalAkhirStr = (customTrip.getTanggalAkhir() != null ? customTrip.getTanggalAkhir().format(DATE_FORMATTER) : "-");
+            lblTanggalPerjalanan.setText("Tanggal: " + tanggalMulaiStr + " s/d " + tanggalAkhirStr);
+            
+            lblHargaPerOrang.setText("Harga Perjalanan: " + CURRENCY_FORMATTER.format(customTrip.getTotalHarga()));
+            lblRating.setVisible(false);
 
-            totalHarga = customTrip.getTotalHarga(); // Gunakan total harga dari CustomTripModel
+            totalHargaUntukTampilan = customTrip.getTotalHarga();
 
         } else {
             lblNamaTrip.setText("Jenis Perjalanan: Tidak Diketahui");
@@ -364,21 +384,110 @@ public class PanelOrderDetail extends JPanel {
             lblTanggalPerjalanan.setText("Tanggal: -");
             lblHargaPerOrang.setText("Harga: -");
             lblRating.setVisible(false);
-            totalHarga = 0.0;
+            totalHargaUntukTampilan = 0.0;
         }
 
-        lblTotalHargaFinal.setText("Total Harga: " + CURRENCY_FORMATTER.format(totalHarga));
+        lblTotalHargaFinal.setText("Total Harga: " + CURRENCY_FORMATTER.format(totalHargaUntukTampilan));
+
+        // --- Conditional Logic for Action Buttons ---
+        String status = displayedReservasi.getStatus();
+        System.out.println("DEBUG PanelOrderDetail - Current Reservation Status: " + status);
+
+        // Hide all buttons by default
+        btnLanjutkanBooking.setVisible(false);
+        btnBayar.setVisible(false);
+        btnBatalkanPesanan.setVisible(false); // <--- Sembunyikan tombol batal default
+
+        if ("pending".equals(status)) {
+            btnLanjutkanBooking.setVisible(true);
+            btnLanjutkanBooking.setEnabled(true);
+            btnBatalkanPesanan.setVisible(true); // <--- Tampilkan tombol batal
+            btnBatalkanPesanan.setEnabled(true); // <--- Aktifkan tombol batal
+            btnBayar.setEnabled(false);
+        } else if ("dipesan".equals(status)) {
+            btnBayar.setVisible(true);
+            btnBayar.setEnabled(true);
+            btnLanjutkanBooking.setEnabled(false);
+            btnBatalkanPesanan.setVisible(false); // Jangan tampilkan batal jika sudah dipesan
+        } else if ("dibayar".equals(status) || "selesai".equals(status)) {
+            btnLanjutkanBooking.setEnabled(false);
+            btnBayar.setEnabled(false);
+            btnBatalkanPesanan.setEnabled(false); // Disable batal
+            // Anda bisa memilih untuk tetap menampilkan tombol dengan status disabled,
+            // atau menyembunyikannya sepenuhnya. Untuk sekarang, saya akan menyembunyikan
+            // tombol aksi yang tidak relevan.
+        }
+    }
+
+    private void btnKembaliActionPerformed(ActionEvent evt) {
+        if (mainAppFrame != null) {
+            mainAppFrame.showPanel(MainAppFrame.PANEL_PESANAN_SAYA);
+        } else {
+            System.err.println("MainAppFrame is null in PanelOrderDetail (btnKembali)");
+        }
+    }
+
+    private void btnLanjutkanBookingActionPerformed(ActionEvent evt) {
+        if ("pending".equals(displayedReservasi.getStatus())) {
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Apakah Anda yakin ingin melanjutkan booking ini? Status akan diubah menjadi 'dipesan'.",
+                    "Konfirmasi Lanjutkan Booking",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                boolean success = reservasiDAO.updateStatusReservasi(displayedReservasi.getId(), "dipesan");
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "Status reservasi berhasil diperbarui menjadi 'dipesan'. Anda sekarang dapat melakukan pembayaran.", "Berhasil", JOptionPane.INFORMATION_MESSAGE);
+                    displayedReservasi = reservasiDAO.getReservasiById(displayedReservasi.getId());
+                    loadOrderDetailData();
+                    mainAppFrame.showPanel(MainAppFrame.PANEL_PESANAN_SAYA);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Gagal memperbarui status reservasi.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Aksi 'Lanjutkan Booking' hanya tersedia untuk reservasi berstatus 'pending'.", "Invalid Status", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void btnBayarActionPerformed(ActionEvent evt) {
+        if ("dipesan".equals(displayedReservasi.getStatus())) {
+            String namaKontak = Session.currentUser != null ? Session.currentUser.getNamaLengkap() : "";
+            String emailKontak = Session.currentUser != null ? Session.currentUser.getEmail() : "";
+            String teleponKontak = Session.currentUser != null ? Session.currentUser.getNomorTelepon() : "";
+            List<String> penumpangList = penumpangDAO.getNamaPenumpangByReservasiId(displayedReservasi.getId());
+
+            mainAppFrame.showPaymentPanel(displayedReservasi.getId(), namaKontak, emailKontak, teleponKontak, penumpangList);
+        } else {
+            JOptionPane.showMessageDialog(this, "Aksi 'Bayar Sekarang' hanya tersedia untuk reservasi berstatus 'dipesan'.", "Invalid Status", JOptionPane.WARNING_MESSAGE);
+        }
     }
 
     /**
-     * Aksi saat tombol "Kembali" ditekan.
-     * Mengarahkan kembali ke PanelUserOrder (daftar reservasi aktif).
+     * Action for the "Batalkan Pesanan" button.
+     * This is typically for 'pending' reservations.
+     * Deletes the reservation from the database.
      */
-    private void btnKembaliActionPerformed(ActionEvent evt) {
-        if (mainAppFrame != null) {
-            mainAppFrame.showPanel(MainAppFrame.PANEL_PESANAN_SAYA); // Kembali ke daftar pesanan aktif
+    private void btnBatalkanPesananActionPerformed(ActionEvent evt) {
+        if ("pending".equals(displayedReservasi.getStatus())) {
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Anda yakin ingin membatalkan pesanan dengan kode: " + displayedReservasi.getKodeReservasi() + "?\n" +
+                    "Pembatalan ini akan menghapus pesanan secara permanen.",
+                    "Konfirmasi Pembatalan Pesanan",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                boolean deleted = reservasiDAO.deleteReservasi(displayedReservasi.getId());
+                if (deleted) {
+                    JOptionPane.showMessageDialog(this, "Pesanan berhasil dibatalkan dan dihapus.", "Pembatalan Berhasil", JOptionPane.INFORMATION_MESSAGE);
+                    // Setelah penghapusan, kembali ke daftar pesanan aktif (PANEL_PESANAN_SAYA)
+                    mainAppFrame.showPanel(MainAppFrame.PANEL_PESANAN_SAYA);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Gagal membatalkan pesanan. Silakan coba lagi.", "Pembatalan Gagal", JOptionPane.ERROR_MESSAGE);
+                }
+            }
         } else {
-            System.err.println("MainAppFrame is null in PanelOrderDetail (btnKembali)");
+            JOptionPane.showMessageDialog(this, "Pesanan hanya dapat dibatalkan jika berstatus 'pending'.", "Status Tidak Valid", JOptionPane.WARNING_MESSAGE);
         }
     }
 }

@@ -1,248 +1,320 @@
 package managementtrevel.TripOrder;
 
-import Asset.AppTheme; // Impor AppTheme Anda
+import Asset.AppTheme;
 import db.Koneksi;
 import db.dao.PembayaranDAO;
 import db.dao.PenumpangDAO;
 import db.dao.ReservasiDAO;
-import managementtrevel.MainAppFrame; // Impor MainAppFrame
+import db.dao.PaketPerjalananDAO;
+import managementtrevel.MainAppFrame;
 import model.PaketPerjalananModel;
 import model.ReservasiModel;
 import model.Session;
+import model.CustomTripModel;
 
-import javax.swing.JPanel;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
-// import java.awt.event.ActionListener; // Tidak diperlukan jika menggunakan method reference
-import java.awt.Dimension; 
-import javax.swing.GroupLayout;
-import javax.swing.ImageIcon;
-import javax.swing.LayoutStyle.ComponentPlacement; 
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Font;
-import javax.swing.BorderFactory;
-import javax.swing.border.EmptyBorder;
-import javax.swing.JLabel;
-import javax.swing.JButton;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.JOptionPane;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.List;  
-import java.awt.Image;
+import java.util.List;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
+import java.time.format.DateTimeFormatter;
+import java.text.NumberFormat;
+import java.util.Locale;
 
+public class PanelOrderHistory extends JPanel {
 
+    private MainAppFrame mainAppFrame;
 
-public class PanelOrderHistory extends JPanel { 
+    private JPanel mainContentPanel; // Panel to hold the list of history cards
+    private JScrollPane scrollPane; // Scroll pane for mainContentPanel
+    private JLabel titleLabel; // Title "Riwayat Pesanan"
+    private JButton btn_back;
 
-    private MainAppFrame mainAppFrame; 
-
-    // Deklarasi komponen UI (sesuai dengan yang dihasilkan oleh NetBeans atau Anda buat manual)
-    private javax.swing.JButton btn_back;
-    private javax.swing.JButton btn_pesanLagi;
-    private javax.swing.JLabel foto_user;
-    private javax.swing.JLabel jLabel1; // Judul "Riwayat Pesanan"
-    private javax.swing.JLabel jLabel2; // "Tanggal Pemesanan"
-    private javax.swing.JLabel jLabel7; // "Harga"
-    private javax.swing.JPanel jPanel1; // Panel untuk "Tanggal Pemesanan"
-    private javax.swing.JPanel jPanel2; // Panel header dengan judul dan tombol back
-    private javax.swing.JPanel panelTemplate; // Panel template untuk setiap item riwayat
-    private javax.swing.JTextField tf_harga;
-    private javax.swing.JTextField tf_hari;
-    private javax.swing.JTextField tf_namakota;
-    private javax.swing.JTextField tf_orang;
-    private javax.swing.JTextField tf_orang1; // "Rating"
-
-    private ReservasiDAO reservasiDAO; 
-    private static int userId;
+    private ReservasiDAO reservasiDAO;
     private PenumpangDAO penumpangDAO;
     private PembayaranDAO pembayaranDAO;
-    public static int getUserId() {
-        return userId;
-    }
+    private PaketPerjalananDAO paketPerjalananDAO;
 
-    public PanelOrderHistory(MainAppFrame mainAppFrame) { 
+    public PanelOrderHistory(MainAppFrame mainAppFrame) {
         this.mainAppFrame = mainAppFrame;
-        initComponents(); // PENTING: Pastikan ini adalah kode dari NetBeans Anda
-        applyAppTheme();  // Terapkan tema setelah komponen diinisialisasi
-        setupActionListeners(); // Atur listener jika belum diatur oleh initComponents
 
-         // Inisialisasi DAO dulu
+        // Initialize DAOs
         reservasiDAO = new ReservasiDAO(Koneksi.getConnection());
         penumpangDAO = new PenumpangDAO(Koneksi.getConnection());
         pembayaranDAO = new PembayaranDAO(Koneksi.getConnection());
+        paketPerjalananDAO = new PaketPerjalananDAO(Koneksi.getConnection());
 
-        loadDataReservasi();
+        initializeUI(); // Call to set up the UI
+        loadDataReservasi(); // Load history data after UI is initialized
+    }
+
+    private void initializeUI() {
+        this.setLayout(new BorderLayout(0, 0));
+        this.setBorder(new EmptyBorder(15, 20, 15, 20)); // General padding
+
+        // Header Panel (Back button + Title)
+        JPanel headerPanel = new JPanel(new BorderLayout(10, 0));
+        headerPanel.setOpaque(false);
+        headerPanel.setBorder(new EmptyBorder(0, 0, 15, 0));
+
+        btn_back = new JButton("< Kembali");
+        btn_back.setFont(AppTheme.FONT_BUTTON);
+        btn_back.setBackground(AppTheme.BUTTON_SECONDARY_BACKGROUND);
+        btn_back.setForeground(AppTheme.BUTTON_SECONDARY_TEXT);
+        btn_back.setOpaque(true);
+        btn_back.setBorderPainted(false);
+        btn_back.setFocusPainted(false);
+        btn_back.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn_back.setBorder(new EmptyBorder(8, 15, 8, 15));
+        addHoverEffect(btn_back, AppTheme.BUTTON_SECONDARY_BACKGROUND.darker(), AppTheme.BUTTON_SECONDARY_BACKGROUND);
+        btn_back.addActionListener(this::btn_backActionPerformed);
+        headerPanel.add(btn_back, BorderLayout.WEST);
+
+        titleLabel = new JLabel("Riwayat Pesanan");
+        titleLabel.setFont(AppTheme.FONT_TITLE_LARGE);
+        titleLabel.setForeground(AppTheme.PRIMARY_BLUE_DARK);
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        headerPanel.add(titleLabel, BorderLayout.CENTER);
+
+        // Dummy label for visual balance in the header
+        JLabel dummyEast = new JLabel();
+        dummyEast.setPreferredSize(btn_back.getPreferredSize());
+        headerPanel.add(dummyEast, BorderLayout.EAST);
+
+        this.add(headerPanel, BorderLayout.NORTH);
+
+        // Main content panel to hold each history card
+        mainContentPanel = new JPanel();
+        mainContentPanel.setLayout(new BoxLayout(mainContentPanel, BoxLayout.Y_AXIS));
+        mainContentPanel.setOpaque(false);
+        mainContentPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
+
+        scrollPane = new JScrollPane(mainContentPanel);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+        scrollPane.setBorder(null);
+
+        this.add(scrollPane, BorderLayout.CENTER);
+
+        applyAppTheme(); // Apply theme to initialized components
     }
 
     private void loadDataReservasi() {
-    try {
-        if (Session.currentUser == null) {
-            JOptionPane.showMessageDialog(this, "User belum login.");
-            return;
-        }
+        mainContentPanel.removeAll(); // Remove all old templates before loading new ones
+        mainContentPanel.revalidate();
+        mainContentPanel.repaint();
 
-        int userId = Session.currentUser.getId();
-        List<ReservasiModel> list = reservasiDAO.getReservasiSelesaiDenganTrip(userId); // GANTI DI SINI
-
-        if (!list.isEmpty()) {
-                ReservasiModel reservasi = list.get(0);
-                PaketPerjalananModel paket = reservasi.getPaket();
-
-                if (paket != null) {
-                    tf_namakota.setText(paket.getNamaKota());
-                    tf_orang1.setText(String.valueOf("Rating " + paket.getRating()));
-                    tf_hari.setText(paket.getJumlahHari() + " Hari");
-
-                    int jumlahPenumpang = penumpangDAO.getJumlahPenumpangByReservasiId(reservasi.getId());
-                    tf_orang.setText(jumlahPenumpang + " Orang");
-
-                    Double jumlahPembayaran = pembayaranDAO.getJumlahPembayaranByReservasiId(reservasi.getId());
-                    if (jumlahPembayaran != null) {
-                        String hargaFormatted = String.format("Rp %, .0f", jumlahPembayaran).replace(',', '.').replace(" ", "");
-                        tf_harga.setText(hargaFormatted);
-                    }
-
-                    String gambarPath = paket.getGambar();
-                    if (gambarPath != null && !gambarPath.isEmpty()) {
-                        SwingUtilities.invokeLater(() -> {
-                            try {
-                                File baseDir = new File(System.getProperty("user.dir")).getParentFile();
-                                String gambarRelatif = gambarPath.startsWith("/") || gambarPath.startsWith("\\") ? gambarPath.substring(1) : gambarPath;
-                                File imageFile = new File(baseDir, gambarRelatif);
-
-                                System.out.println("Base Dir: " + baseDir.getAbsolutePath());
-                                System.out.println("Gambar relatif: " + gambarRelatif);
-                                System.out.println("Full path gambar: " + imageFile.getAbsolutePath());
-                                System.out.println("File exists: " + imageFile.exists());
-
-                                if (imageFile.exists()) {
-                                    int width = foto_user.getWidth() > 0 ? foto_user.getWidth() : 600;
-                                    int height = foto_user.getHeight() > 0 ? foto_user.getHeight() : 400;
-
-                                    ImageIcon icon = new ImageIcon(
-                                        new ImageIcon(imageFile.toURI().toURL())
-                                            .getImage()
-                                            .getScaledInstance(width, height, Image.SCALE_SMOOTH)
-                                    );
-
-                                    foto_user.setIcon(icon);
-                                    foto_user.setText("");
-                                    foto_user.setOpaque(false);
-                                } else {
-                                    foto_user.setIcon(null);
-                                    foto_user.setText("FOTO");
-                                }
-                            } catch (Exception e) {
-                                foto_user.setIcon(null);
-                                foto_user.setText("FOTO");
-                            }
-                        });
-                    } else {
-                        foto_user.setIcon(null);
-                        foto_user.setText("FOTO");
-                    }
-
-                } else {
-                    tf_namakota.setText("Tidak ada data");
-                    tf_orang1.setText("-");
-                    tf_hari.setText("-");
-                    tf_orang.setText("-");
-                    tf_harga.setText("-");
-                    foto_user.setIcon(null);
-                    foto_user.setText("FOTO");
-                }
-            } else {
-                tf_namakota.setText("Tidak ada reservasi");
-                tf_orang1.setText("-");
-                tf_hari.setText("-");
-                tf_orang.setText("-");
-                tf_harga.setText("-");
-                foto_user.setIcon(null);
-                foto_user.setText("FOTO");
+        try {
+            if (Session.currentUser == null) {
+                displayEmptyMessage("Pengguna belum login.");
+                return;
             }
 
+            int userId = Session.currentUser.getId();
+            // Retrieve finished reservations (status 'selesai')
+            List<ReservasiModel> listReservasi = reservasiDAO.getReservasiSelesaiDenganTrip(userId); // Fetch only 'selesai'
+
+            if (!listReservasi.isEmpty()) {
+                System.out.println("DEBUG PanelOrderHistory - Found " + listReservasi.size() + " finished reservations.");
+                for (ReservasiModel reservasi : listReservasi) {
+                    mainContentPanel.add(createHistoryCard(reservasi));
+                    mainContentPanel.add(Box.createRigidArea(new Dimension(0, 15))); // Space between cards
+                }
+            } else {
+                displayEmptyMessage("Tidak ada riwayat pesanan ditemukan.");
+            }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Gagal mengambil data reservasi: " + e.getMessage());
+            displayEmptyMessage("Gagal mengambil data riwayat: " + e.getMessage());
+            System.err.println("Error saat mengambil data riwayat di PanelOrderHistory: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
+    private void displayEmptyMessage(String message) {
+        mainContentPanel.removeAll();
+        JLabel emptyLabel = new JLabel(message, SwingConstants.CENTER);
+        emptyLabel.setFont(AppTheme.FONT_PRIMARY_MEDIUM);
+        emptyLabel.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+        emptyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        mainContentPanel.add(Box.createVerticalGlue()); // Push label to center
+        mainContentPanel.add(emptyLabel);
+        mainContentPanel.add(Box.createVerticalGlue()); // Push label to center
+        mainContentPanel.revalidate();
+        mainContentPanel.repaint();
+    }
+
+    private JPanel createHistoryCard(ReservasiModel reservasi) {
+        JPanel cardPanel = new JPanel(new BorderLayout(15, 0));
+        cardPanel.setBackground(Color.WHITE);
+        cardPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(AppTheme.BORDER_COLOR, 1),
+            new EmptyBorder(15, 15, 15, 15)
+        ));
+        cardPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
+
+        // Left: Photo / Placeholder
+        JLabel fotoLabel = new JLabel("FOTO", SwingConstants.CENTER);
+        fotoLabel.setPreferredSize(new Dimension(100, 100));
+        fotoLabel.setBackground(AppTheme.BACKGROUND_LIGHT_GRAY);
+        fotoLabel.setOpaque(true);
+        fotoLabel.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER_COLOR));
+        fotoLabel.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
+        fotoLabel.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+
+        // Load image if available for PaketPerjalananModel
+        if ("paket_perjalanan".equals(reservasi.getTripType()) && reservasi.getPaket() != null) {
+            String gambarPath = reservasi.getPaket().getGambar();
+            if (gambarPath != null && !gambarPath.isEmpty()) {
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        File baseDir = new File(System.getProperty("user.dir")).getParentFile();
+                        String gambarRelatif = gambarPath.startsWith("/") || gambarPath.startsWith("\\") ? gambarPath.substring(1) : gambarPath;
+                        File imageFile = new File(baseDir, gambarRelatif);
+
+                        if (imageFile.exists()) {
+                            ImageIcon originalIcon = new ImageIcon(imageFile.toURI().toURL());
+                            Image scaledImage = originalIcon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+                            fotoLabel.setIcon(new ImageIcon(scaledImage));
+                            fotoLabel.setText("");
+                            fotoLabel.setOpaque(false);
+                        } else {
+                            fotoLabel.setText("Gambar tidak ditemukan");
+                        }
+                    } catch (Exception e) {
+                        fotoLabel.setText("Gagal memuat gambar");
+                        System.err.println("Error loading image for history card: " + e.getMessage());
+                    }
+                });
+            }
+        } else if ("custom_trip".equals(reservasi.getTripType())) {
+             fotoLabel.setText("Custom Trip");
+        }
+        cardPanel.add(fotoLabel, BorderLayout.WEST);
+
+        // Center: Details
+        JPanel detailPanel = new JPanel();
+        detailPanel.setLayout(new BoxLayout(detailPanel, BoxLayout.Y_AXIS));
+        detailPanel.setOpaque(false);
+        detailPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel lblNamaTrip = new JLabel();
+        lblNamaTrip.setFont(AppTheme.FONT_SUBTITLE);
+        lblNamaTrip.setForeground(AppTheme.TEXT_DARK);
+        lblNamaTrip.setAlignmentX(Component.LEFT_ALIGNMENT);
+        detailPanel.add(lblNamaTrip);
+
+        JLabel lblDetail1 = new JLabel(); // For Days, People, Rating
+        lblDetail1.setFont(AppTheme.FONT_PRIMARY_MEDIUM);
+        lblDetail1.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+        lblDetail1.setAlignmentX(Component.LEFT_ALIGNMENT);
+        detailPanel.add(lblDetail1);
+
+        JLabel lblHarga = new JLabel();
+        lblHarga.setFont(AppTheme.FONT_PRIMARY_BOLD);
+        lblHarga.setForeground(AppTheme.ACCENT_ORANGE);
+        lblHarga.setAlignmentX(Component.LEFT_ALIGNMENT);
+        detailPanel.add(lblHarga);
+
+        JLabel lblTanggalPemesanan = new JLabel(); // Label for order date
+        lblTanggalPemesanan.setFont(AppTheme.FONT_LABEL_FORM);
+        lblTanggalPemesanan.setForeground(AppTheme.TEXT_DARK);
+        lblTanggalPemesanan.setAlignmentX(Component.LEFT_ALIGNMENT);
+        detailPanel.add(lblTanggalPemesanan);
+        
+        // Add Status label for history view
+        JLabel lblStatus = new JLabel();
+        lblStatus.setFont(AppTheme.FONT_LABEL_FORM);
+        lblStatus.setForeground(AppTheme.TEXT_DARK);
+        lblStatus.setAlignmentX(Component.LEFT_ALIGNMENT);
+        detailPanel.add(lblStatus);
+        
+        detailPanel.add(Box.createVerticalGlue());
+
+        // Populate details
+        String namaTrip = "N/A";
+        String detailText = "";
+        String hargaText = NumberFormat.getCurrencyInstance(new Locale("id", "ID")).format(0.0);
+        int jumlahOrang = 0;
+        double rating = 0.0;
+        double currentTotalHarga = 0.0;
+
+        jumlahOrang = penumpangDAO.getJumlahPenumpangByReservasiId(reservasi.getId());
+        System.out.println("DEBUG PanelOrderHistory - Reservasi ID: " + reservasi.getId() + ", Jumlah Penumpang: " + jumlahOrang);
+
+
+        if ("paket_perjalanan".equals(reservasi.getTripType()) && reservasi.getPaket() != null) {
+            PaketPerjalananModel paket = reservasi.getPaket();
+            namaTrip = paket.getNamaPaket() + " (Kota: " + paket.getNamaKota() + ")";
+            rating = paket.getRating();
+            detailText = paket.getJumlahHari() + " Hari | " + jumlahOrang + " Orang | Rating " + String.format("%.1f", rating);
+            
+            Double hargaLunas = pembayaranDAO.getJumlahPembayaranByReservasiId(reservasi.getId());
+            if (hargaLunas != null && hargaLunas > 0) {
+                currentTotalHarga = hargaLunas;
+            } else {
+                currentTotalHarga = paket.getHarga() * jumlahOrang;
+            }
+            hargaText = NumberFormat.getCurrencyInstance(new Locale("id", "ID")).format(currentTotalHarga);
+            System.out.println("DEBUG PanelOrderHistory - Paket: " + namaTrip + ", Final Harga: " + hargaText);
+
+        } else if ("custom_trip".equals(reservasi.getTripType()) && reservasi.getCustomTrip() != null) {
+            CustomTripModel customTrip = reservasi.getCustomTrip();
+            namaTrip = customTrip.getNamaTrip() + " (Kota: " + customTrip.getNamaKota() + ")";
+            if (customTrip.getJumlahPeserta() > 0) {
+                jumlahOrang = customTrip.getJumlahPeserta();
+            } else {
+                jumlahOrang = penumpangDAO.getJumlahPenumpangByReservasiId(reservasi.getId());
+            }
+            detailText = customTrip.getJumlahHari() + " Hari | " + jumlahOrang + " Orang";
+            
+            currentTotalHarga = customTrip.getTotalHarga();
+            hargaText = NumberFormat.getCurrencyInstance(new Locale("id", "ID")).format(currentTotalHarga);
+            System.out.println("DEBUG PanelOrderHistory - Custom Trip: " + namaTrip + ", Total Harga: " + hargaText);
+        }
+
+        lblNamaTrip.setText(namaTrip);
+        lblDetail1.setText(detailText);
+        lblHarga.setText("Harga: " + hargaText);
+        lblTanggalPemesanan.setText("Tanggal Pemesanan: " + (reservasi.getTanggalReservasi() != null ? reservasi.getTanggalReservasi().format(DateTimeFormatter.ofPattern("dd MMMMвався")) : "N/A"));
+        lblStatus.setText("Status: " + reservasi.getStatus()); // Display actual status
+
+        cardPanel.add(detailPanel, BorderLayout.CENTER);
+
+        // Right: "Pesan Lagi" Button (Only this button for history)
+        JPanel actionButtonsPanel = new JPanel();
+        actionButtonsPanel.setLayout(new BoxLayout(actionButtonsPanel, BoxLayout.Y_AXIS));
+        actionButtonsPanel.setOpaque(false);
+        actionButtonsPanel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+
+        JButton btnPesanLagi = new JButton("Pesan Lagi");
+        stylePrimaryButton(btnPesanLagi, "Pesan Lagi");
+        btnPesanLagi.addActionListener(e -> btn_pesanLagiActionPerformed(reservasi));
+        actionButtonsPanel.add(btnPesanLagi);
+
+        // No "Batalkan Pesanan" button here in PanelOrderHistory
+        
+        cardPanel.add(actionButtonsPanel, BorderLayout.EAST);
+
+        return cardPanel;
+    }
 
     private void applyAppTheme() {
         this.setBackground(AppTheme.PANEL_BACKGROUND);
-        // Beri padding pada panel utama ini jika GroupLayout di initComponents tidak mengaturnya
         this.setBorder(new EmptyBorder(15, 20, 15, 20));
 
-
-        // Panel Header (jPanel2)
-        if (jPanel2 != null) {
-            jPanel2.setBackground(AppTheme.PANEL_BACKGROUND); // Atau warna lain jika header beda
-            jPanel2.setOpaque(false); // Jika ingin background PanelOrderHistory yang terlihat
-        }
-        if (jLabel1 != null) { // Judul "Riwayat Pesanan"
-            jLabel1.setFont(AppTheme.FONT_TITLE_LARGE);
-            jLabel1.setForeground(AppTheme.PRIMARY_BLUE_DARK);
+        if (titleLabel != null) {
+            titleLabel.setFont(AppTheme.FONT_TITLE_LARGE);
+            titleLabel.setForeground(AppTheme.PRIMARY_BLUE_DARK);
         }
         if (btn_back != null) {
             styleSecondaryButton(btn_back, "< Kembali");
-        }
-
-        // Panel Tanggal Pemesanan (jPanel1)
-        if (jPanel1 != null) {
-            jPanel1.setBackground(Color.WHITE); // Atau AppTheme.BACKGROUND_LIGHT_GRAY
-            jPanel1.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0,0,1,0, AppTheme.BORDER_COLOR), // Garis bawah
-                new EmptyBorder(5,10,5,10)
-            ));
-        }
-        if (jLabel2 != null) { // "Tanggal Pemesanan"
-            jLabel2.setFont(AppTheme.FONT_LABEL_FORM);
-            jLabel2.setForeground(AppTheme.TEXT_DARK);
-        }
-        
-
-        // Panel Template (Kartu Riwayat Pesanan)
-        if (panelTemplate != null) {
-            panelTemplate.setBackground(Color.WHITE);
-            panelTemplate.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(AppTheme.BORDER_COLOR, 1),
-                new EmptyBorder(15, 15, 15, 15)
-            ));
-        }
-
-        // Foto User Placeholder di Kartu
-        if (foto_user != null) {
-            foto_user.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
-            foto_user.setForeground(AppTheme.TEXT_SECONDARY_DARK);
-            foto_user.setBackground(AppTheme.BACKGROUND_LIGHT_GRAY);
-            foto_user.setOpaque(true);
-            foto_user.setHorizontalAlignment(SwingConstants.CENTER);
-            foto_user.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER_COLOR));
-            if (foto_user.getPreferredSize().width == 0 || foto_user.getPreferredSize().height == 0) {
-                 foto_user.setPreferredSize(new Dimension(111, 111)); 
-            }
-        }
-
-        // TextFields yang berfungsi sebagai Label
-        styleDisplayTextField(tf_namakota, AppTheme.FONT_SUBTITLE, AppTheme.TEXT_DARK);
-        styleDisplayTextField(tf_hari, AppTheme.FONT_PRIMARY_MEDIUM, AppTheme.TEXT_SECONDARY_DARK);
-        styleDisplayTextField(tf_orang, AppTheme.FONT_PRIMARY_MEDIUM, AppTheme.TEXT_SECONDARY_DARK);
-        styleDisplayTextField(tf_orang1, AppTheme.FONT_PRIMARY_DEFAULT, AppTheme.TEXT_SECONDARY_DARK); // Rating
-        styleDisplayTextField(tf_harga, AppTheme.FONT_PRIMARY_BOLD, AppTheme.ACCENT_ORANGE); // Harga
-
-        // Label
-        if (jLabel7 != null) { // "Harga:"
-            jLabel7.setFont(AppTheme.FONT_LABEL_FORM);
-            jLabel7.setForeground(AppTheme.TEXT_DARK);
-        }
-        
-        // Tombol Pesan Lagi
-        if (btn_pesanLagi != null) {
-            stylePrimaryButton(btn_pesanLagi, "Pesan Lagi");
         }
     }
     
@@ -251,14 +323,13 @@ public class PanelOrderHistory extends JPanel {
             textField.setFont(font);
             textField.setForeground(foregroundColor);
             textField.setEditable(false);
-            textField.setBorder(null); 
-            textField.setOpaque(false); 
-            textField.setBackground(new Color(0,0,0,0)); 
+            textField.setBorder(null);
+            textField.setOpaque(false);
+            textField.setBackground(new Color(0,0,0,0));
         }
     }
 
     private void stylePrimaryButton(JButton button, String text) {
-        // button.setText(text); // Teks diasumsikan sudah diatur oleh NetBeans
         button.setFont(AppTheme.FONT_BUTTON);
         button.setBackground(AppTheme.BUTTON_PRIMARY_BACKGROUND);
         button.setForeground(AppTheme.BUTTON_PRIMARY_TEXT);
@@ -271,7 +342,6 @@ public class PanelOrderHistory extends JPanel {
     }
 
     private void styleSecondaryButton(JButton button, String text) {
-        // button.setText(text); // Teks diasumsikan sudah diatur oleh NetBeans
         button.setFont(AppTheme.FONT_BUTTON);
         button.setBackground(AppTheme.BUTTON_SECONDARY_BACKGROUND);
         button.setForeground(AppTheme.BUTTON_SECONDARY_TEXT);
@@ -298,225 +368,36 @@ public class PanelOrderHistory extends JPanel {
     }
     
     private void setupActionListeners() {
-        // Listener biasanya sudah diatur di initComponents oleh NetBeans.
-        // Jika Anda memindahkannya ke sini, pastikan untuk menghapusnya dari initComponents
-        // atau cek apakah listener sudah ada sebelum menambahkannya lagi.
-        // Contoh:
-        // if (btn_back != null && btn_back.getActionListeners().length == 0) {
-        //     btn_back.addActionListener(this::btn_backActionPerformed);
-        // }
-        // if (btn_pesanLagi != null && btn_pesanLagi.getActionListeners().length == 0) {
-        //     btn_pesanLagi.addActionListener(this::btn_pesanLagiActionPerformed);
-        // }
+        if (btn_back != null) {
+            btn_back.addActionListener(this::btn_backActionPerformed);
+        }
     }
 
-    // PENTING: Anda HARUS menyalin kode initComponents() dari file OrderHistory.java Anda
-    // (yang dihasilkan oleh NetBeans GUI Builder) ke dalam metode di bawah ini.
-    // Kode placeholder di bawah ini TIDAK akan menghasilkan UI yang benar.
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        // This method will be empty as UI is built programmatically
+    }
 
-        jPanel1 = new javax.swing.JPanel();
-        jLabel2 = new javax.swing.JLabel();
-        panelTemplate = new javax.swing.JPanel();
-        btn_pesanLagi = new javax.swing.JButton();
-        jLabel7 = new javax.swing.JLabel();
-        tf_namakota = new javax.swing.JTextField();
-        tf_hari = new javax.swing.JTextField();
-        tf_orang = new javax.swing.JTextField();
-        tf_orang1 = new javax.swing.JTextField();
-        tf_harga = new javax.swing.JTextField();
-        foto_user = new javax.swing.JLabel();
-        jPanel2 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        btn_back = new javax.swing.JButton();
-
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
-
-        jLabel2.setFont(new java.awt.Font("Helvetica Neue", 1, 13)); // NOI18N
-        jLabel2.setText("Tanggal Pemesanan ");
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel2)
-                .addContainerGap(375, Short.MAX_VALUE))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(10, 10, 10)
-                .addComponent(jLabel2)
-                .addContainerGap(10, Short.MAX_VALUE))
-        );
-
-        panelTemplate.setBackground(new java.awt.Color(255, 255, 255));
-
-        btn_pesanLagi.setText("Pesan Lagi");
-        btn_pesanLagi.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_pesanLagiActionPerformed(evt);
-            }
-        });
-
-        jLabel7.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        jLabel7.setText("Harga:");
-
-        tf_namakota.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        tf_namakota.setText("Nama kota");
-        tf_namakota.setBorder(null);
-
-        tf_hari.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        tf_hari.setText("...Hari");
-        tf_hari.setBorder(null);
-
-        tf_orang.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        tf_orang.setText("...Orang");
-        tf_orang.setBorder(null);
-
-        tf_orang1.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        tf_orang1.setText("Rating");
-        tf_orang1.setBorder(null);
-
-        tf_harga.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        tf_harga.setText("Rp...");
-        tf_harga.setBorder(null);
-
-        foto_user.setBackground(new java.awt.Color(0, 0, 0));
-        foto_user.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        foto_user.setText("FOTO");
-        foto_user.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
-        foto_user.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-
-        javax.swing.GroupLayout panelTemplateLayout = new javax.swing.GroupLayout(panelTemplate);
-        panelTemplate.setLayout(panelTemplateLayout);
-        panelTemplateLayout.setHorizontalGroup(
-            panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelTemplateLayout.createSequentialGroup()
-                .addGap(23, 23, 23)
-                .addComponent(foto_user, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(panelTemplateLayout.createSequentialGroup()
-                        .addGap(36, 36, 36)
-                        .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(panelTemplateLayout.createSequentialGroup()
-                                .addComponent(jLabel7)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(tf_harga, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(panelTemplateLayout.createSequentialGroup()
-                                .addComponent(tf_namakota, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(tf_hari, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(tf_orang, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(tf_orang1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelTemplateLayout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(btn_pesanLagi)
-                        .addContainerGap())))
-        );
-        panelTemplateLayout.setVerticalGroup(
-            panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelTemplateLayout.createSequentialGroup()
-                .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(btn_pesanLagi)
-                    .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(panelTemplateLayout.createSequentialGroup()
-                            .addGap(25, 25, 25)
-                            .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(tf_namakota, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(tf_hari, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(tf_orang, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(tf_orang1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                            .addGroup(panelTemplateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(jLabel7)
-                                .addComponent(tf_harga, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGroup(panelTemplateLayout.createSequentialGroup()
-                            .addGap(26, 26, 26)
-                            .addComponent(foto_user, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(23, Short.MAX_VALUE))
-        );
-
-        jLabel1.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
-        jLabel1.setText("Riwayat Pesanan"); // Teks judul
-
-        btn_back.setText("< Kembali");
-        btn_back.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_backActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(btn_back)
-                .addGap(18, 18, Short.MAX_VALUE) 
-                .addComponent(jLabel1) 
-                .addContainerGap(194, Short.MAX_VALUE)) // Sesuaikan agar judul lebih ke tengah
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btn_back)
-                    .addComponent(jLabel1))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        
-        // Mengatur tata letak utama untuk PanelOrderHistory
-        // Ini adalah contoh, Anda harus menyesuaikannya dengan struktur GroupLayout dari NetBeans Anda
-        GroupLayout layout = new GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(panelTemplate, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(ComponentPlacement.RELATED)
-                .addComponent(jPanel1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(ComponentPlacement.RELATED)
-                .addComponent(panelTemplate, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-    }// </editor-fold>//GEN-END:initComponents
-
-    private void btn_backActionPerformed(java.awt.event.ActionEvent evt) {                                         
+    private void btn_backActionPerformed(java.awt.event.ActionEvent evt) {
         if (mainAppFrame != null) {
-            mainAppFrame.showPanel(MainAppFrame.PANEL_USER_PROFILE); 
+            mainAppFrame.showPanel(MainAppFrame.PANEL_USER_PROFILE);
         } else {
             System.err.println("MainAppFrame is null in PanelOrderHistory (btn_back)");
         }
-    }                                        
+    }
 
-    private void btn_pesanLagiActionPerformed(java.awt.event.ActionEvent evt) {                                              
+    private void btn_pesanLagiActionPerformed(ReservasiModel reservasi) {
         if (mainAppFrame != null) {
-            // Logika untuk "Pesan Lagi" bisa lebih kompleks,
-            // mungkin pre-fill Custom Trip atau navigasi ke detail produk
-            JOptionPane.showMessageDialog(this, "Fitur 'Pesan Lagi' akan mengarahkan ke detail atau custom trip (Belum diimplementasikan di MainAppFrame)", "Info", JOptionPane.INFORMATION_MESSAGE);
-            // Contoh: mainAppFrame.showPanel(MainAppFrame.PANEL_TRIP_DETAIL, idPesanan);
+            if ("paket_perjalanan".equals(reservasi.getTripType()) && reservasi.getPaket() != null) {
+                JOptionPane.showMessageDialog(this, "Mengarahkan untuk memesan lagi Paket: " + reservasi.getPaket().getNamaPaket(), "Pesan Lagi", JOptionPane.INFORMATION_MESSAGE);
+                mainAppFrame.showPanel(MainAppFrame.PANEL_TRIP_DETAIL, reservasi.getPaket(), null, null);
+            } else if ("custom_trip".equals(reservasi.getTripType()) && reservasi.getCustomTrip() != null) {
+                JOptionPane.showMessageDialog(this, "Mengarahkan untuk memesan lagi Custom Trip: " + reservasi.getCustomTrip().getNamaTrip(), "Pesan Lagi", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Tidak dapat memesan lagi jenis perjalanan ini.", "Pesan Lagi", JOptionPane.WARNING_MESSAGE);
+            }
         } else {
             System.err.println("MainAppFrame is null in PanelOrderHistory (btn_pesanLagi)");
         }
-    }                                             
+    }
 }
