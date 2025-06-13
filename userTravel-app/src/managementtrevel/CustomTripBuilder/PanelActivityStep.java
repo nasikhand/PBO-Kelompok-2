@@ -5,6 +5,8 @@ import managementtrevel.MainAppFrame; // Impor MainAppFrame
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter; // Digunakan untuk JTextArea, bukan JTextField
+import java.awt.event.FocusEvent;   // Digunakan untuk JTextArea, bukan JTextField
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -12,11 +14,14 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import java.text.NumberFormat; // Untuk format mata uang
+import java.util.Locale; // Untuk format mata uang
+import java.text.ParseException; // Untuk NumberFormat.parse()
 
-// Mengubah nama kelas dan extends JPanel
+
 public class PanelActivityStep extends JPanel {
 
-    private MainAppFrame mainAppFrame; // Referensi ke MainAppFrame
+    private MainAppFrame mainAppFrame;
 
     private JPanel panelBuildSteps;
     private JPanel panelCustomTripMain;
@@ -52,8 +57,9 @@ public class PanelActivityStep extends JPanel {
     private JPanel panelTripSummary;
     private JLabel lblSummaryStartDateDisplay;
     private JLabel lblSummaryEndDateDisplay;
-    private JLabel lblSummaryTransportDisplay;
+    private JLabel lblSummaryTransportModeDisplay;
     private JLabel lblSummaryAccommodationDisplay;
+    private JLabel lblSummaryActivitiesDisplay; // New label for activities summary title
     private JScrollPane jScrollPaneDestinasiSummary;
     private JList<String> listDestinasiSummaryDisplay;
     
@@ -72,35 +78,38 @@ public class PanelActivityStep extends JPanel {
     private final String currentEndDate;
     private final String currentTransportMode;
     private final String currentTransportDetails;
-    private final String currentAccommodationName;
-    private final String currentRoomType;
-    private final String currentAccommodationNotes;
-    private List<String> addedActivitiesList;
+    private final String currentAccommodationName; // Final parameter from constructor
+    private final String currentRoomType;          // Final parameter from constructor
+    private final String currentAccommodationNotes; // Final parameter from constructor
+    private double currentInitialEstimatedCost;
 
+    private List<String> addedActivitiesList;
 
     private final String ACTIVE_STEP_ICON = "● ";
     private final String INACTIVE_STEP_ICON = "○ ";
 
-    private JComponent panelMainFooter;
+    private JPanel panelMainFooter;
+    private JPanel panelMainHeader;
+    private JPanel panelSummaryDetails;
 
-    private JComponent panelMainHeader;
-
-    private JComponent panelSummaryDetails;
-
-    // Konstruktor diubah untuk menerima MainAppFrame dan data dari langkah sebelumnya
+    // Konstruktor diubah untuk menerima MainAppFrame dan data dari langkah sebelumnya, termasuk totalEstimatedCost
     public PanelActivityStep(MainAppFrame mainAppFrame, List<String> destinations, String startDate, String endDate, 
-                                String transportMode, String transportDetails,
-                                String accommodationName, String roomType, String accommodationNotes) {
+                             String transportMode, String transportDetails,
+                             String accommodationName, String roomType, String accommodationNotes, double initialEstimatedCost) {
         this.mainAppFrame = mainAppFrame;
         this.currentDestinations = destinations != null ? new ArrayList<>(destinations) : new ArrayList<>();
         this.currentStartDate = startDate;
         this.currentEndDate = endDate;
         this.currentTransportMode = transportMode;
         this.currentTransportDetails = transportDetails;
-        this.currentAccommodationName = accommodationName;
-        this.currentRoomType = roomType;
-        this.currentAccommodationNotes = accommodationNotes;
-        this.addedActivitiesList = new ArrayList<>(); // Inisialisasi list untuk menyimpan aktivitas
+        this.currentAccommodationName = accommodationName; // Inisialisasi dari parameter
+        this.currentRoomType = roomType;                  // Inisialisasi dari parameter
+        this.currentAccommodationNotes = accommodationNotes; // Inisialisasi dari parameter
+        this.currentInitialEstimatedCost = initialEstimatedCost;
+
+        this.addedActivitiesList = new ArrayList<>(); // Initialize the list
+        this.listModelDestinasiDisplay = new DefaultListModel<>(); // Initialize DefaultListModel
+        this.listModelAddedActivities = new DefaultListModel<>(); // Initialize DefaultListModel
         
         initializeUI();
         applyAppTheme(); // Terapkan tema setelah komponen diinisialisasi
@@ -141,9 +150,9 @@ public class PanelActivityStep extends JPanel {
         panelCustomTripMain = new JPanel(new BorderLayout(10, 10));
         panelCustomTripMain.setBorder(new EmptyBorder(0, 10, 0, 0));
 
-        JPanel panelMainHeader = new JPanel(new BorderLayout());
-        lblCustomTripBuilderTitle = new JLabel("Custom Trip Builder - Tambah Kegiatan"); // Judul disesuaikan
-        btnSaveTrip = new JButton("Simpan Trip");
+        this.panelMainHeader = new JPanel(new BorderLayout());
+        lblCustomTripBuilderTitle = new JLabel("Custom Trip Builder - Tambah Kegiatan");
+        btnSaveTrip = new JButton("Simpan Draf Trip");
         panelMainHeader.add(lblCustomTripBuilderTitle, BorderLayout.WEST);
         panelMainHeader.add(btnSaveTrip, BorderLayout.EAST);
         panelCustomTripMain.add(panelMainHeader, BorderLayout.NORTH);
@@ -189,7 +198,6 @@ public class PanelActivityStep extends JPanel {
         panelLeftContent.add(panelAddActivity);
         panelLeftContent.add(Box.createRigidArea(new Dimension(0,10)));
 
-        // Panel Suggest Activity
         panelSuggestActivity = new JPanel(new BorderLayout());
         lblSuggestActivityInfo = new JLabel("Saran kegiatan akan muncul di sini...", JLabel.CENTER);
         panelSuggestActivity.add(lblSuggestActivityInfo, BorderLayout.CENTER);
@@ -197,7 +205,6 @@ public class PanelActivityStep extends JPanel {
         panelLeftContent.add(panelSuggestActivity);
         panelLeftContent.add(Box.createRigidArea(new Dimension(0,10)));
 
-        // Panel Activity Option
         panelActivityOption = new JPanel(new BorderLayout());
         lblActivityOptionInfo = new JLabel("Opsi untuk kegiatan yang dipilih...", JLabel.CENTER);
         panelActivityOption.add(lblActivityOptionInfo, BorderLayout.CENTER);
@@ -220,13 +227,17 @@ public class PanelActivityStep extends JPanel {
         lblSummaryEndDateDisplay.setAlignmentX(Component.LEFT_ALIGNMENT);
         panelSummaryDetails.add(lblSummaryEndDateDisplay);
 
-        lblSummaryTransportDisplay = new JLabel("Transportasi: -");
-        lblSummaryTransportDisplay.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panelSummaryDetails.add(lblSummaryTransportDisplay);
+        lblSummaryTransportModeDisplay = new JLabel("Transportasi: -");
+        lblSummaryTransportModeDisplay.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panelSummaryDetails.add(lblSummaryTransportModeDisplay);
 
         lblSummaryAccommodationDisplay = new JLabel("Akomodasi: -");
         lblSummaryAccommodationDisplay.setAlignmentX(Component.LEFT_ALIGNMENT);
         panelSummaryDetails.add(lblSummaryAccommodationDisplay);
+
+        lblSummaryActivitiesDisplay = new JLabel("Kegiatan Ditambahkan:");
+        lblSummaryActivitiesDisplay.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panelSummaryDetails.add(lblSummaryActivitiesDisplay);
         
         panelSummaryDetails.add(Box.createRigidArea(new Dimension(0,5)));
         JSeparator summarySeparator = new JSeparator(SwingConstants.HORIZONTAL);
@@ -242,6 +253,7 @@ public class PanelActivityStep extends JPanel {
         listDestinasiSummaryDisplay = new JList<>(listModelDestinasiDisplay);
         listDestinasiSummaryDisplay.setEnabled(false); 
         jScrollPaneDestinasiSummary = new JScrollPane(listDestinasiSummaryDisplay);
+        jScrollPaneDestinasiSummary.setPreferredSize(new Dimension(0, 100));
         panelTripSummary.add(jScrollPaneDestinasiSummary, BorderLayout.CENTER);
         panelRightContent.add(panelTripSummary);
         panelRightContent.add(Box.createRigidArea(new Dimension(0,10)));
@@ -263,7 +275,7 @@ public class PanelActivityStep extends JPanel {
         splitPaneContent.setContinuousLayout(true);
         panelCustomTripMain.add(splitPaneContent, BorderLayout.CENTER);
 
-        JPanel panelMainFooter = new JPanel(new BorderLayout());
+        this.panelMainFooter = new JPanel(new BorderLayout());
         btnPrevStep = new JButton("< Kembali ke Akomodasi"); 
         btnNextStep = new JButton("Lanjut ke Finalisasi >");
         panelMainFooter.add(btnPrevStep, BorderLayout.WEST); 
@@ -289,9 +301,10 @@ public class PanelActivityStep extends JPanel {
         panelCustomTripMain.setBackground(Color.WHITE);
         panelCustomTripMain.setBorder(new EmptyBorder(15,20,15,20));
 
+        if (panelMainHeader != null) ((JComponent) panelMainHeader).setOpaque(false);
         lblCustomTripBuilderTitle.setFont(AppTheme.FONT_TITLE_LARGE);
         lblCustomTripBuilderTitle.setForeground(AppTheme.PRIMARY_BLUE_DARK);
-        styleSecondaryButton(btnSaveTrip, "Simpan Trip");
+        styleSecondaryButton(btnSaveTrip, "Simpan Draf Trip");
 
         panelLeftContent.setOpaque(false);
         panelRightContent.setOpaque(false);
@@ -307,7 +320,7 @@ public class PanelActivityStep extends JPanel {
             titledBorderFont, titledBorderColor));
         panelSuggestActivity.setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(AppTheme.BORDER_COLOR), "Saran Kegiatan",
-             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, 
+            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, 
             titledBorderFont, titledBorderColor));
         panelActivityOption.setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(AppTheme.BORDER_COLOR), "Opsi Kegiatan",
@@ -355,16 +368,16 @@ public class PanelActivityStep extends JPanel {
         lblSummaryStartDateDisplay.setForeground(AppTheme.TEXT_SECONDARY_DARK);
         lblSummaryEndDateDisplay.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
         lblSummaryEndDateDisplay.setForeground(AppTheme.TEXT_SECONDARY_DARK);
-        lblSummaryTransportDisplay.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
-        lblSummaryTransportDisplay.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+        lblSummaryTransportModeDisplay.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
+        lblSummaryTransportModeDisplay.setForeground(AppTheme.TEXT_SECONDARY_DARK);
         lblSummaryAccommodationDisplay.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
         lblSummaryAccommodationDisplay.setForeground(AppTheme.TEXT_SECONDARY_DARK);
-        
+
         if (panelSummaryDetails.getComponent(0) instanceof JLabel) { 
              ((JLabel)panelSummaryDetails.getComponent(0)).setFont(AppTheme.FONT_LABEL_FORM);
              ((JLabel)panelSummaryDetails.getComponent(0)).setForeground(AppTheme.TEXT_DARK);
         }
-         if (panelSummaryDetails.getComponent(5) instanceof JLabel) { // "Destinations:"
+        if (panelSummaryDetails.getComponent(5) instanceof JLabel) { // "Destinations:"
              ((JLabel)panelSummaryDetails.getComponent(5)).setFont(AppTheme.FONT_LABEL_FORM);
              ((JLabel)panelSummaryDetails.getComponent(5)).setForeground(AppTheme.TEXT_DARK);
              ((JLabel)panelSummaryDetails.getComponent(5)).setBorder(new EmptyBorder(3,0,3,0));
@@ -384,8 +397,8 @@ public class PanelActivityStep extends JPanel {
         styleSecondaryButton(btnPrevStep, "< Kembali");
         stylePrimaryButton(btnNextStep, "Lanjut ke Finalisasi >");
         
-        if (panelMainHeader != null) panelMainHeader.setOpaque(false);
-        if (panelMainFooter != null) panelMainFooter.setOpaque(false);
+        if (panelMainHeader != null) ((JComponent) panelMainHeader).setOpaque(false);
+        if (panelMainFooter != null) ((JComponent) panelMainFooter).setOpaque(false);
     }
     
     private void stylePrimaryButton(JButton button, String text) {
@@ -426,22 +439,38 @@ public class PanelActivityStep extends JPanel {
             }
         });
     }
-     private void addFocusBorderEffect(JTextField textField) {
-        textField.addFocusListener(new java.awt.event.FocusAdapter() {
+    
+    private void addFocusBorderEffect(JTextField textField) {
+        textField.addFocusListener(new FocusAdapter() {
             @Override
-            public void focusGained(java.awt.event.FocusEvent evt) {
+            public void focusGained(FocusEvent e) {
                 textField.setBorder(AppTheme.createFocusBorder());
             }
             @Override
-            public void focusLost(java.awt.event.FocusEvent evt) {
+            public void focusLost(FocusEvent e) {
                 textField.setBorder(AppTheme.createDefaultInputBorder());
             }
         });
     }
     
+    private void addFocusBorderEffect(JTextArea textArea) { // Overload for JTextArea
+        textArea.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                textArea.setBorder(AppTheme.createFocusBorder());
+            }
+            @Override
+            public void focusLost(FocusEvent e) {
+                textArea.setBorder(AppTheme.createDefaultInputBorder());
+            }
+        });
+    }
+
+
     private void setupLogicAndVisuals() {
         updateBuildStepLabels(5); // Langkah aktif adalah 5 (Kegiatan)
         
+        // Populate summary details from previous steps
         if (currentDestinations != null) {
             for (String dest : currentDestinations) {
                 listModelDestinasiDisplay.addElement(dest);
@@ -449,12 +478,11 @@ public class PanelActivityStep extends JPanel {
         }
         lblSummaryStartDateDisplay.setText("Mulai: " + (currentStartDate != null ? currentStartDate : "-"));
         lblSummaryEndDateDisplay.setText("Selesai: " + (currentEndDate != null ? currentEndDate : "-"));
-        
         String transportInfo = (currentTransportMode != null && !currentTransportMode.isEmpty() ? currentTransportMode : "-");
         if (currentTransportDetails != null && !currentTransportDetails.isEmpty()){
             transportInfo += " (" + currentTransportDetails + ")";
         }
-        lblSummaryTransportDisplay.setText("Transportasi: " + transportInfo);
+        lblSummaryTransportModeDisplay.setText("Transportasi: " + transportInfo);
         
         String accommodationInfo = (currentAccommodationName != null && !currentAccommodationName.isEmpty() ? currentAccommodationName : "-");
         if (currentRoomType != null && !currentRoomType.isEmpty()){
@@ -465,13 +493,35 @@ public class PanelActivityStep extends JPanel {
         }
         lblSummaryAccommodationDisplay.setText("Akomodasi: " + accommodationInfo);
 
+        // Initial state for activity text field and buttons
+        addFocusBorderEffect(txtActivityName); // Apply focus effect to activity name field
+        btnRemoveActivityFromList.setEnabled(false); // Disable remove button initially
+
+        // Listeners for activity list and buttons
         btnAddActivityToList.addActionListener(this::btnAddActivityToListActionPerformed);
         btnRemoveActivityFromList.addActionListener(this::btnRemoveActivityFromListActionPerformed);
+        listAddedActivities.addListSelectionListener(e -> { // Listener to enable/disable remove button
+            if (!e.getValueIsAdjusting()) {
+                btnRemoveActivityFromList.setEnabled(listAddedActivities.getSelectedIndex() != -1);
+                updateEstimatedCost(); // Update cost if selection changes (e.g., activity has cost)
+            }
+        });
+
+        // Listeners for Save/Prev/Next buttons
         btnSaveTrip.addActionListener(this::btnSaveTripActionPerformed);
         btnPrevStep.addActionListener(this::btnPrevStepActionPerformed);
         btnNextStep.addActionListener(this::btnNextStepActionPerformed);
+
+        updateEstimatedCost(); // Calculate initial cost based on inherited cost and current step
+        updateNextStepButtonState(); // Update next step button state
     }
     
+    private void updateNextStepButtonState() {
+        // Next button is always enabled, or you can require at least one activity
+        // For now, let's keep it enabled even if no activities are added
+        btnNextStep.setEnabled(true); 
+    }
+
     private void updateBuildStepLabels(int activeStep) {
         JLabel[] stepLabels = {
             lblStep1Destinasi, lblStep2Tanggal, lblStep3Transport,
@@ -491,13 +541,26 @@ public class PanelActivityStep extends JPanel {
             }
         }
     }
-    
+
+    private void updateEstimatedCost() {
+        double currentCost = currentInitialEstimatedCost; // Start with cost from previous step
+
+        // Example: Add cost based on number of activities
+        // For simplicity, let's assume each activity adds a flat cost.
+        currentCost += listModelAddedActivities.getSize() * 50000; // Example: Rp 50.000 per activity
+
+        lblEstimasiHargaValue.setText(AppTheme.formatCurrency(currentCost));
+    }
+
     private void btnAddActivityToListActionPerformed(ActionEvent evt) {
         String activity = txtActivityName.getText().trim();
         if (!activity.isEmpty()) {
             if (listModelAddedActivities != null) { 
                 listModelAddedActivities.addElement(activity);
-                txtActivityName.setText(""); 
+                txtActivityName.setText(""); // Clear input field
+                updateEstimatedCost(); // Update cost after adding
+                // Automatically select the newly added item (optional)
+                listAddedActivities.setSelectedIndex(listModelAddedActivities.getSize() - 1);
             }
         } else {
             JOptionPane.showMessageDialog(this, "Masukkan deskripsi kegiatan.", "Input Kosong", JOptionPane.WARNING_MESSAGE);
@@ -509,6 +572,8 @@ public class PanelActivityStep extends JPanel {
             int selectedIndex = listAddedActivities.getSelectedIndex();
             if (selectedIndex != -1) {
                 listModelAddedActivities.remove(selectedIndex);
+                updateEstimatedCost(); // Update cost after removing
+                btnRemoveActivityFromList.setEnabled(false); // Disable button after removal
             } else {
                 JOptionPane.showMessageDialog(this, "Pilih kegiatan dari daftar untuk dihapus.", "Tidak Ada Kegiatan Terpilih", JOptionPane.WARNING_MESSAGE);
             }
@@ -516,57 +581,70 @@ public class PanelActivityStep extends JPanel {
     }
 
     private void btnSaveTripActionPerformed(ActionEvent evt) {
-        addedActivitiesList.clear(); // Bersihkan dulu jika ada data lama
-        if (listModelAddedActivities != null) {
-            for (int i = 0; i < listModelAddedActivities.getSize(); i++) {
-                addedActivitiesList.add(listModelAddedActivities.getElementAt(i));
-            }
+        // Collect all activities to save
+        addedActivitiesList.clear();
+        for (int i = 0; i < listModelAddedActivities.getSize(); i++) {
+            addedActivitiesList.add(listModelAddedActivities.getElementAt(i));
         }
 
         String message = String.format(
-            "Trip Disimpan (Simulasi):\nDestinasi: %s\nTanggal: %s s/d %s\nTransportasi: %s (%s)\nAkomodasi: %s (%s) - Catatan: %s\nKegiatan: %s\nEstimasi Biaya: %s",
+            "Draf Trip Disimpan (Simulasi):\nDestinasi: %s\nTanggal: %s s/d %s\nTransportasi: %s (%s)\nAkomodasi: %s (%s) - Catatan: %s\nKegiatan: %s\nEstimasi Biaya: %s",
             currentDestinations, 
             currentStartDate, 
             currentEndDate,
             currentTransportMode,
             currentTransportDetails != null && !currentTransportDetails.isEmpty() ? currentTransportDetails : "Tidak ada detail",
-            currentAccommodationName == null || currentAccommodationName.isEmpty() ? "-" : currentAccommodationName,
-            currentRoomType == null || currentRoomType.isEmpty() ? "" : ", Kamar: " + currentRoomType,
-            currentAccommodationNotes == null || currentAccommodationNotes.isEmpty() ? "" : ", Catatan: " + currentAccommodationNotes,
+            currentAccommodationName.isEmpty() ? "Tidak ditentukan" : currentAccommodationName, // Access from field
+            currentRoomType.isEmpty() ? "Tidak ada preferensi" : currentRoomType,             // Access from field
+            currentAccommodationNotes.isEmpty() ? "Tidak ada catatan" : currentAccommodationNotes, // Access from field
             addedActivitiesList.isEmpty() ? "Tidak ada" : addedActivitiesList.toString(),
-            lblEstimasiHargaValue.getText()
+            AppTheme.formatCurrency(calculateEstimatedCostForStep())
         );
         JOptionPane.showMessageDialog(this, message, "Simpan Berhasil", JOptionPane.INFORMATION_MESSAGE);
     }
 
+    private double calculateEstimatedCostForStep() {
+        double totalCost = currentInitialEstimatedCost;
+        totalCost += listModelAddedActivities.getSize() * 50000; // Biaya kegiatan
+        return totalCost;
+    }
+
     private void btnPrevStepActionPerformed(ActionEvent evt) {
         if (mainAppFrame != null) {
-            // Navigasi kembali ke PanelAccommodationStep
+            // Navigasi kembali ke PanelAccommodationStep, meneruskan data yang relevan
             mainAppFrame.showPanel(MainAppFrame.PANEL_ACCOMMODATION_STEP, 
-                                   currentDestinations, currentStartDate, currentEndDate, 
-                                   currentTransportMode, currentTransportDetails); 
+                                currentDestinations, currentStartDate, currentEndDate, 
+                                currentTransportMode, currentTransportDetails,
+                                currentAccommodationName, currentRoomType, currentAccommodationNotes,
+                                currentInitialEstimatedCost); // Meneruskan biaya awal ke langkah sebelumnya
         } else {
             System.err.println("MainAppFrame reference is null in PanelActivityStep (Prev).");
         }
     }
 
     private void btnNextStepActionPerformed(ActionEvent evt) {
-        addedActivitiesList.clear();
-        if (listModelAddedActivities != null) {
-            for (int i = 0; i < listModelAddedActivities.getSize(); i++) {
-                addedActivitiesList.add(listModelAddedActivities.getElementAt(i));
-            }
-        }
-        
-        if (mainAppFrame != null) {
-            // Navigasi ke PanelFinalStep
-            mainAppFrame.showPanel(MainAppFrame.PANEL_FINAL_STEP, currentDestinations, currentStartDate, currentEndDate, currentTransportMode, currentTransportDetails, currentAccommodationName, currentRoomType, currentAccommodationNotes, addedActivitiesList);
-            // JOptionPane.showMessageDialog(this, 
-            //     String.format("Akan navigasi ke Finalisasi.\n...Data sebelumnya...\nKegiatan: %s", 
-            //     addedActivitiesList.isEmpty() ? "Tidak ada" : addedActivitiesList.toString()),
-            //     "Info Navigasi", JOptionPane.INFORMATION_MESSAGE);
-        } else {
-             System.err.println("MainAppFrame reference is null in PanelActivityStep (Next).");
+    addedActivitiesList.clear(); // Bersihkan untuk mengisi ulang dari listModelAddedActivities
+    for (int i = 0; i < listModelAddedActivities.getSize(); i++) {
+        addedActivitiesList.add(listModelAddedActivities.getElementAt(i));
+    }
+    
+    // Dapatkan estimasi biaya total kumulatif untuk diteruskan ke langkah final
+    double currentTotalEstimatedCost = calculateEstimatedCostForStep();
+
+    if (mainAppFrame != null) {
+        mainAppFrame.showPanel(MainAppFrame.PANEL_FINAL_STEP, 
+                               currentDestinations, 
+                               currentStartDate, 
+                               currentEndDate, 
+                               currentTransportMode, 
+                               currentTransportDetails, 
+                               currentAccommodationName, 
+                               currentRoomType, 
+                               currentAccommodationNotes, 
+                               addedActivitiesList, // Meneruskan daftar kegiatan
+                               currentTotalEstimatedCost); // Meneruskan biaya kumulatif
+    } else {
+        System.err.println("MainAppFrame reference is null in PanelActivityStep (Next).");
         }
     }
 }

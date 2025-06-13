@@ -11,12 +11,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Date; 
 import java.text.SimpleDateFormat; 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
-// Impor JDateChooser
 import com.toedter.calendar.JDateChooser;
 import com.toedter.calendar.JTextFieldDateEditor;
 
@@ -65,20 +68,24 @@ public class PanelDateStep extends JPanel {
     private DefaultListModel<String> listModelDestinasiDisplay;
     private final List<String> currentDestinations;
     private Date selectedStartDate; 
-    private Date selectedEndDate;   
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); // Format tanggal
+    private Date selectedEndDate;
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+    private double initialEstimatedCost; // <--- FIELD BARU UNTUK BIAYA DARI STEP SEBELUMNYA
 
     private final String ACTIVE_STEP_ICON = "● ";
     private final String INACTIVE_STEP_ICON = "○ ";
-    // Placeholder tidak lagi relevan untuk JDateChooser dengan cara yang sama
     
-    // Variabel instance yang mungkin sebelumnya lokal di initializeUI()
     private JPanel panelMainHeader;
     private JPanel panelMainFooter;
 
-    public PanelDateStep(MainAppFrame mainAppFrame, List<String> destinations) {
+    // Konstruktor diubah untuk menerima estimasi biaya awal
+    public PanelDateStep(MainAppFrame mainAppFrame, List<String> destinations, double initialEstimatedCost) {
         this.mainAppFrame = mainAppFrame;
         this.currentDestinations = destinations != null ? new ArrayList<>(destinations) : new ArrayList<>();
+        this.initialEstimatedCost = initialEstimatedCost; // <--- INISIALISASI BIAYA AWAL
+        this.listModelDestinasiDisplay = new DefaultListModel<>();
+
         initializeUI();
         applyAppTheme(); 
         setupLogicAndVisuals();
@@ -118,7 +125,6 @@ public class PanelDateStep extends JPanel {
         panelCustomTripMain = new JPanel(new BorderLayout(10, 10));
         panelCustomTripMain.setBorder(new EmptyBorder(0, 10, 0, 0));
 
-        // Inisialisasi panelMainHeader sebagai variabel instance
         this.panelMainHeader = new JPanel(new BorderLayout());
         lblCustomTripBuilderTitle = new JLabel("Custom Trip Builder - Pilih Tanggal"); 
         btnSaveTrip = new JButton("Simpan Trip");
@@ -145,7 +151,7 @@ public class PanelDateStep extends JPanel {
 
         dateChooserStartDate = new JDateChooser();
         dateChooserStartDate.setDateFormatString("yyyy-MM-dd"); 
-        dateChooserStartDate.setPreferredSize(new Dimension(150, 28)); // Sesuaikan tinggi agar konsisten
+        dateChooserStartDate.setPreferredSize(new Dimension(150, 28));
         gbcDate.gridx = 1; gbcDate.gridy = 0; gbcDate.fill = GridBagConstraints.HORIZONTAL; gbcDate.weightx = 1.0;
         panelDateSelection.add(dateChooserStartDate, gbcDate);
 
@@ -155,7 +161,7 @@ public class PanelDateStep extends JPanel {
 
         dateChooserEndDate = new JDateChooser();
         dateChooserEndDate.setDateFormatString("yyyy-MM-dd");
-        dateChooserEndDate.setPreferredSize(new Dimension(150, 28)); // Sesuaikan tinggi
+        dateChooserEndDate.setPreferredSize(new Dimension(150, 28));
         gbcDate.gridx = 1; gbcDate.gridy = 1; gbcDate.fill = GridBagConstraints.HORIZONTAL; gbcDate.weightx = 1.0;
         panelDateSelection.add(dateChooserEndDate, gbcDate);
         
@@ -201,7 +207,6 @@ public class PanelDateStep extends JPanel {
         splitPaneContent.setContinuousLayout(true);
         panelCustomTripMain.add(splitPaneContent, BorderLayout.CENTER);
 
-        // Inisialisasi panelMainFooter sebagai variabel instance
         this.panelMainFooter = new JPanel(new BorderLayout());
         btnPrevStep = new JButton("< Kembali ke Destinasi"); 
         btnNextStep = new JButton("Lanjut ke Transportasi >");
@@ -228,9 +233,10 @@ public class PanelDateStep extends JPanel {
         panelCustomTripMain.setBackground(Color.WHITE);
         panelCustomTripMain.setBorder(new EmptyBorder(15,20,15,20));
 
+        if (panelMainHeader != null) panelMainHeader.setOpaque(false);
         lblCustomTripBuilderTitle.setFont(AppTheme.FONT_TITLE_LARGE);
         lblCustomTripBuilderTitle.setForeground(AppTheme.PRIMARY_BLUE_DARK);
-        styleSecondaryButton(btnSaveTrip, "Simpan Trip");
+        styleSecondaryButton(btnSaveTrip, "Simpan Draf Trip");
 
         panelLeftContent.setOpaque(false);
         panelRightContent.setOpaque(false);
@@ -260,11 +266,11 @@ public class PanelDateStep extends JPanel {
         if (panelSummaryDates != null) {
             panelSummaryDates.setOpaque(false);
             Component[] dateSummaryComponents = panelSummaryDates.getComponents();
-            if (dateSummaryComponents.length > 0 && dateSummaryComponents[0] instanceof JLabel) { // "Tanggal Dipilih: "
+            if (dateSummaryComponents.length > 0 && dateSummaryComponents[0] instanceof JLabel) {
                 ((JLabel)dateSummaryComponents[0]).setFont(AppTheme.FONT_LABEL_FORM); 
                 ((JLabel)dateSummaryComponents[0]).setForeground(AppTheme.TEXT_DARK);
             }
-             if (dateSummaryComponents.length > 2 && dateSummaryComponents[2] instanceof JLabel) { // " s/d "
+            if (dateSummaryComponents.length > 2 && dateSummaryComponents[2] instanceof JLabel) {
                 ((JLabel)dateSummaryComponents[2]).setFont(AppTheme.FONT_LABEL_FORM);
                 ((JLabel)dateSummaryComponents[2]).setForeground(AppTheme.TEXT_DARK);
             }
@@ -293,7 +299,7 @@ public class PanelDateStep extends JPanel {
         lblEstimasiHargaValue.setFont(AppTheme.FONT_TITLE_MEDIUM);
         lblEstimasiHargaValue.setForeground(AppTheme.ACCENT_ORANGE);
 
-        styleSecondaryButton(btnPrevStep, "< Kembali");
+        styleSecondaryButton(btnPrevStep, "< Kembali ke Destinasi");
         stylePrimaryButton(btnNextStep, "Lanjut ke Transportasi >");
         
         if (panelMainHeader != null) panelMainHeader.setOpaque(false);
@@ -307,19 +313,17 @@ public class PanelDateStep extends JPanel {
         dateChooser.getCalendarButton().setBackground(AppTheme.PRIMARY_BLUE_LIGHT);
         dateChooser.getCalendarButton().setForeground(AppTheme.TEXT_WHITE);
         dateChooser.getCalendarButton().setFocusPainted(false);
-        dateChooser.getCalendarButton().setBorder(BorderFactory.createEmptyBorder(2,5,2,5)); // Padding tombol kalender
+        dateChooser.getCalendarButton().setBorder(BorderFactory.createEmptyBorder(2,5,2,5));
 
         JTextFieldDateEditor editor = (JTextFieldDateEditor) dateChooser.getDateEditor();
         editor.setFont(AppTheme.FONT_TEXT_FIELD);
         editor.setBackground(AppTheme.INPUT_BACKGROUND);
         editor.setForeground(AppTheme.INPUT_TEXT); 
         editor.setBorder(AppTheme.createDefaultInputBorder());
-        editor.setEditable(false); // Agar user hanya bisa memilih dari kalender
+        editor.setEditable(false);
 
         dateChooser.getDateEditor().addPropertyChangeListener("date", evt -> {
             Date newDate = (Date) evt.getNewValue();
-            // Tidak perlu lagi set foreground untuk placeholder karena JDateChooser menanganinya
-            // Update summary
             if (dateChooser == dateChooserStartDate) {
                 selectedStartDate = newDate;
                 lblSummaryStartDateDisplay.setText("Mulai: " + (newDate != null ? dateFormat.format(newDate) : "-"));
@@ -327,6 +331,7 @@ public class PanelDateStep extends JPanel {
                 selectedEndDate = newDate;
                 lblSummaryEndDateDisplay.setText("Selesai: " + (newDate != null ? dateFormat.format(newDate) : "-"));
             }
+            updateEstimatedCost(); // Update cost whenever date changes
         });
     }
     
@@ -370,7 +375,7 @@ public class PanelDateStep extends JPanel {
     }
     
     private void setupLogicAndVisuals() {
-        updateBuildStepLabels(2); 
+        updateBuildStepLabels(2); // Set active step
         
         if (currentDestinations != null) {
             for (String dest : currentDestinations) {
@@ -407,30 +412,30 @@ public class PanelDateStep extends JPanel {
     }
 
     private void btnSaveTripActionPerformed(ActionEvent evt) {
-        // selectedStartDate dan selectedEndDate sudah diupdate oleh listener JDateChooser
-        
         if (selectedStartDate == null || selectedEndDate == null) {
             JOptionPane.showMessageDialog(this, "Pilih tanggal mulai dan selesai yang valid sebelum menyimpan.", "Tidak Dapat Menyimpan", JOptionPane.WARNING_MESSAGE);
             return;
         }
-         if (selectedEndDate.before(selectedStartDate)) {
+        if (selectedEndDate.before(selectedStartDate)) {
             JOptionPane.showMessageDialog(this, "Tanggal Selesai harus setelah atau sama dengan Tanggal Mulai.", "Input Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
+
+        // Dapatkan nilai estimasi biaya yang sudah dihitung dalam format double
+        double currentEstimatedCostForSaving = calculateEstimatedCostForStep(); 
 
         String message = String.format(
             "Trip Disimpan (Simulasi):\nDestinasi: %s\nTanggal Mulai: %s\nTanggal Selesai: %s\nEstimasi Biaya: %s",
             currentDestinations, 
             dateFormat.format(selectedStartDate), 
             dateFormat.format(selectedEndDate),
-            lblEstimasiHargaValue.getText()
+            AppTheme.formatCurrency(currentEstimatedCostForSaving) // Gunakan formatCurrency untuk konsistensi
         );
         JOptionPane.showMessageDialog(this, message, "Simpan Berhasil", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void btnPrevStepActionPerformed(ActionEvent evt) {
         if (mainAppFrame != null) {
-            // Saat kembali, kita tidak perlu mengirim data tanggal karena akan diisi ulang di DestinationStep
             mainAppFrame.showPanel(MainAppFrame.PANEL_DESTINATION_STEP); 
         } else {
             System.err.println("MainAppFrame reference is null in PanelDateStep (Prev).");
@@ -438,7 +443,6 @@ public class PanelDateStep extends JPanel {
     }
 
     private void btnNextStepActionPerformed(ActionEvent evt) {
-        // selectedStartDate dan selectedEndDate sudah diupdate oleh listener JDateChooser
         if (selectedStartDate == null) {
             JOptionPane.showMessageDialog(this, "Masukkan Tanggal Mulai yang valid.", "Input Error", JOptionPane.ERROR_MESSAGE);
             dateChooserStartDate.requestFocusInWindow(); 
@@ -456,12 +460,62 @@ public class PanelDateStep extends JPanel {
         }
         
         if (mainAppFrame != null) {
+            // Dapatkan estimasi biaya dari langkah ini (termasuk biaya sebelumnya)
+            double currentTotalEstimatedCost = calculateEstimatedCostForStep(); // Mengambil total dari step ini
+            
             mainAppFrame.showPanel(MainAppFrame.PANEL_TRANSPORT_STEP, 
                                    currentDestinations, 
                                    dateFormat.format(selectedStartDate), 
-                                   dateFormat.format(selectedEndDate));
+                                   dateFormat.format(selectedEndDate),
+                                   currentTotalEstimatedCost); // <--- Meneruskan estimasi biaya total
         } else {
-             System.err.println("MainAppFrame reference is null in PanelDateStep (Next).");
+            System.err.println("MainAppFrame reference is null in PanelDateStep (Next).");
         }
+    }
+
+    /**
+     * Calculates the estimated cost based on selected dates and destinations.
+     * This is a placeholder; you should implement your actual pricing logic here.
+     */
+    private void updateEstimatedCost() {
+        double currentCost = initialEstimatedCost; // Mulai dengan biaya dari langkah sebelumnya
+        long durationDays = 0;
+
+        // Hitung durasi jika kedua tanggal dipilih
+        if (selectedStartDate != null && selectedEndDate != null && !selectedEndDate.before(selectedStartDate)) {
+            // Konversi java.util.Date ke LocalDate untuk perhitungan ChronoUnit
+            LocalDate start = new java.sql.Date(selectedStartDate.getTime()).toLocalDate();
+            LocalDate end = new java.sql.Date(selectedEndDate.getTime()).toLocalDate();
+            durationDays = ChronoUnit.DAYS.between(start, end) + 1;
+        }
+        
+        // Tambahkan biaya dasar per hari (contoh)
+        if (durationDays > 0) {
+            currentCost += durationDays * 250000; // Contoh: Rp 250.000 per hari
+        }
+
+        // Perbarui label estimasi harga menggunakan metode formatCurrency dari AppTheme
+        lblEstimasiHargaValue.setText(AppTheme.formatCurrency(currentCost));
+    }
+
+    /**
+     * Helper method to calculate the total estimated cost up to this step.
+     * This is crucial to pass the cumulative cost to the next step.
+     * @return The total estimated cost up to this step.
+     */
+    private double calculateEstimatedCostForStep() { // Perhatikan: metode ini sudah private sebelumnya, bisa tetap private
+        double totalCost = initialEstimatedCost;
+        long durationDays = 0;
+
+        if (selectedStartDate != null && selectedEndDate != null && !selectedEndDate.before(selectedStartDate)) {
+            LocalDate start = new java.sql.Date(selectedStartDate.getTime()).toLocalDate();
+            LocalDate end = new java.sql.Date(selectedEndDate.getTime()).toLocalDate();
+            durationDays = ChronoUnit.DAYS.between(start, end) + 1;
+        }
+        
+        if (durationDays > 0) {
+            totalCost += durationDays * 250000;
+        }
+        return totalCost;
     }
 }

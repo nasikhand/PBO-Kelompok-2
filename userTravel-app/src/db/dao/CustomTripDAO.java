@@ -5,7 +5,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate; // Tambahkan import ini jika diperlukan untuk tanggal
+import java.sql.Statement; // Import ini untuk Statement.RETURN_GENERATED_KEYS
+import java.time.LocalDate;
+import java.sql.Date; // Import ini untuk java.sql.Date.valueOf()
 import java.util.ArrayList;
 import java.util.List;
 import model.CustomTripDetailModel;
@@ -14,9 +16,8 @@ import model.CustomTripModel;
 
 public class CustomTripDAO {
 
-    private Connection conn; // <--- DEKLARASI INI DITAMBAHKAN
+    private Connection conn;
 
-    // Konstruktor default yang mendapatkan koneksi dari Koneksi.getConnection()
     public CustomTripDAO() {
         this.conn = Koneksi.getConnection();
         if (this.conn == null) {
@@ -24,12 +25,63 @@ public class CustomTripDAO {
         }
     }
 
-    // Konstruktor yang menerima objek Connection (seperti yang sudah ada)
     public CustomTripDAO(Connection conn) {
-        this.conn = conn; // <--- INISIALISASI INI DITAMBAHKAN
+        this.conn = conn;
         if (this.conn == null) {
             System.err.println("Koneksi yang diberikan ke CustomTripDAO adalah NULL.");
         }
+    }
+
+    /**
+     * Menyimpan objek CustomTripModel baru ke database.
+     * @param customTrip Objek CustomTripModel yang akan disimpan.
+     * @return ID dari custom trip yang baru dibuat, atau -1 jika gagal.
+     */
+    public int save(CustomTripModel customTrip) {
+        if (this.conn == null) {
+            System.err.println("Tidak ada koneksi database untuk operasi save CustomTrip.");
+            return -1;
+        }
+        String sql = "INSERT INTO custom_trip (user_id, nama_trip, tanggal_mulai, tanggal_akhir, jumlah_peserta, status, total_harga, catatan_user) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, customTrip.getUserId());
+            ps.setString(2, customTrip.getNamaTrip());
+            
+            // Konversi LocalDate ke java.sql.Date
+            if (customTrip.getTanggalMulai() != null) {
+                ps.setDate(3, Date.valueOf(customTrip.getTanggalMulai()));
+            } else {
+                ps.setNull(3, java.sql.Types.DATE);
+            }
+            if (customTrip.getTanggalAkhir() != null) {
+                ps.setDate(4, Date.valueOf(customTrip.getTanggalAkhir()));
+            } else {
+                ps.setNull(4, java.sql.Types.DATE);
+            }
+            
+            ps.setInt(5, customTrip.getJumlahPeserta());
+            ps.setString(6, customTrip.getStatus());
+            ps.setDouble(7, customTrip.getTotalHarga());
+            ps.setString(8, customTrip.getCatatanUser());
+
+            int affectedRows = ps.executeUpdate();
+
+            if (affectedRows > 0) {
+                try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int idBaru = generatedKeys.getInt(1);
+                        System.out.println("✅ Custom Trip berhasil disimpan dengan ID: " + idBaru);
+                        return idBaru;
+                    }
+                }
+            } else {
+                System.err.println("❌ Tidak ada baris yang disisipkan ke database untuk Custom Trip.");
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Error saat menyimpan Custom Trip: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return -1;
     }
 
     public CustomTripModel getById(int id) {
@@ -47,7 +99,7 @@ public class CustomTripDAO {
                 if (rs.next()) {
                     customTrip = new CustomTripModel();
                     customTrip.setId(rs.getInt("id"));
-                    customTrip.setUserId(rs.getInt("user_id")); // Pastikan field ini ada di CustomTripModel
+                    customTrip.setUserId(rs.getInt("user_id"));
                     customTrip.setNamaTrip(rs.getString("nama_trip"));
 
                     java.sql.Date sqlTanggalMulai = rs.getDate("tanggal_mulai");
@@ -64,17 +116,12 @@ public class CustomTripDAO {
                         customTrip.setTanggalAkhir(null);
                     }
                     
-                    customTrip.setJumlahPeserta(rs.getInt("jumlah_peserta")); // Pastikan field ini ada di CustomTripModel
-                    customTrip.setStatus(rs.getString("status")); // Pastikan field ini ada di CustomTripModel
-                    customTrip.setTotalHarga(rs.getDouble("total_harga")); // Pastikan field ini ada di CustomTripModel
-                    customTrip.setCatatanUser(rs.getString("catatan_user")); // Pastikan field ini ada di CustomTripModel
+                    customTrip.setJumlahPeserta(rs.getInt("jumlah_peserta"));
+                    customTrip.setStatus(rs.getString("status"));
+                    customTrip.setTotalHarga(rs.getDouble("total_harga"));
+                    customTrip.setCatatanUser(rs.getString("catatan_user"));
 
-                    // Karena tabel custom_trip tidak punya kota_id, kita bisa set namaKota
-                    // dengan nama_trip atau string default jika tidak ada nama kota spesifik.
-                    customTrip.setNamaKota(customTrip.getNamaTrip()); // Set nama kota di model dari nama_trip
-
-                    // Jumlah hari akan dihitung oleh CustomTripModel.getJumlahHari()
-                    // customTrip.setJumlahHari((int) customTrip.getJumlahHari()); // Tidak perlu ini jika getter menghitungnya
+                    customTrip.setNamaKota(customTrip.getNamaTrip());
 
                 }
             }
@@ -83,5 +130,25 @@ public class CustomTripDAO {
             e.printStackTrace();
         }
         return customTrip;
+    }
+
+    public boolean deleteCustomTrip(int id) {
+        // Implementasi DELETE FROM custom_trip WHERE id = ?
+        // Hati-hati dengan foreign key jika ada di rincian_custom_trip
+        // Anda mungkin perlu menghapus rinciannya dulu
+        if (this.conn == null) {
+            System.err.println("Tidak ada koneksi database untuk operasi delete CustomTrip.");
+            return false;
+        }
+        String sql = "DELETE FROM custom_trip WHERE id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            int affectedRows = ps.executeUpdate();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            System.err.println("Error saat menghapus Custom Trip: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 }

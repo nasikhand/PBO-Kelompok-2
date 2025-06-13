@@ -5,16 +5,18 @@ import java.awt.Font;
 import javax.swing.BorderFactory;
 import javax.swing.border.Border; 
 import javax.swing.border.EmptyBorder;
+import java.text.NumberFormat; 
+import java.util.Locale; 
 
 public class AppTheme {
 
     public static final Color PRIMARY_BLUE_DARK = new Color(28, 73, 107); 
     public static final Color PRIMARY_BLUE_LIGHT = new Color(78, 154, 187); 
-    public static final Color ACCENT_ORANGE = new Color(228, 107, 62);   
+    public static final Color ACCENT_ORANGE = new Color(228, 107, 62);
 
     public static final Color BACKGROUND_LIGHT_GRAY = new Color(235, 237, 238); 
     public static final Color TEXT_WHITE = Color.WHITE;
-    public static final Color TEXT_DARK = new Color(45, 45, 45);         
+    public static final Color TEXT_DARK = new Color(45, 45, 45); 
     public static final Color TEXT_SECONDARY_DARK = new Color(80, 80, 80);
 
     public static final Color PANEL_BACKGROUND = BACKGROUND_LIGHT_GRAY; 
@@ -71,9 +73,26 @@ public class AppTheme {
     }
 
     public static Border createDefaultInputBorder() {
-         return BorderFactory.createCompoundBorder(
+          return BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(BORDER_COLOR, 1),
             new EmptyBorder(5, 8, 5, 8)
         );
+    }
+
+    /**
+     * Helper method to format currency. Displays no decimal places if the amount is a whole number,
+     * otherwise displays two decimal places.
+     * @param amount The double value to format as currency.
+     * @return The formatted currency string (e.g., "Rp1.000.000" or "Rp1.500.000,50").
+     */
+    public static String formatCurrency(double amount) {
+        NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
+        // Check if the amount is a whole number (no decimal part)
+        if (amount == Math.floor(amount)) {
+            formatter.setMaximumFractionDigits(0); // Display no decimal places
+        } else {
+            formatter.setMaximumFractionDigits(2); // Display two decimal places for non-whole numbers
+        }
+        return formatter.format(amount);
     }
 }

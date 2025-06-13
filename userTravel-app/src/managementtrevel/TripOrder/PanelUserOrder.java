@@ -19,6 +19,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
@@ -296,7 +297,52 @@ public class PanelUserOrder extends JPanel {
         btnDetail.setBorder(new EmptyBorder(8, 15, 8, 15));
         addHoverEffect(btnDetail, AppTheme.BUTTON_PRIMARY_BACKGROUND.darker(), AppTheme.BUTTON_PRIMARY_BACKGROUND);
         btnDetail.addActionListener(e -> {
-            mainAppFrame.showPanel(MainAppFrame.PANEL_ORDER_DETAIL, reservasi);
+            // Logika baru untuk tombol "Lihat Detail"
+            if ("custom_trip".equals(reservasi.getTripType()) && reservasi.getCustomTrip() != null) {
+                // Untuk custom trip, arahkan ke PanelFinalStep untuk melihat ringkasan penuh
+                // Anda perlu meneruskan semua detail trip kustom ke PanelFinalStep
+                // MainAppFrame.showPanel(..., List<String> destinations, String startDate, ..., List<String> activities, double totalCost)
+                
+                // Ambil data dari customTripModel yang sudah terload di reservasi
+                CustomTripModel customTrip = reservasi.getCustomTrip();
+                
+                // Perlu mengubah LocalDate ke String untuk PanelFinalStep jika konstruktornya mengharapkan String
+                String startDateStr = customTrip.getTanggalMulai() != null ? customTrip.getTanggalMulai().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) : null;
+                String endDateStr = customTrip.getTanggalAkhir() != null ? customTrip.getTanggalAkhir().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) : null;
+
+                // PanelFinalStep tidak punya parameter untuk transport/akomodasi/aktivitas details dari custom trip model secara langsung
+                // Ini akan memerlukan penyesuaian jika detail tersebut ingin ditampilkan kembali.
+                // Untuk demo, kita akan meneruskan nama trip, tanggal, dan biaya
+                
+                // Jika ingin menampilkan detail trip kustom secara penuh, PanelFinalStep perlu disiapkan untuk itu,
+                // atau buat PanelCustomTripDetail terpisah yang menerima CustomTripModel.
+                
+                // Untuk saat ini, kita akan meneruskan data yang tersedia ke PanelFinalStep
+                // Diasumsikan PanelFinalStep dapat menerima data seperti ini
+                mainAppFrame.showPanel(MainAppFrame.PANEL_FINAL_STEP,
+                                       // Data Destinasi (dari custom trip details jika ada)
+                                       // Untuk saat ini, kita akan pakai nama trip sebagai destinasi tunggal
+                                       new ArrayList<>(List.of(customTrip.getNamaTrip())),
+                                       startDateStr,
+                                       endDateStr,
+                                       // Data transport, akomodasi, aktivitas dari custom trip model tidak langsung tersedia
+                                       // Anda perlu memuatnya dari rincian_custom_trip atau menyimpannya di CustomTripModel
+                                       null, // transportMode
+                                       null, // transportDetails
+                                       null, // accommodationName
+                                       null, // roomType
+                                       null, // accommodationNotes
+                                       new ArrayList<>(), // activities (kosong jika tidak diambil)
+                                       customTrip.getTotalHarga() // Biaya total
+                );
+
+
+            } else if ("paket_perjalanan".equals(reservasi.getTripType()) && reservasi.getPaket() != null) {
+                // Untuk paket perjalanan, arahkan ke PanelBookingScreen
+                mainAppFrame.showPanel(MainAppFrame.PANEL_BOOKING_SCREEN, reservasi.getPaket());
+            } else {
+                JOptionPane.showMessageDialog(PanelUserOrder.this, "Detail tidak dapat ditampilkan untuk jenis perjalanan ini.", "Informasi", JOptionPane.INFORMATION_MESSAGE);
+            }
         });
 
         JPanel buttonWrapPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
