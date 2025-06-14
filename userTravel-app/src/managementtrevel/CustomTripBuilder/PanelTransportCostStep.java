@@ -583,11 +583,12 @@ public class PanelTransportCostStep extends JPanel {
     }
 
     private void btnNextStepActionPerformed(ActionEvent evt) {
+
         // These are for the overall trip, can still be useful
         selectedTransportMode = (String) cmbTransportMode.getSelectedItem();
         transportDetailsNotes = txtTransportDetails.getText().trim();
         
-        double totalTransportCost = 0;
+        double totalTransportCost = this.currentInitialEstimatedCost;
 
         // --- CRUCIAL PART: Update the model objects ---
         for (int i = 0; i < itineraryDetails.size(); i++) {

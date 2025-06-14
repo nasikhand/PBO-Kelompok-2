@@ -44,7 +44,7 @@ public class PanelParticipantsStep extends JPanel {
     private JLabel lblStep3TransportCost;
     private JLabel lblStep4Participants; // This step's label
     private JLabel lblStep5Final;
-    private final double currentCost;
+    // private final double currentCost;
 
     private JLabel lblCustomTripBuilderTitle;
     private JButton btnSaveTrip;
@@ -101,7 +101,7 @@ public class PanelParticipantsStep extends JPanel {
         this.mainAppFrame = mainAppFrame;
         this.currentDestinations = destinations != null ? new ArrayList<>(destinations) : new ArrayList<>();
         this.itineraryDetails = itineraryDetails;
-        this.currentCost = initialEstimatedCost;
+        this.currentInitialEstimatedCost = initialEstimatedCost; 
         this.currentTransportMode = transportMode;
         this.currentTransportDetails = transportDetails;
         this.passengerDetailRows = new ArrayList<>();
@@ -191,7 +191,17 @@ public class PanelParticipantsStep extends JPanel {
         dynamicNamesPanel.setLayout(new BoxLayout(dynamicNamesPanel, BoxLayout.Y_AXIS));
         dynamicNamesPanel.setOpaque(false); // Use the parent panel's background
 
-        panelParticipantsInput.add(dynamicNamesPanel, gbcParticipants);
+        
+        JScrollPane scrollPaneForParticipants = new JScrollPane(dynamicNamesPanel);
+        
+        scrollPaneForParticipants.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPaneForParticipants.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+        scrollPaneForParticipants.setBorder(BorderFactory.createEmptyBorder());
+        scrollPaneForParticipants.getViewport().setOpaque(false);
+        scrollPaneForParticipants.setOpaque(false);
+
+        panelParticipantsInput.add(scrollPaneForParticipants, gbcParticipants);
 
         panelLeftContent.add(panelParticipantsInput);
         panelLeftContent.add(Box.createVerticalGlue());
@@ -226,11 +236,6 @@ public class PanelParticipantsStep extends JPanel {
         // Transport Summary
         lblSummaryTransportDisplay = new JLabel("Transportasi Dipilih: -");
         summaryContentTop.add(lblSummaryTransportDisplay);
-        summaryContentTop.add(Box.createRigidArea(new Dimension(0, 10)));
-
-        // Accommodation Summary
-        lblSummaryAccommodationDisplay = new JLabel("Akomodasi Dipilih: -");
-        summaryContentTop.add(lblSummaryAccommodationDisplay);
         summaryContentTop.add(Box.createRigidArea(new Dimension(0, 10)));
 
         lblSummaryParticipantsDisplay = new JLabel("Jumlah Peserta: -");
@@ -338,9 +343,6 @@ public class PanelParticipantsStep extends JPanel {
         lblSummaryTransportDisplay.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
         lblSummaryTransportDisplay.setForeground(AppTheme.TEXT_SECONDARY_DARK);
 
-        lblSummaryAccommodationDisplay.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
-        lblSummaryAccommodationDisplay.setForeground(AppTheme.TEXT_SECONDARY_DARK);
-
         lblSummaryParticipantsDisplay.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
         lblSummaryParticipantsDisplay.setForeground(AppTheme.TEXT_SECONDARY_DARK);
 
@@ -429,46 +431,36 @@ public class PanelParticipantsStep extends JPanel {
     }
 
     private void setupLogicAndVisuals() {
-        updateBuildStepLabels(4); // Active step is 4 (Participants)
+        updateBuildStepLabels(4); 
+        populateSummaryDisplay(); // Set summary values first
+        updateEstimatedCost();    // THEN, set the initial cost
         
-        populateSummaryDisplay();
-
-        styleInputField(txtJumlahPeserta, PLACEHOLDER_TEXT_PARTICIPANTS);
-        txtJumlahPeserta.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            @Override
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { updateParticipantsRelatedData(); }
-            @Override
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { updateParticipantsRelatedData(); }
-            @Override
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { updateParticipantsRelatedData(); }
-        });
-        
-        btnSaveTrip.addActionListener(this::btnSaveTripActionPerformed);
-        btnPrevStep.addActionListener(this::btnPrevStepActionPerformed);
+        txtJumlahPeserta.getDocument().addDocumentListener(new SimpleDocumentListener(this::handlePassengerCountChange));
         btnNextStep.addActionListener(this::btnNextStepActionPerformed);
-
-        updateParticipantsRelatedData();
+        btnPrevStep.addActionListener(this::btnPrevStepActionPerformed);
+        validateForm();
     }
 
-    private void updateParticipantNameFields(int count) {
-        dynamicNamesPanel.removeAll();
-        passengerDetailRows.clear(); // Gunakan list yang baru
-        
-        for (int i = 0; i < count; i++) {
-            CustomPassengerDetailRow row = new CustomPassengerDetailRow(i + 1);
-            
-            // Tambahkan listener untuk validasi real-time
-            row.getNameField().getDocument().addDocumentListener(new SimpleDocumentListener(this::validateForm));
-            row.getGenderComboBox().addActionListener(e -> validateForm());
-            row.getDateChooser().addPropertyChangeListener("date", e -> validateForm());
-            row.getPhoneField().getDocument().addDocumentListener(new SimpleDocumentListener(this::validateForm));
-            row.getEmailField().getDocument().addDocumentListener(new SimpleDocumentListener(this::validateForm));
-            
-            passengerDetailRows.add(row);
-            dynamicNamesPanel.add(row);
+    private void handlePassengerCountChange() {
+        int jumlah = 0;
+        try {
+            if (!txtJumlahPeserta.getText().trim().isEmpty() && !txtJumlahPeserta.getText().equals("Contoh: 2")) {
+                jumlah = Integer.parseInt(txtJumlahPeserta.getText().trim());
+            }
+            if (jumlah < 0) jumlah = 0;
+            if (jumlah > 10) {
+                 JOptionPane.showMessageDialog(this, "Jumlah maksimal adalah 10 peserta.", "Batas Maksimal", JOptionPane.WARNING_MESSAGE);
+                 jumlah = 10;
+                 txtJumlahPeserta.setText("10");
+            }
+        } catch (NumberFormatException e) {
+            jumlah = 0;
         }
-        dynamicNamesPanel.revalidate();
-        dynamicNamesPanel.repaint();
+        this.numberOfParticipants = jumlah;
+        
+        updateParticipantFields(jumlah);
+        updateEstimatedCost(); // Recalculate cost with new participant count
+        validateForm();
     }
 
     private static class CustomPassengerDetailRow extends JPanel {
@@ -690,38 +682,12 @@ public class PanelParticipantsStep extends JPanel {
         lblEstimasiHargaValue.setText(AppTheme.formatCurrency(currentInitialEstimatedCost));
     }
 
-    private void updateParticipantsRelatedData() {
-        int parsedParticipants = 0;
-        String text = txtJumlahPeserta.getText().trim();
-
-        // Check if the field is not empty and not the placeholder
-        if (!text.isEmpty() && !text.equals(PLACEHOLDER_TEXT_PARTICIPANTS)) {
-            try {
-                parsedParticipants = Integer.parseInt(text);
-                if (parsedParticipants < 0) { // Should not be negative
-                    parsedParticipants = 0;
-                }
-            } catch (NumberFormatException e) {
-                // Handle cases where user types non-numeric text
-                parsedParticipants = 0; 
-            }
-        }
-        
-        numberOfParticipants = parsedParticipants;
-
-        lblSummaryParticipantsDisplay.setText("Jumlah Peserta: " + numberOfParticipants + " Orang");
-        updateEstimatedCost();
-        btnNextStep.setEnabled(numberOfParticipants > 0);
-
-        updateParticipantNameFields(numberOfParticipants);
-    }
-
     private void updateEstimatedCost() {
-        double currentCost = currentInitialEstimatedCost;
-
-        currentCost += numberOfParticipants * 50000;
-
-        lblEstimasiHargaValue.setText(AppTheme.formatCurrency(currentCost));
+        double baseCost = this.currentInitialEstimatedCost;
+        double additionalCost = this.numberOfParticipants * 50000; // Example fee per participant
+        double finalCost = baseCost + additionalCost;
+        lblEstimasiHargaValue.setText(AppTheme.formatCurrency(finalCost));
+        lblSummaryParticipantsDisplay.setText("Jumlah Peserta: " + this.numberOfParticipants + " Orang");
     }
 
     private void btnSaveTripActionPerformed(ActionEvent evt) {
@@ -731,7 +697,7 @@ public class PanelParticipantsStep extends JPanel {
         }
 
         String message = String.format(
-            "Draf Trip Disimpan (Simulasi):\nDestinasi: %s\nTanggal: %s\nTransportasi: %s\nAkomodasi: %s\nJumlah Peserta: %d\nEstimasi Biaya: %s",
+            "Draf Trip Disimpan (Simulasi):\nDestinasi: %s\nTanggal: %s\nTransportasi: %s\nJumlah Peserta: %d\nEstimasi Biaya: %s",
             currentDestinations,
             lblSummaryDatesDisplay.getText(),
             lblSummaryTransportDisplay.getText(),
@@ -760,6 +726,9 @@ public class PanelParticipantsStep extends JPanel {
         JOptionPane.showMessageDialog(this, "Harap lengkapi semua data peserta dengan benar.", "Validasi Gagal", JOptionPane.WARNING_MESSAGE);
         return;
     }
+    double baseCost = this.currentInitialEstimatedCost;
+    double additionalCost = this.numberOfParticipants * 50000; 
+    double finalTotalCost = baseCost + additionalCost;
 
     List<PenumpangModel> penumpangList = getPassengerDetails();
     
@@ -769,7 +738,37 @@ public class PanelParticipantsStep extends JPanel {
                 currentTransportMode,
                 currentTransportDetails,
                 penumpangList,
-                currentCost,
+                finalTotalCost,
                 numberOfParticipants);
+    }
+    private void updateParticipantFields(int count) {
+        // Hapus semua komponen yang ada sebelumnya dari panel dinamis
+        dynamicNamesPanel.removeAll();
+        // Kosongkan juga list yang menyimpan referensi ke baris-baris tersebut
+        passengerDetailRows.clear();
+
+        // Loop sebanyak jumlah peserta yang diinginkan
+        for (int i = 0; i < count; i++) {
+            // Buat instance baru dari inner class kita untuk setiap penumpang
+            CustomPassengerDetailRow row = new CustomPassengerDetailRow(i + 1);
+            
+            // Tambahkan listener ke setiap input di dalam baris tersebut.
+            // Setiap kali ada perubahan (mengetik, memilih dari dropdown, dll.),
+            // panggil metode validateForm() untuk memeriksa apakah tombol "Lanjut" harus diaktifkan.
+            row.getNameField().getDocument().addDocumentListener(new SimpleDocumentListener(this::validateForm));
+            row.getGenderComboBox().addActionListener(e -> validateForm());
+            row.getDateChooser().addPropertyChangeListener("date", e -> validateForm());
+            row.getPhoneField().getDocument().addDocumentListener(new SimpleDocumentListener(this::validateForm));
+            row.getEmailField().getDocument().addDocumentListener(new SimpleDocumentListener(this::validateForm));
+            
+            // Simpan referensi ke baris baru ini di dalam list
+            passengerDetailRows.add(row);
+            // Tambahkan baris yang sudah jadi ke panel dinamis
+            dynamicNamesPanel.add(row);
+        }
+        
+        // Perbarui (refresh) UI untuk menampilkan perubahan
+        dynamicNamesPanel.revalidate();
+        dynamicNamesPanel.repaint();
     }
 }

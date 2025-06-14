@@ -122,15 +122,14 @@ public class PanelDestinationStep extends JPanel {
         add(panelBuildSteps, BorderLayout.WEST);
 
         panelCustomTripMain = new JPanel(new BorderLayout(10, 10));
-        panelCustomTripMain.setBorder(new EmptyBorder(0, 10, 0, 0)); 
+        panelCustomTripMain.setBorder(new EmptyBorder(0, 10, 0, 0));
 
-        panelMainHeader = new JPanel(new BorderLayout());
-        lblCustomTripBuilderTitle = new JLabel("Custom Trip Builder");
-        btnSaveTrip = new JButton("Simpan Draf Trip"); 
+        this.panelMainHeader = new JPanel(new BorderLayout());
+        lblCustomTripBuilderTitle = new JLabel("Custom Trip Builder - Atur Destinasi");
+        btnSaveTrip = new JButton("Simpan Draf Trip");
         panelMainHeader.add(lblCustomTripBuilderTitle, BorderLayout.WEST);
         panelMainHeader.add(btnSaveTrip, BorderLayout.EAST);
         panelCustomTripMain.add(panelMainHeader, BorderLayout.NORTH);
-
         panelLeftContent = new JPanel();
         panelLeftContent.setLayout(new BoxLayout(panelLeftContent, BoxLayout.Y_AXIS));
         panelLeftContent.setBorder(new EmptyBorder(0,0,0,5)); 
@@ -234,7 +233,7 @@ public class PanelDestinationStep extends JPanel {
         if (panelMainHeader != null) panelMainHeader.setOpaque(false);
         lblCustomTripBuilderTitle.setFont(AppTheme.FONT_TITLE_LARGE);
         lblCustomTripBuilderTitle.setForeground(AppTheme.PRIMARY_BLUE_DARK);
-        styleSecondaryButton(btnSaveTrip, "Simpan Draf Trip"); 
+        styleSecondaryButton(btnSaveTrip, "Simpan Draf Trip");
 
         panelLeftContent.setOpaque(false);
         panelRightContent.setOpaque(false);
@@ -255,7 +254,7 @@ public class PanelDestinationStep extends JPanel {
             titledBorderFont, titledBorderColor));
 
         panelTripSummary.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(AppTheme.BORDER_COLOR), "Ringkasan Trip Anda",
+            BorderFactory.createLineBorder(AppTheme.BORDER_COLOR), "Ringkasan Trip",
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, 
             titledBorderFont, titledBorderColor));
         panelEstimatedCost.setBorder(BorderFactory.createTitledBorder(
@@ -292,12 +291,13 @@ public class PanelDestinationStep extends JPanel {
 
 
         listDestinasiSummary.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
-        listDestinasiSummary.setBackground(AppTheme.INPUT_BACKGROUND);
-        listDestinasiSummary.setForeground(AppTheme.INPUT_TEXT);
-        jScrollPaneDestinasiSummary.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER_COLOR));
+        listDestinasiSummary.setBackground(new Color(0, 0, 0, 0)); // Dibuat transparan
+        listDestinasiSummary.setForeground(AppTheme.TEXT_SECONDARY_DARK); // Warna teks lebih soft
+        jScrollPaneDestinasiSummary.setBorder(BorderFactory.createEmptyBorder()); // Border dihilangkan
+        jScrollPaneDestinasiSummary.getViewport().setOpaque(false);
 
         lblTripSummaryDestinationLabel.setFont(AppTheme.FONT_LABEL_FORM);
-        lblTripSummaryDestinationLabel.setForeground(AppTheme.TEXT_DARK);
+        lblTripSummaryDestinationLabel.setForeground(AppTheme.PRIMARY_BLUE_DARK);   
         lblEstimasiHargaValue.setFont(AppTheme.FONT_TITLE_MEDIUM); 
         lblEstimasiHargaValue.setForeground(AppTheme.ACCENT_ORANGE);
 
