@@ -1,14 +1,19 @@
 package managementtrevel.CustomTripBuilder;
 
 import Asset.AppTheme;
+import com.toedter.calendar.JDateChooser;
 import managementtrevel.MainAppFrame;
 import controller.DestinasiController;
 import model.CustomTripDetailModel;
 import model.DestinasiModel;
+import model.PenumpangModel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
@@ -39,6 +44,7 @@ public class PanelParticipantsStep extends JPanel {
     private JLabel lblStep3TransportCost;
     private JLabel lblStep4Participants; // This step's label
     private JLabel lblStep5Final;
+    private final double currentCost;
 
     private JLabel lblCustomTripBuilderTitle;
     private JButton btnSaveTrip;
@@ -57,6 +63,7 @@ public class PanelParticipantsStep extends JPanel {
     private JLabel lblSummaryParticipantsDisplay;
     private JScrollPane jScrollPaneDestinasiSummary;
     private JList<String> listDestinasiSummary;
+    private List<CustomPassengerDetailRow> passengerDetailRows;
     
     private JPanel panelEstimatedCost;
     private JLabel lblTripSummaryTitleInfo; 
@@ -71,9 +78,8 @@ public class PanelParticipantsStep extends JPanel {
     private double currentInitialEstimatedCost;
     private final String currentTransportMode;
     private final String currentTransportDetails;
-    private final String currentAccommodationName;
-    private final String currentRoomType;
-    private final String currentAccommodationNotes;
+
+    
 
     private int numberOfParticipants; // Field to store the parsed number of participants
 
@@ -91,17 +97,14 @@ public class PanelParticipantsStep extends JPanel {
     // Konstruktor yang paling komprehensif, menerima semua data yang mungkin
     public PanelParticipantsStep(MainAppFrame mainAppFrame, List<String> destinations, List<CustomTripDetailModel> itineraryDetails,
                                  double initialEstimatedCost, 
-                                 String transportMode, String transportDetails,
-                                 String accommodationName, String roomType, String accommodationNotes) {
+                                 String transportMode, String transportDetails) {
         this.mainAppFrame = mainAppFrame;
         this.currentDestinations = destinations != null ? new ArrayList<>(destinations) : new ArrayList<>();
-        this.itineraryDetails = itineraryDetails != null ? new ArrayList<>(itineraryDetails) : new ArrayList<>();
-        this.currentInitialEstimatedCost = initialEstimatedCost;
+        this.itineraryDetails = itineraryDetails;
+        this.currentCost = initialEstimatedCost;
         this.currentTransportMode = transportMode;
         this.currentTransportDetails = transportDetails;
-        this.currentAccommodationName = accommodationName;
-        this.currentRoomType = roomType;
-        this.currentAccommodationNotes = accommodationNotes;
+        this.passengerDetailRows = new ArrayList<>();
         
         this.listModelDestinasiSummaryDisplay = new DefaultListModel<>();
         this.destinasiController = new DestinasiController(); // Inisialisasi DestinasiController
@@ -448,40 +451,184 @@ public class PanelParticipantsStep extends JPanel {
     }
 
     private void updateParticipantNameFields(int count) {
-        // Ensure the list to hold the text fields is ready
-        if (participantNameFields == null) {
-            participantNameFields = new ArrayList<>();
-        }
-        
-        // Clear any existing components
         dynamicNamesPanel.removeAll();
-        participantNameFields.clear();
-
-        if (count > 0) {
-            // Create a label that acts as a sub-header
-            JLabel namesHeader = new JLabel("Nama Peserta");
-            namesHeader.setFont(AppTheme.FONT_LABEL_FORM_BOLD);
-            namesHeader.setForeground(AppTheme.TEXT_DARK);
-            namesHeader.setBorder(new EmptyBorder(15, 0, 5, 0)); // Add some space above
-            dynamicNamesPanel.add(namesHeader);
-        }
+        passengerDetailRows.clear(); // Gunakan list yang baru
         
-        // Loop to create the required number of fields
         for (int i = 0; i < count; i++) {
-            // Create a styled text field for the participant's name
-            JTextField nameField = new JTextField(20);
-            styleInputField(nameField, "Nama Peserta " + (i + 1)); // Use our existing styling method
+            CustomPassengerDetailRow row = new CustomPassengerDetailRow(i + 1);
             
-            participantNameFields.add(nameField); // Add to our list for later access
+            // Tambahkan listener untuk validasi real-time
+            row.getNameField().getDocument().addDocumentListener(new SimpleDocumentListener(this::validateForm));
+            row.getGenderComboBox().addActionListener(e -> validateForm());
+            row.getDateChooser().addPropertyChangeListener("date", e -> validateForm());
+            row.getPhoneField().getDocument().addDocumentListener(new SimpleDocumentListener(this::validateForm));
+            row.getEmailField().getDocument().addDocumentListener(new SimpleDocumentListener(this::validateForm));
             
-            dynamicNamesPanel.add(nameField);
-            dynamicNamesPanel.add(Box.createRigidArea(new Dimension(0, 8))); // Add a small gap
+            passengerDetailRows.add(row);
+            dynamicNamesPanel.add(row);
         }
-
-        // Refresh the UI to show the new components
         dynamicNamesPanel.revalidate();
         dynamicNamesPanel.repaint();
     }
+
+    private static class CustomPassengerDetailRow extends JPanel {
+        private final JTextField nameField, phoneField, emailField;
+        private final JComboBox<String> genderComboBox;
+        private final JDateChooser dateChooser;
+
+        public CustomPassengerDetailRow(int passengerNumber) {
+            setLayout(new GridBagLayout());
+            setOpaque(false);
+            setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, AppTheme.BORDER_COLOR));
+            setBorder(new EmptyBorder(5, 5, 5, 5));
+
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.insets = new Insets(5, 2, 5, 2);
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.anchor = GridBagConstraints.WEST;
+            
+            JLabel nameLabel = new JLabel("Nama Penumpang " + passengerNumber + ":");
+            AppTheme.styleFormLabel(nameLabel);
+            gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
+            add(nameLabel, gbc);
+            nameField = new JTextField();
+            AppTheme.styleInputField(nameField, "Nama sesuai KTP");
+            gbc.gridy = 1; add(nameField, gbc);
+
+            JLabel genderLabel = new JLabel("Jenis Kelamin:");
+            AppTheme.styleFormLabel(genderLabel);
+            gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 1; gbc.weightx = 0.4;
+            add(genderLabel, gbc);
+            JLabel dobLabel = new JLabel("Tanggal Lahir:");
+            AppTheme.styleFormLabel(dobLabel);
+            gbc.gridx = 1; gbc.gridy = 2; gbc.weightx = 0.6;
+            add(dobLabel, gbc);
+            
+            genderComboBox = new JComboBox<>(new String[]{"- Pilih -", "pria", "wanita"});
+            AppTheme.styleComboBox(genderComboBox);
+            gbc.gridx = 0; gbc.gridy = 3;
+            add(genderComboBox, gbc);
+            
+            dateChooser = new JDateChooser();
+            dateChooser.setDateFormatString("dd MMM YYYY");
+            dateChooser.setFont(AppTheme.FONT_TEXT_FIELD);
+            gbc.gridx = 1; gbc.gridy = 3;
+            add(dateChooser, gbc);
+            
+            JLabel phoneLabel = new JLabel("No. Telepon:");
+            AppTheme.styleFormLabel(phoneLabel);
+            gbc.gridx = 0; gbc.gridy = 4; gbc.weightx = 0.4;
+            add(phoneLabel, gbc);
+            JLabel emailLabel = new JLabel("Email:");
+            AppTheme.styleFormLabel(emailLabel);
+            gbc.gridx = 1; gbc.gridy = 4; gbc.weightx = 0.6;
+            add(emailLabel, gbc);
+
+            phoneField = new JTextField();
+            AppTheme.styleInputField(phoneField, "Contoh: 08123456789");
+            gbc.gridx = 0; gbc.gridy = 5;
+            add(phoneField, gbc);
+            
+            emailField = new JTextField();
+            AppTheme.styleInputField(emailField, "Contoh: nama@email.com");
+            gbc.gridx = 1; gbc.gridy = 5;
+            add(emailField, gbc);
+        }
+        
+        // Getters untuk komponen UI (untuk menambahkan listener dari luar)
+        public JTextField getNameField() { return nameField; }
+        public JComboBox<String> getGenderComboBox() { return genderComboBox; }
+        public JDateChooser getDateChooser() { return dateChooser; }
+        public JTextField getPhoneField() { return phoneField; }
+        public JTextField getEmailField() { return emailField; }
+        
+        // Getters untuk data
+        public String getPassengerName() { return nameField.getText().trim(); }
+        public String getGender() { return (String) genderComboBox.getSelectedItem(); }
+        public java.util.Date getDateOfBirth() { return dateChooser.getDate(); }
+        public String getPhoneNumber() { return phoneField.getText().trim(); }
+        public String getEmail() { return emailField.getText().trim(); }
+
+        // Metode validasi untuk satu baris
+        public boolean isDataValid() {
+            boolean nameValid = !getPassengerName().isEmpty() && !getPassengerName().equals("Nama sesuai KTP");
+            boolean genderValid = genderComboBox.getSelectedIndex() > 0;
+            boolean dobValid = dateChooser.getDate() != null;
+            boolean phoneValid = !getPhoneNumber().isEmpty() && !getPhoneNumber().equals("Contoh: 08123456789");
+            boolean emailValid = !getEmail().isEmpty() && !getEmail().equals("Contoh: nama@email.com") && getEmail().contains("@");
+            return nameValid && genderValid && dobValid && phoneValid && emailValid;
+        }
+    }
+
+    private List<PenumpangModel> getPassengerDetails() {
+        List<PenumpangModel> passengers = new ArrayList<>();
+        for (CustomPassengerDetailRow row : passengerDetailRows) {
+            PenumpangModel p = new PenumpangModel();
+            p.setNamaPenumpang(row.getPassengerName());
+            p.setJenisKelamin(row.getGender());
+            p.setEmail(row.getEmail());
+            p.setNomorTelepon(row.getPhoneNumber());
+            java.util.Date dob = row.getDateOfBirth();
+            if (dob != null) {
+                p.setTanggalLahir(new java.sql.Date(dob.getTime()));
+            }
+            passengers.add(p);
+        }
+        return passengers;
+    }
+
+    private boolean validateForm() {
+    boolean isCountValid;
+    int jumlah = 0;
+    try {
+        jumlah = Integer.parseInt(txtJumlahPeserta.getText().trim());
+        isCountValid = jumlah > 0;
+    } catch (NumberFormatException e) {
+        isCountValid = false;
+    }
+
+    boolean allRowsValid = true;
+    if (isCountValid) {
+        if (passengerDetailRows.size() == jumlah) {
+            for (CustomPassengerDetailRow row : passengerDetailRows) {
+                if (!row.isDataValid()) {
+                    allRowsValid = false;
+                    break;
+                }
+            }
+        } else {
+            allRowsValid = false; // Jumlah field belum sesuai dengan angka yang dimasukkan
+        }
+    } else {
+        allRowsValid = false; // Jika jumlah tidak valid, maka keseluruhan tidak valid
+    }
+    
+    boolean isFormValid = isCountValid && allRowsValid;
+    btnNextStep.setEnabled(isFormValid);
+    return isFormValid;
+}
+    class SimpleDocumentListener implements DocumentListener {
+    private final Runnable action;
+
+    public SimpleDocumentListener(Runnable action) {
+        this.action = action;
+    }
+
+    @Override
+    public void insertUpdate(DocumentEvent e) {
+        action.run();
+    }
+
+    @Override
+    public void removeUpdate(DocumentEvent e) {
+        action.run();
+    }
+
+    @Override
+    public void changedUpdate(DocumentEvent e) {
+        action.run();
+    }
+}
 
     private void updateBuildStepLabels(int activeStep) {
         JLabel[] stepLabels = {
@@ -537,15 +684,6 @@ public class PanelParticipantsStep extends JPanel {
             transportInfo += " (" + currentTransportDetails + ")";
         }
         lblSummaryTransportDisplay.setText("Transportasi Dipilih: " + transportInfo);
-
-        String accommodationInfo = (currentAccommodationName != null && !currentAccommodationName.isEmpty() ? currentAccommodationName : "-");
-        if (currentRoomType != null && !currentRoomType.isEmpty()){
-            accommodationInfo += " (Kamar: " + currentRoomType + ")";
-        }
-        if (currentAccommodationNotes != null && !currentAccommodationNotes.isEmpty()){
-            accommodationInfo += " - Catatan: " + currentAccommodationNotes;
-        }
-        lblSummaryAccommodationDisplay.setText("Akomodasi Dipilih: " + accommodationInfo);
 
         lblSummaryParticipantsDisplay.setText("Jumlah Peserta: " + numberOfParticipants + " Orang");
         
@@ -618,49 +756,20 @@ public class PanelParticipantsStep extends JPanel {
     }
 
     private void btnNextStepActionPerformed(ActionEvent evt) {
-        if (numberOfParticipants == 0) {
-            JOptionPane.showMessageDialog(this, "Masukkan jumlah peserta (minimal 1) untuk melanjutkan.", "Validasi Peserta", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
+    if (numberOfParticipants == 0 || !validateForm()) {
+        JOptionPane.showMessageDialog(this, "Harap lengkapi semua data peserta dengan benar.", "Validasi Gagal", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
 
-        // --- NEW: Collect the names from the fields ---
-        List<String> participantNames = new ArrayList<>();
-        for (JTextField nameField : participantNameFields) {
-            String name = nameField.getText().trim();
-            if (name.isEmpty() || name.startsWith("Nama Peserta")) {
-                // You can choose to show an error or just add a placeholder
-                participantNames.add("Peserta " + (participantNames.size() + 1));
-            } else {
-                participantNames.add(name);
-            }
-        }
-        
-        double currentTotalEstimatedCost = 0.0;
-        try {
-            String formattedCost = lblEstimasiHargaValue.getText().replace(NumberFormat.getCurrencyInstance(new Locale("id", "ID")).getCurrency().getSymbol(), "").replace(".", "").replace(",", ".");
-            currentTotalEstimatedCost = NumberFormat.getInstance(new Locale("id", "ID")).parse(formattedCost).doubleValue();
-        } catch (ParseException e) {
-            System.err.println("Error parsing estimated cost from label in ParticipantsStep: " + e.getMessage());
-            currentTotalEstimatedCost = currentInitialEstimatedCost;
-        }
-
-        // --- MODIFIED: Call the new showPanel method ---
-        if (mainAppFrame != null) {
-            // NOTE: The signature of this showPanel call has changed.
-            // We now pass 'participantNames' instead of an empty list for 'activities'.
-            mainAppFrame.showPanel(MainAppFrame.PANEL_FINAL_STEP,
-                    currentDestinations,
-                    itineraryDetails,
-                    currentTransportMode,
-                    currentTransportDetails,
-                    currentAccommodationName,
-                    currentRoomType,
-                    currentAccommodationNotes,
-                    participantNames, // Pass the collected names
-                    currentTotalEstimatedCost,
-                    numberOfParticipants);
-        } else {
-            System.err.println("MainAppFrame reference is null in PanelParticipantsStep (Next).");
-        }
+    List<PenumpangModel> penumpangList = getPassengerDetails();
+    
+    mainAppFrame.showPanel(MainAppFrame.PANEL_FINAL_STEP,
+                currentDestinations,
+                itineraryDetails,
+                currentTransportMode,
+                currentTransportDetails,
+                penumpangList,
+                currentCost,
+                numberOfParticipants);
     }
 }

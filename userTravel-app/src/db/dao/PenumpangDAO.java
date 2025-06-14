@@ -2,6 +2,7 @@ package db.dao;
 
 import db.Koneksi;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -92,31 +93,21 @@ public class PenumpangDAO {
     }
 
     public boolean insertPenumpang(PenumpangModel penumpang) {
-        if (this.conn == null) {
-            System.err.println("Tidak ada koneksi database untuk insertPenumpang (model).");
-            return false;
-        }
         String sql = "INSERT INTO penumpang (reservasi_id, nama_penumpang, jenis_kelamin, tanggal_lahir, nomor_telepon, email) VALUES (?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = Koneksi.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setInt(1, penumpang.getReservasiId());
             ps.setString(2, penumpang.getNamaPenumpang());
             ps.setString(3, penumpang.getJenisKelamin());
-
-            if (penumpang.getTanggalLahir() != null) {
-                ps.setDate(4, new java.sql.Date(penumpang.getTanggalLahir().getTime()));
-            } else {
-                ps.setNull(4, java.sql.Types.DATE);
-            }
-            
+            ps.setDate(4, (Date) penumpang.getTanggalLahir());
             ps.setString(5, penumpang.getNomorTelepon());
-            ps.setString(6, penumpang.getEmail());
-            int result = ps.executeUpdate();
-            System.out.println("DEBUG PenumpangDAO - insertPenumpang(model): Rows Affected = " + result);
-            return result > 0;
+            ps.setString(6, penumpang.getEmail()); 
+
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error saat insert penumpang (model): " + e.getMessage());
             e.printStackTrace();
+            return false;
         }
-        return false;
     }
 }

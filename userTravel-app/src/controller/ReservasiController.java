@@ -107,4 +107,10 @@ public class ReservasiController {
     public boolean deleteReservasi(int reservasiId) {
         return reservasiDAO.deleteReservasi(reservasiId);
     }
+
+    public boolean tambahPenumpangLengkap(int reservasiId, PenumpangModel penumpang) {
+        PenumpangDAO dao = new PenumpangDAO();
+        penumpang.setReservasiId(reservasiId); // Pastikan ID reservasi diset
+        return dao.insertPenumpang(penumpang);
+    }
 }

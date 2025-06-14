@@ -10,6 +10,7 @@ public class PenumpangModel {
     private Date tanggalLahir;
     private String nomorTelepon;
     private String email;
+    
 
     // Constructor kosong
     public PenumpangModel() {}

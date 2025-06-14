@@ -28,6 +28,7 @@ import managementtrevel.TripOrder.PanelOrderDetail;
 import managementtrevel.TripOrder.PanelOrderHistory;
 import managementtrevel.TripOrder.PanelUserOrder;
 import model.PaketPerjalananModel;
+import model.PenumpangModel;
 import model.ReservasiModel;
 import model.UserModel;
 import model.CustomTripDetailModel; // <--- PASTIKAN IMPORT INI ADA DAN TIDAK DIKOMENTARI
@@ -266,12 +267,14 @@ public class MainAppFrame extends JFrame {
     // 3. PanelTransportCostStep (NEW Step 3) -> PanelParticipantsStep (NEW Step 4)
     // Menerima data transport yang difinalisasi (string label), dan total biaya kumulatif
     public void showPanel(String panelName, List<String> selectedDestinationsFromItinerary, List<CustomTripDetailModel> itineraryDetails, double totalEstimatedCost, String fixedTransportCostLabel, String transportMode, String transportDetails) {
-        if (panelName.equals(PANEL_PARTICIPANTS_STEP)) { // NEW Step 4
-            removePanelIfExists(panelName);
-            PanelParticipantsStep panel = new PanelParticipantsStep(this, selectedDestinationsFromItinerary, itineraryDetails, totalEstimatedCost, fixedTransportCostLabel, transportMode, transportDetails);
-            panel.setName(panelName);
-            mainPanelContainer.add(panel, panelName);
-            cardLayout.show(mainPanelContainer, panelName);
+    if (panelName.equals(PANEL_PARTICIPANTS_STEP)) { 
+        removePanelIfExists(panelName);
+        // FIXED: Menambahkan argumen string kosong untuk mencocokkan konstruktor baru
+        PanelParticipantsStep panel = new PanelParticipantsStep(this, selectedDestinationsFromItinerary, itineraryDetails, 
+                                                                totalEstimatedCost, fixedTransportCostLabel, transportDetails);
+        panel.setName(panelName);
+        mainPanelContainer.add(panel, panelName);
+        cardLayout.show(mainPanelContainer, panelName);
             System.out.println("Menampilkan panel: " + panelName + " dengan biaya transport dan estimasi biaya total: " + totalEstimatedCost);
         } else {
             System.err.println("Peringatan: showPanel(String, List<String>, List<CustomTripDetailModel>, double, String, String, String) dipanggil untuk panel yang tidak sesuai: " + panelName);
@@ -284,26 +287,25 @@ public class MainAppFrame extends JFrame {
     // 4. PanelParticipantsStep (NEW Step 4) -> PanelFinalStep (Step 5)
     // Menerima semua data yang dikumpulkan sebelumnya, ditambah jumlah peserta
     public void showPanel(String panelName, List<String> destinations, List<CustomTripDetailModel> itineraryDetails,
-                      String transportMode, String transportDetails, String accommodationName, 
-                      String roomType, String accommodationNotes, List<String> participantNames, // <-- RENAMED
-                      double totalEstimatedCost, int numberOfParticipants) { 
+                      String transportMode, String transportDetails, List<PenumpangModel> participantDetails,
+                      double totalEstimatedCost, int numberOfParticipants) {
+
     if (panelName.equals(PANEL_FINAL_STEP)) {
-        removePanelIfExists(panelName);
-        // Make sure PanelFinalStep's constructor also accepts this new list
-        PanelFinalStep panel = new PanelFinalStep(this, destinations, itineraryDetails, transportMode, transportDetails, 
-                                                  accommodationName, roomType, accommodationNotes, 
-                                                  participantNames, // <-- Pass it here
-                                                  totalEstimatedCost, numberOfParticipants);
+        PanelFinalStep panel = new PanelFinalStep(this, destinations, itineraryDetails, transportMode, transportDetails,
+                                                  participantDetails, totalEstimatedCost, numberOfParticipants);
         panel.setName(panelName);
         mainPanelContainer.add(panel, panelName);
         cardLayout.show(mainPanelContainer, panelName);
-            System.out.println("Menampilkan panel: " + panelName + " dengan kegiatan dan estimasi biaya total: " + totalEstimatedCost + ", Peserta: " + numberOfParticipants);
-        } else {
-            System.err.println("Peringatan: showPanel(String, List<String>, List<CustomTripDetailModel>, String, String, String, String, String, List<String>, double, int) dipanggil untuk panel yang tidak sesuai: " + panelName);
-            showPanel(panelName);
-        }
-        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
-    }
+
+    } else {
+          System.err.println("Peringatan: Panggilan showPanel yang salah untuk panel: " + panelName);
+          showPanel(panelName);
+      }
+
+      if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) {
+          sidebarPanel.collapsePublic();
+      }
+  }
     
     private void removePanelIfExists(String panelName){
         Component[] components = mainPanelContainer.getComponents();
@@ -353,7 +355,7 @@ public class MainAppFrame extends JFrame {
             removePanelIfExists(panelName);
             // Panggil konstruktor PanelParticipantsStep yang sesuai (tanpa akomodasi)
             // Kita akan meneruskan string kosong untuk akomodasi jika tidak ada di langkah ini.
-            PanelParticipantsStep panel = new PanelParticipantsStep(this, selectedDestinationsFromItinerary, itineraryDetails, totalEstimatedCost, transportMode, transportDetails, "", "", ""); 
+            PanelParticipantsStep panel = new PanelParticipantsStep(this, selectedDestinationsFromItinerary, itineraryDetails, totalEstimatedCost, transportMode, transportDetails);
             panel.setName(panelName);
             mainPanelContainer.add(panel, panelName);
             cardLayout.show(mainPanelContainer, panelName);
@@ -371,7 +373,7 @@ public class MainAppFrame extends JFrame {
         if (panelName.equals(PANEL_PARTICIPANTS_STEP)) { 
             removePanelIfExists(panelName);
             // Panggil konstruktor PanelParticipantsStep yang paling komprehensif
-            PanelParticipantsStep panel = new PanelParticipantsStep(this, selectedDestinationsFromItinerary, itineraryDetails, initialEstimatedCost, currentTransportMode, currentTransportDetails, currentAccommodationName, currentRoomType, currentAccommodationNotes);
+            PanelParticipantsStep panel = new PanelParticipantsStep(this, selectedDestinationsFromItinerary, itineraryDetails, initialEstimatedCost, currentTransportMode, currentTransportDetails);
             panel.setName(panelName);
             mainPanelContainer.add(panel, panelName);
             cardLayout.show(mainPanelContainer, panelName);
