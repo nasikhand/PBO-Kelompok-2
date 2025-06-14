@@ -1,17 +1,24 @@
 package managementtrevel; // Pastikan package ini benar
 
 import Asset.AppTheme;
-import Asset.SidebarPanel; // Pastikan package Asset sudah benar
+import Asset.SidebarPanel;
 import java.awt.*;
 import java.util.List;
 import javax.swing.*;
 import managementtrevel.BookingScreen.PanelBookingScreen;
-import managementtrevel.CustomTripBuilder.PanelAccommodationStep;
-import managementtrevel.CustomTripBuilder.PanelActivityStep; 
-import managementtrevel.CustomTripBuilder.PanelDateStep;
+// Hapus import untuk panel-panel lama yang akan dihilangkan
+// import managementtrevel.CustomTripBuilder.PanelAccommodationStep;
+// import managementtrevel.CustomTripBuilder.PanelActivityStep;
+// import managementtrevel.CustomTripBuilder.PanelDateStep;
 import managementtrevel.CustomTripBuilder.PanelDestinationStep;
 import managementtrevel.CustomTripBuilder.PanelFinalStep;
-import managementtrevel.CustomTripBuilder.PanelTransportStep;
+// import managementtrevel.CustomTripBuilder.PanelTransportStep;
+
+// Import panel-panel baru (akan dibuat atau sudah ada)
+import managementtrevel.CustomTripBuilder.PanelItineraryStep;   // NEW Step 2
+import managementtrevel.CustomTripBuilder.PanelTransportCostStep; // NEW Step 3
+import managementtrevel.CustomTripBuilder.PanelParticipantsStep; // NEW Step 4
+
 import managementtrevel.HomeUser.PanelBeranda;
 import managementtrevel.HomeUser.PanelUserProfil;
 import managementtrevel.Payment.PanelPayment;
@@ -22,7 +29,8 @@ import managementtrevel.TripOrder.PanelOrderHistory;
 import managementtrevel.TripOrder.PanelUserOrder;
 import model.PaketPerjalananModel;
 import model.ReservasiModel;
-import model.UserModel; 
+import model.UserModel;
+import model.CustomTripDetailModel; // <--- PASTIKAN IMPORT INI ADA DAN TIDAK DIKOMENTARI
 
 
 public class MainAppFrame extends JFrame {
@@ -32,16 +40,22 @@ public class MainAppFrame extends JFrame {
     private UserModel currentUser;
     private SidebarPanel sidebarPanel;
 
-    // Konstanta untuk nama panel
+    // Konstanta untuk nama panel - DIUPDATE UNTUK ALUR BARU
     public static final String PANEL_BERANDA = "PanelBeranda";
     public static final String PANEL_USER_PROFILE = "PanelUserProfile";
     
-    public static final String PANEL_DESTINATION_STEP = "PanelDestinationStep";
-    public static final String PANEL_DATE_STEP = "PanelDateStep";
-    public static final String PANEL_TRANSPORT_STEP = "PanelTransportStep";
-    public static final String PANEL_ACCOMMODATION_STEP = "PanelAccommodationStep";
-    public static final String PANEL_ACTIVITY_STEP = "PanelActivityStep"; 
-    public static final String PANEL_FINAL_STEP = "PanelFinalStep";
+    // Custom Trip Builder - KONSTANTA BARU/DIUPDATE UNTUK 5 LANGKAH
+    public static final String PANEL_DESTINATION_STEP = "PanelDestinationStep"; // Step 1
+    public static final String PANEL_ITINERARY_STEP = "PanelItineraryStep";     // NEW Step 2
+    public static final String PANEL_TRANSPORT_COST_STEP = "PanelTransportCostStep"; // NEW Step 3
+    public static final String PANEL_PARTICIPANTS_STEP = "PanelParticipantsStep"; // NEW Step 4
+    public static final String PANEL_FINAL_STEP = "PanelFinalStep";             // Step 5 (Final)
+
+    // Hapus konstanta lama yang tidak digunakan lagi jika Anda sudah menghapus panelnya
+    // public static final String PANEL_DATE_STEP = "PanelDateStep";
+    // public static final String PANEL_TRANSPORT_STEP = "PanelTransportStep";
+    // public static final String PANEL_ACCOMMODATION_STEP = "PanelAccommodationStep";
+    // public static final String PANEL_ACTIVITY_STEP = "PanelActivityStep";
 
     public static final String PANEL_PESANAN_SAYA = "PanelUserOrder"; 
     public static final String PANEL_ORDER_DETAIL = "PanelOrderDetail";
@@ -71,24 +85,20 @@ public class MainAppFrame extends JFrame {
         setLocationRelativeTo(null);
         applyGlobalThemeSettings(); 
 
-        // Penting: Pastikan SidebarPanel diinisialisasi setelah MainAppFrame
         sidebarPanel = new SidebarPanel(this);
 
         cardLayout = new CardLayout();
         mainPanelContainer = new JPanel(cardLayout);
         mainPanelContainer.setBackground(AppTheme.PANEL_BACKGROUND); 
 
-        // Tambahkan semua panel utama yang akan digunakan di CardLayout
+        // Inisialisasi panel utama yang akan digunakan di CardLayout
         mainPanelContainer.add(new PanelBeranda(this), PANEL_BERANDA);
         mainPanelContainer.add(new PanelUserProfil(this), PANEL_USER_PROFILE);
         mainPanelContainer.add(new PanelOrderHistory(this), PANEL_RIWAYAT_PESANAN);
         mainPanelContainer.add(new PanelUserOrder(this), PANEL_PESANAN_SAYA);
-
-        // Panel Custom Trip Builder (hanya step pertama yang diinisialisasi di sini)
         mainPanelContainer.add(new PanelDestinationStep(this), PANEL_DESTINATION_STEP);
 
-        // Panel-panel lain akan ditambahkan dan dihapus secara dinamis oleh showPanel
-        
+
         add(sidebarPanel, BorderLayout.WEST);
         add(mainPanelContainer, BorderLayout.CENTER);
 
@@ -110,45 +120,38 @@ public class MainAppFrame extends JFrame {
         }
     }
 
-    // --- Overload showPanel methods ---
+    // --- Overload showPanel methods - DIUPDATE UNTUK ALUR BARU ---
 
     public void showPanel(String panelName) {
-        // Logika spesifik untuk beberapa panel yang mungkin perlu refresh data
         if (panelName.equals(PANEL_USER_PROFILE)) {
             Component userProfilCard = getPanelByName(PANEL_USER_PROFILE);
             if (userProfilCard instanceof PanelUserProfil) {
                 ((PanelUserProfil) userProfilCard).setProfileData(); 
             }
         } else if (panelName.equals(PANEL_PESANAN_SAYA)) {
-            // Recreate PanelUserOrder to ensure latest data is loaded
             removePanelIfExists(panelName);
             PanelUserOrder panel = new PanelUserOrder(this); 
             panel.setName(panelName);
             mainPanelContainer.add(panel, panelName);
         } else if (panelName.equals(PANEL_RIWAYAT_PESANAN)) {
-            // Recreate PanelOrderHistory to ensure latest data is loaded
             removePanelIfExists(panelName);
             PanelOrderHistory panel = new PanelOrderHistory(this); 
             panel.setName(panelName);
             mainPanelContainer.add(panel, panelName);
         } else if (panelName.equals(PANEL_DESTINATION_STEP)) {
-            // Recreate PanelDestinationStep for fresh state if navigating back to it
             removePanelIfExists(panelName);
             PanelDestinationStep panel = new PanelDestinationStep(this);
             panel.setName(panelName);
             mainPanelContainer.add(panel, panelName);
         }
         
-        // Show the panel
         cardLayout.show(mainPanelContainer, panelName);
         System.out.println("Menampilkan panel: " + panelName);
-        // Collapse sidebar if expanded
         if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) {
            sidebarPanel.collapsePublic();
         }
     }
 
-    // Overload for search results
     public void showSearchResultPanel(String namaKotaAtauDestinasi, String tanggalKeberangkatan) {
         removePanelIfExists(PANEL_SEARCH_RESULT);
         PanelSearchResult searchResultPanel = new PanelSearchResult(this, namaKotaAtauDestinasi, tanggalKeberangkatan);
@@ -159,7 +162,6 @@ public class MainAppFrame extends JFrame {
         if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
     }
 
-    // Overload for trip detail (PaketPerjalananModel)
     public void showPanel(String panelName, PaketPerjalananModel paket, String originalSearchNamaKota, String originalSearchTanggal) {
         if (panelName.equals(PANEL_TRIP_DETAIL)) {
             removePanelIfExists(panelName);
@@ -177,7 +179,6 @@ public class MainAppFrame extends JFrame {
         }
     }
 
-    // Overload for booking screen (PaketPerjalananModel)
     public void showPanel(String panelName, PaketPerjalananModel paket) {
         if (panelName.equals(PANEL_BOOKING_SCREEN)) {
             removePanelIfExists(panelName);
@@ -185,7 +186,7 @@ public class MainAppFrame extends JFrame {
             panel.setName(panelName);
             mainPanelContainer.add(panel, panelName);
             cardLayout.show(mainPanelContainer, panelName);
-            System.out.println("Menampilkan panel: " + panelName + " untuk paket: " + (paket != null ? paket.getNamaPaket() : "null"));
+            System.out.println("Menampilkan panel: " + PANEL_BOOKING_SCREEN + " untuk paket: " + (paket != null ? paket.getNamaPaket() : "null"));
         } else {
             System.err.println("Peringatan: showPanel(String, PaketPerjalananModel) dipanggil untuk panel yang tidak sesuai: " + panelName);
             showPanel(panelName); 
@@ -193,7 +194,6 @@ public class MainAppFrame extends JFrame {
         if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
     }
     
-    // Overload for payment screen
     public void showPaymentPanel(int reservasiId, String namaKontak, String emailKontak, String teleponKontak, List<String> penumpangList) {
         removePanelIfExists(PANEL_PAYMENT);
         PanelPayment panel = new PanelPayment(this, reservasiId, namaKontak, emailKontak, teleponKontak, penumpangList);
@@ -204,7 +204,6 @@ public class MainAppFrame extends JFrame {
         if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
     }
 
-    // Overload for order detail (ReservasiModel)
     public void showPanel(String panelName, ReservasiModel reservasi) {
         if (panelName.equals(PANEL_ORDER_DETAIL)) {
             removePanelIfExists(panelName);
@@ -222,13 +221,14 @@ public class MainAppFrame extends JFrame {
         }
     }
 
-    // Custom Trip Builder Overloads (passing data between steps)
+    // --- Custom Trip Builder Overloads (5 Langkah) ---
 
-    // Overload for PanelDateStep (receiving destinations and initial cost from DestinationStep)
+    // 1. PanelDestinationStep (Step 1) -> PanelItineraryStep (NEW Step 2)
+    // Menerima destinasi yang dipilih dan estimasi biaya dari PanelDestinationStep
     public void showPanel(String panelName, List<String> destinations, double initialEstimatedCost) {
-        if (panelName.equals(PANEL_DATE_STEP)) {
+        if (panelName.equals(PANEL_ITINERARY_STEP)) { // NEW Step 2
             removePanelIfExists(panelName); 
-            PanelDateStep panel = new PanelDateStep(this, destinations, initialEstimatedCost);
+            PanelItineraryStep panel = new PanelItineraryStep(this, destinations, initialEstimatedCost);
             panel.setName(panelName);
             mainPanelContainer.add(panel, panelName);
             cardLayout.show(mainPanelContainer, panelName);
@@ -240,155 +240,63 @@ public class MainAppFrame extends JFrame {
         if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
     }
 
-    // Overload for PanelTransportStep (receiving data from PanelDateStep, including cumulative cost)
-    public void showPanel(String panelName, List<String> destinations, String startDate, String endDate, double totalEstimatedCost) {
-        if (panelName.equals(PANEL_TRANSPORT_STEP)) {
+    // 2. PanelItineraryStep (NEW Step 2) -> PanelTransportCostStep (NEW Step 3)
+    // Menerima destinasi yang dipilih, detail itinerary (termasuk tanggal kunjungan per destinasi), dan total biaya kumulatif
+    public void showPanel(String panelName, List<String> selectedDestinationsFromItinerary, List<CustomTripDetailModel> itineraryDetails, double totalEstimatedCost) {
+        if (panelName.equals(PANEL_TRANSPORT_COST_STEP)) { // NEW Step 3
             removePanelIfExists(panelName);
-            PanelTransportStep panel = new PanelTransportStep(this, destinations, startDate, endDate, totalEstimatedCost);
+            PanelTransportCostStep panel = new PanelTransportCostStep(this, selectedDestinationsFromItinerary, itineraryDetails, totalEstimatedCost);
             panel.setName(panelName);
             mainPanelContainer.add(panel, panelName);
             cardLayout.show(mainPanelContainer, panelName);
-            System.out.println("Menampilkan panel: " + panelName + " dengan tanggal dan estimasi biaya total: " + totalEstimatedCost);
+            System.out.println("Menampilkan panel: " + panelName + " dengan detail itinerari dan estimasi biaya total: " + totalEstimatedCost);
         } else {
-            System.err.println("Peringatan: showPanel(String, List<String>, String, String, double) dipanggil untuk panel yang tidak sesuai: " + panelName);
-            showPanel(panelName); // Fallback to simpler overload if needed
-        }
-        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
-    }
-
-    // Overload for PanelAccommodationStep (receiving data from PanelTransportStep, including cumulative cost)
-    public void showPanel(String panelName, List<String> destinations, String startDate, String endDate, String transportMode, String transportDetails, double totalEstimatedCost) {
-        if (panelName.equals(PANEL_ACCOMMODATION_STEP)) {
-            removePanelIfExists(panelName);
-            PanelAccommodationStep panel = new PanelAccommodationStep(this, destinations, startDate, endDate, transportMode, transportDetails, totalEstimatedCost);
-            panel.setName(panelName);
-            mainPanelContainer.add(panel, panelName);
-            cardLayout.show(mainPanelContainer, panelName);
-            System.out.println("Menampilkan panel: " + panelName + " dengan transportasi dan estimasi biaya total: " + totalEstimatedCost);
-        } else {
-            System.err.println("Peringatan: showPanel(String, List<String>, String, String, String, String, double) dipanggil untuk panel yang tidak sesuai: " + panelName);
-            showPanel(panelName);
-        }
-        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
-    }
-    
-    // Overload for PanelActivityStep (receiving data from PanelAccommodationStep, including cumulative cost)
-    public void showPanel(String panelName, List<String> destinations, String startDate, String endDate, String transportMode, String transportDetails, String accommodationName, String roomType, String accommodationNotes, double totalEstimatedCost) {
-        if (panelName.equals(PANEL_ACTIVITY_STEP)) {
-            removePanelIfExists(panelName);
-            PanelActivityStep panel = new PanelActivityStep(this, destinations, startDate, endDate, transportMode, transportDetails, accommodationName, roomType, accommodationNotes, totalEstimatedCost);
-            panel.setName(panelName);
-            mainPanelContainer.add(panel, panelName);
-            cardLayout.show(mainPanelContainer, panelName);
-            System.out.println("Menampilkan panel: " + panelName + " dengan akomodasi dan estimasi biaya total: " + totalEstimatedCost);
-        } else {
-            System.err.println("Peringatan: showPanel(String, List<String>, String, String, String, String, String, String, String, double) dipanggil untuk panel yang tidak sesuai: " + panelName);
+            System.err.println("Peringatan: showPanel(String, List<String>, List<CustomTripDetailModel>, double) dipanggil untuk panel yang tidak sesuai: " + panelName);
             showPanel(panelName); 
         }
         if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
     }
- 
-    // Overload for PanelFinalStep (receiving data from PanelActivityStep, including cumulative cost)
-    public void showPanel(String panelName, List<String> destinations, String startDate, String endDate, String transportMode, String transportDetails, String accommodationName, String roomType, String accommodationNotes, List<String> activities, double totalEstimatedCost) {
+
+
+    // 3. PanelTransportCostStep (NEW Step 3) -> PanelParticipantsStep (NEW Step 4)
+    // Menerima data transport yang difinalisasi (string label), dan total biaya kumulatif
+    public void showPanel(String panelName, List<String> selectedDestinationsFromItinerary, List<CustomTripDetailModel> itineraryDetails, double totalEstimatedCost, String fixedTransportCostLabel, String transportMode, String transportDetails) {
+        if (panelName.equals(PANEL_PARTICIPANTS_STEP)) { // NEW Step 4
+            removePanelIfExists(panelName);
+            PanelParticipantsStep panel = new PanelParticipantsStep(this, selectedDestinationsFromItinerary, itineraryDetails, totalEstimatedCost, fixedTransportCostLabel, transportMode, transportDetails);
+            panel.setName(panelName);
+            mainPanelContainer.add(panel, panelName);
+            cardLayout.show(mainPanelContainer, panelName);
+            System.out.println("Menampilkan panel: " + panelName + " dengan biaya transport dan estimasi biaya total: " + totalEstimatedCost);
+        } else {
+            System.err.println("Peringatan: showPanel(String, List<String>, List<CustomTripDetailModel>, double, String, String, String) dipanggil untuk panel yang tidak sesuai: " + panelName);
+            showPanel(panelName); 
+        }
+        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
+    }
+
+
+    // 4. PanelParticipantsStep (NEW Step 4) -> PanelFinalStep (Step 5)
+    // Menerima semua data yang dikumpulkan sebelumnya, ditambah jumlah peserta
+    public void showPanel(String panelName, List<String> destinations, List<CustomTripDetailModel> itineraryDetails,
+                            String transportMode, String transportDetails, String accommodationName, 
+                            String roomType, String accommodationNotes, List<String> activities, 
+                            double totalEstimatedCost, int numberOfParticipants) { 
         if (panelName.equals(PANEL_FINAL_STEP)) {
             removePanelIfExists(panelName);
-            PanelFinalStep panel = new PanelFinalStep(this, destinations, startDate, endDate, transportMode, transportDetails, accommodationName, roomType, accommodationNotes, activities, totalEstimatedCost);
+            PanelFinalStep panel = new PanelFinalStep(this, destinations, itineraryDetails, transportMode, transportDetails, 
+                                                       accommodationName, roomType, accommodationNotes, activities, 
+                                                       totalEstimatedCost, numberOfParticipants);
             panel.setName(panelName);
             mainPanelContainer.add(panel, panelName);
             cardLayout.show(mainPanelContainer, panelName);
-            System.out.println("Menampilkan panel: " + panelName + " dengan kegiatan dan estimasi biaya total: " + totalEstimatedCost);
+            System.out.println("Menampilkan panel: " + panelName + " dengan kegiatan dan estimasi biaya total: " + totalEstimatedCost + ", Peserta: " + numberOfParticipants);
         } else {
-            System.err.println("Peringatan: showPanel(String, List<String>, String, String, String, String, String, String, String, List<String>, double) dipanggil untuk panel yang tidak sesuai: " + panelName);
+            System.err.println("Peringatan: showPanel(String, List<String>, List<CustomTripDetailModel>, String, String, String, String, String, List<String>, double, int) dipanggil untuk panel yang tidak sesuai: " + panelName);
             showPanel(panelName);
         }
         if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
     }
-
-
-    // --- Generic showPanel overloads for older paths (can be removed if no longer used) ---
-    // These might be causing ambiguities if not commented out when more specific overloads exist.
-    // Consider replacing calls to these with the more specific ones or ensuring defaults are passed.
-    /*
-    public void showPanel(String panelName, List<String> destinations) {
-        if (panelName.equals(PANEL_DATE_STEP)) {
-            removePanelIfExists(panelName);
-            PanelDateStep panel = new PanelDateStep(this, destinations, 0.0); // Default cost
-            panel.setName(panelName);
-            mainPanelContainer.add(panel, panelName);
-            cardLayout.show(mainPanelContainer, panelName);
-            System.out.println("Menampilkan panel: " + panelName + " dengan destinasi (default cost).");
-        } else {
-            System.err.println("Peringatan: showPanel(String, List<String>) dipanggil untuk panel yang tidak sesuai: " + panelName);
-            showPanel(panelName);
-        }
-        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
-    }
-
-    public void showPanel(String panelName, List<String> destinations, String startDate, String endDate) {
-        if (panelName.equals(PANEL_TRANSPORT_STEP)) {
-            removePanelIfExists(panelName);
-            PanelTransportStep panel = new PanelTransportStep(this, destinations, startDate, endDate, 0.0); // Default cost
-            panel.setName(panelName);
-            mainPanelContainer.add(panel, panelName);
-            cardLayout.show(mainPanelContainer, panelName);
-            System.out.println("Menampilkan panel: " + panelName + " dengan tanggal (default cost).");
-        } else {
-            System.err.println("Peringatan: showPanel(String, List<String>, String, String) dipanggil untuk panel yang tidak sesuai: " + panelName);
-            showPanel(panelName);
-        }
-        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
-    }
-
-    public void showPanel(String panelName, List<String> destinations, String startDate, String endDate,
-                            String transportMode, String transportDetails) {
-        if (panelName.equals(PANEL_ACCOMMODATION_STEP)) {
-            removePanelIfExists(panelName);
-            PanelAccommodationStep panel = new PanelAccommodationStep(this, destinations, startDate, endDate, transportMode, transportDetails, 0.0); // Default cost
-            panel.setName(panelName);
-            mainPanelContainer.add(panel, panelName);
-            cardLayout.show(mainPanelContainer, panelName);
-            System.out.println("Menampilkan panel: " + panelName + " dengan transportasi (default cost).");
-        } else {
-            System.err.println("Peringatan: showPanel(String, List<String>, String, String, String, String) dipanggil untuk panel yang tidak sesuai: " + panelName);
-            showPanel(panelName);
-        }
-        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
-    }
-
-    public void showPanel(String panelName, List<String> destinations, String startDate, String endDate,
-                            String transportMode, String transportDetails, String accommodationName,
-                            String roomType, String accommodationNotes) {
-        if (panelName.equals(PANEL_ACTIVITY_STEP)) {
-            removePanelIfExists(panelName);
-            PanelActivityStep panel = new PanelActivityStep(this, destinations, startDate, endDate, transportMode, transportDetails, accommodationName, roomType, accommodationNotes, 0.0); // Default cost
-            panel.setName(panelName);
-            mainPanelContainer.add(panel, panelName);
-            cardLayout.show(mainPanelContainer, panelName);
-            System.out.println("Menampilkan panel: " + panelName + " dengan akomodasi (default cost).");
-        } else {
-            System.err.println("Peringatan: showPanel(String, List<String>, String, String, String, String, String, String, String) dipanggil untuk panel yang tidak sesuai: " + panelName);
-            showPanel(panelName);
-        }
-        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
-    }
-
-    public void showPanel(String panelName, List<String> destinations, String startDate, String endDate,
-                            String transportMode, String transportDetails, String accommodationName,
-                            String roomType, String accommodationNotes, List<String> activities) {
-        if (panelName.equals(PANEL_FINAL_STEP)) {
-            removePanelIfExists(panelName);
-            PanelFinalStep panel = new PanelFinalStep(this, destinations, startDate, endDate, transportMode, transportDetails, accommodationName, roomType, accommodationNotes, activities, 0.0); // Default cost
-            panel.setName(panelName);
-            mainPanelContainer.add(panel, panelName);
-            cardLayout.show(mainPanelContainer, panelName);
-            System.out.println("Menampilkan panel: " + panelName + " dengan kegiatan (default cost).");
-        } else {
-            System.err.println("Peringatan: showPanel(String, List<String>, String, String, String, String, String, String, String, List<String>) dipanggil untuk panel yang tidak sesuai: " + panelName);
-            showPanel(panelName);
-        }
-        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
-    }
-    */
     
     private void removePanelIfExists(String panelName){
         Component[] components = mainPanelContainer.getComponents();
@@ -431,5 +339,40 @@ public class MainAppFrame extends JFrame {
             MainAppFrame mainAppFrame = new MainAppFrame(); 
             mainAppFrame.setVisible(true);
         });
+    }
+
+    public void showPanel(String panelName, List<String> selectedDestinationsFromItinerary, List<CustomTripDetailModel> itineraryDetails, double totalEstimatedCost, String transportMode, String transportDetails) {
+        if (panelName.equals(PANEL_PARTICIPANTS_STEP)) { 
+            removePanelIfExists(panelName);
+            // Panggil konstruktor PanelParticipantsStep yang sesuai (tanpa akomodasi)
+            // Kita akan meneruskan string kosong untuk akomodasi jika tidak ada di langkah ini.
+            PanelParticipantsStep panel = new PanelParticipantsStep(this, selectedDestinationsFromItinerary, itineraryDetails, totalEstimatedCost, transportMode, transportDetails, "", "", ""); 
+            panel.setName(panelName);
+            mainPanelContainer.add(panel, panelName);
+            cardLayout.show(mainPanelContainer, panelName);
+            System.out.println("Menampilkan panel: " + panelName + " (dari TransportCostStep) dengan estimasi biaya: " + totalEstimatedCost);
+        } else {
+            System.err.println("Peringatan: showPanel(String, List<String>, List<CustomTripDetailModel>, double, String, String) dipanggil untuk panel yang tidak sesuai: " + panelName);
+            showPanel(panelName); 
+        }
+        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
+    }
+
+    // --- IMPLEMENTASI OVERLOAD 2 (dari PanelAccommodationStep atau ActivityStep untuk kembali) ---
+    // Ini menerima semua detail transport dan akomodasi.
+    public void showPanel(String panelName, List<String> selectedDestinationsFromItinerary, List<CustomTripDetailModel> itineraryDetails, double initialEstimatedCost, String currentTransportMode, String currentTransportDetails, String currentAccommodationName, String currentRoomType, String currentAccommodationNotes) {
+        if (panelName.equals(PANEL_PARTICIPANTS_STEP)) { 
+            removePanelIfExists(panelName);
+            // Panggil konstruktor PanelParticipantsStep yang paling komprehensif
+            PanelParticipantsStep panel = new PanelParticipantsStep(this, selectedDestinationsFromItinerary, itineraryDetails, initialEstimatedCost, currentTransportMode, currentTransportDetails, currentAccommodationName, currentRoomType, currentAccommodationNotes);
+            panel.setName(panelName);
+            mainPanelContainer.add(panel, panelName);
+            cardLayout.show(mainPanelContainer, panelName);
+            System.out.println("Menampilkan panel: " + panelName + " (dengan Akmodasi/Activities) dengan estimasi biaya: " + initialEstimatedCost);
+        } else {
+            System.err.println("Peringatan: showPanel(String, List<String>, List<CustomTripDetailModel>, double, String, String, String, String, String) dipanggil untuk panel yang tidak sesuai: " + panelName);
+            showPanel(panelName);
+        }
+        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
     }
 }

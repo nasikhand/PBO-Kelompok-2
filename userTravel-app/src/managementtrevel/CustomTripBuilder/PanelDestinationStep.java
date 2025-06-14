@@ -1,9 +1,9 @@
 package managementtrevel.CustomTripBuilder;
 
-import Asset.AppTheme;
-import managementtrevel.MainAppFrame;
-import controller.DestinasiController;
-import model.DestinasiModel;
+import Asset.AppTheme; // Impor AppTheme Anda
+import managementtrevel.MainAppFrame; // Impor MainAppFrame
+import controller.DestinasiController; // Import DestinasiController
+import model.DestinasiModel; // Import DestinasiModel
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -208,7 +208,7 @@ public class PanelDestinationStep extends JPanel {
         panelCustomTripMain.add(splitPaneContent, BorderLayout.CENTER);
 
         panelMainFooter = new JPanel(new BorderLayout());
-        btnNextStep = new JButton("Lanjut ke Tanggal >"); 
+        btnNextStep = new JButton("Lanjut ke Tanggal >"); // Akan diubah ke "Lanjut ke Itinerary >"
         panelMainFooter.add(btnNextStep, BorderLayout.EAST); 
         panelMainFooter.setBorder(new EmptyBorder(10,0,0,0)); 
         panelCustomTripMain.add(panelMainFooter, BorderLayout.SOUTH);
@@ -279,7 +279,7 @@ public class PanelDestinationStep extends JPanel {
         stylePrimaryButton(btnCariDestinasi, "Cari");
         stylePrimaryButton(btnTambahDestinasi, "Tambah (+)");
         styleSecondaryButton(btnHapusDestinasi, "Hapus (-)");
-        stylePrimaryButton(btnNextStep, "Lanjut ke Tanggal >");
+        stylePrimaryButton(btnNextStep, "Lanjut ke Itinerary >"); // Update button text
 
         lblHasilPencarianInfo.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
         lblHasilPencarianInfo.setForeground(AppTheme.TEXT_SECONDARY_DARK);
@@ -461,26 +461,11 @@ public class PanelDestinationStep extends JPanel {
             destinationsToSave.add(listModelDestinasi.getElementAt(i));
         }
 
-        double currentEstimatedCostValue = 0.0;
-        try {
-            // Karena updateEstimatedCost() sudah memperbarui label dengan format mata uang yang baik,
-            // kita perlu mem-parse kembali string tersebut ke double.
-            // Atau, bisa juga dengan mendapatkan nilai langsung dari perhitungan updateEstimatedCost
-            // yang baru saja dijalankan. Untuk konsistensi, kita parse dari label.
-            String formattedCostText = lblEstimasiHargaValue.getText();
-            NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
-            currentEstimatedCostValue = nf.parse(formattedCostText).doubleValue();
-        } catch (ParseException e) {
-            System.err.println("Error parsing estimated cost for saving: " + e.getMessage());
-            // Jika parsing gagal, fallback ke 0.0 atau tampilkan peringatan
-            currentEstimatedCostValue = 0.0; 
-        }
-
         String tripDetails = "Draf Trip Disimpan:\n";
         for(int i=0; i < destinationsToSave.size(); i++){
             tripDetails += "- " + destinationsToSave.get(i) + "\n";
         }
-        tripDetails += "Estimasi Biaya: " + AppTheme.formatCurrency(currentEstimatedCostValue); // Gunakan formatCurrency untuk konsistensi
+        tripDetails += "Estimasi Biaya: " + lblEstimasiHargaValue.getText();
 
         JOptionPane.showMessageDialog(this, tripDetails, "Simpan Draf Trip Berhasil (Simulasi)", JOptionPane.INFORMATION_MESSAGE);
     }
@@ -578,45 +563,71 @@ public class PanelDestinationStep extends JPanel {
         }
         
         if (mainAppFrame != null) {
-            // Dapatkan estimasi biaya dari langkah ini dan teruskan ke langkah berikutnya
             double currentEstimatedCost = 0.0;
             try {
-                // Parse nilai dari JLabel lblEstimasiHargaValue, hapus format mata uang
                 String formattedCost = lblEstimasiHargaValue.getText().replace(NumberFormat.getCurrencyInstance(new Locale("id", "ID")).getCurrency().getSymbol(), "").replace(".", "").replace(",", ".");
                 currentEstimatedCost = NumberFormat.getInstance(new Locale("id", "ID")).parse(formattedCost).doubleValue();
             } catch (ParseException e) {
                 System.err.println("Error parsing estimated cost from label: " + e.getMessage());
-                // Fallback, jika parsing gagal, mungkin teruskan 0 atau tampilkan warning
             }
 
-            // PENTING: Panggil overload showPanel yang menerima (String, List<String>, double)
-            mainAppFrame.showPanel(MainAppFrame.PANEL_DATE_STEP, 
+            // PENTING: Mengarahkan ke PANEL_ITINERARY_STEP yang baru
+            mainAppFrame.showPanel(MainAppFrame.PANEL_ITINERARY_STEP, 
                                    destinationsForNextStep,
-                                   currentEstimatedCost); // <--- Meneruskan estimasi biaya ke PanelDateStep
+                                   currentEstimatedCost);
         } else {
             System.err.println("MainAppFrame reference is null in PanelDestinationStep.");
         }
     }
 
-    // --- START: Metode updateBuildStepLabels yang hilang ---
+    // --- START: Metode updateBuildStepLabels ---
     private void updateBuildStepLabels(int activeStep) {
         JLabel[] stepLabels = {
-            lblStep1Destinasi, lblStep2Tanggal, lblStep3Transport,
-            lblStep4Akomodasi, lblStep5Kegiatan, lblStep6Final
+            lblStep1Destinasi,      // Step 1
+            lblStep2Tanggal,        // Ini akan jadi lblStep2Itinerary
+            lblStep3Transport,      // Ini akan jadi lblStep3TransportCost
+            lblStep4Akomodasi,      // Ini akan jadi lblStep4Participants
+            lblStep5Kegiatan        // Ini akan jadi lblStep5Final (sebelumnya lblStep6Final)
+            // lblStep6Final tidak ada lagi di alur 5 langkah
         };
+        
+        // Sesuaikan teks untuk 5 langkah baru
         String[] stepTexts = {
-            "1. Destinasi", "2. Tanggal", "3. Transportasi",
-            "4. Akomodasi", "5. Kegiatan", "6. Finalisasi"
+            "1. Destinasi",
+            "2. Itinerary",      // Menggantikan "Tanggal"
+            "3. Transportasi",   // Menggantikan "Transportasi" lama, atau lebih spesifik "Biaya Transport"
+            "4. Peserta",        // Menggantikan "Akomodasi" lama
+            "5. Finalisasi"      // Menggantikan "Kegiatan" lama, dan ini adalah final
         };
 
-        for (int i = 0; i < stepLabels.length; i++) {
-            if (stepLabels[i] != null) {
+        // Jika Anda ingin mengubah nama label GUI Anda agar lebih sesuai dengan alur baru,
+        // Anda harus mengubah deklarasi JLabel di bagian atas kelas dan di initializeUI().
+        // Contoh:
+        // private JLabel lblStep2Itinerary; // Menggantikan lblStep2Tanggal
+        // private JLabel lblStep3TransportCost; // Menggantikan lblStep3Transport
+        // private JLabel lblStep4Participants; // Menggantikan lblStep4Akomodasi
+        // private JLabel lblStep5Final; // Menggantikan lblStep5Kegiatan, lblStep6Final menjadi tidak ada
+
+        // Jika Anda belum mengganti nama JLabel di UI, mapping di atas akan mengacu ke yang lama.
+        // Untuk menjaga kompatibilitas dengan nama JLabel yang ada (lblStep1Destinasi, lblStep2Tanggal, dst.)
+        // kita bisa memetakan seperti ini:
+        JLabel[] currentStepLabels = {
+            lblStep1Destinasi,
+            lblStep2Tanggal, // Akan digunakan untuk Itinerary
+            lblStep3Transport, // Akan digunakan untuk Transport Cost
+            lblStep4Akomodasi, // Akan digunakan untuk Participants
+            lblStep5Kegiatan   // Akan digunakan untuk Finalisasi (karena sekarang ada 5 langkah)
+        };
+
+        // Logika update loop tetap sama, tetapi sekarang hanya untuk 5 langkah
+        for (int i = 0; i < 5; i++) { // Iterasi hanya sampai 5 langkah
+            if (currentStepLabels[i] != null) {
                 boolean isActive = (i + 1 == activeStep);
-                stepLabels[i].setText((isActive ? ACTIVE_STEP_ICON : INACTIVE_STEP_ICON) + stepTexts[i]);
-                stepLabels[i].setFont(isActive ? AppTheme.FONT_STEP_LABEL_ACTIVE : AppTheme.FONT_STEP_LABEL);
-                stepLabels[i].setForeground(isActive ? AppTheme.ACCENT_ORANGE : AppTheme.TEXT_SECONDARY_DARK);
+                currentStepLabels[i].setText((isActive ? ACTIVE_STEP_ICON : INACTIVE_STEP_ICON) + stepTexts[i]);
+                currentStepLabels[i].setFont(isActive ? AppTheme.FONT_STEP_LABEL_ACTIVE : AppTheme.FONT_STEP_LABEL);
+                currentStepLabels[i].setForeground(isActive ? AppTheme.ACCENT_ORANGE : AppTheme.TEXT_SECONDARY_DARK);
             }
         }
     }
-    // --- END: Metode updateBuildStepLabels yang hilang ---
+    // --- END: Metode updateBuildStepLabels ---
 }

@@ -10,8 +10,6 @@ import db.dao.KotaDAO;
 import db.dao.PaketPerjalananDAO;
 import db.dao.ReservasiDAO;
 import managementtrevel.MainAppFrame;
-import managementtrevel.SearchResultScreen.SearchResult;
-import managementtrevel.TripDetailScreen.TripDetail;
 import model.KotaModel; 
 import model.PaketPerjalananModel;
 import model.ReservasiModel;

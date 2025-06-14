@@ -2,7 +2,13 @@ package managementtrevel.CustomTripBuilder;
 
 import Asset.AppTheme;
 import managementtrevel.MainAppFrame;
+import controller.DestinasiController; // Import ini
+import model.CustomTripDetailModel;
+import model.DestinasiModel; // Import ini
 
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
@@ -11,19 +17,16 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.List;
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
 import java.text.NumberFormat;
-import java.util.Locale;
+import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.text.SimpleDateFormat; // For SimpleDateFormat
 
-
-public class PanelTransportStep extends JPanel {
+public class PanelTransportCostStep extends JPanel {
 
     private MainAppFrame mainAppFrame;
 
@@ -35,22 +38,22 @@ public class PanelTransportStep extends JPanel {
 
     private JLabel lblBuildStepsTitle;
     private JLabel lblStep1Destinasi;
-    private JLabel lblStep2Tanggal;
-    private JLabel lblStep3Transport;
-    private JLabel lblStep4Akomodasi;
-    private JLabel lblStep5Kegiatan;
-    private JLabel lblStep6Final;
+    private JLabel lblStep2Itinerary;
+    private JLabel lblStep3TransportCost;
+    private JLabel lblStep4Participants;
+    private JLabel lblStep5Final;
 
     private JLabel lblCustomTripBuilderTitle;
     private JButton btnSaveTrip;
 
-    private JPanel panelTransportSelection;
+    private JPanel panelTransportCostSelection;
     private JLabel lblTransportMode;
     private JComboBox<String> cmbTransportMode;
     private JLabel lblTransportDetails;
     private JTextField txtTransportDetails;
 
     private JPanel panelTripSummary;
+    private JLabel lblSummaryDestinationsDisplay;
     private JLabel lblSummaryDatesDisplay;
     private JLabel lblSummaryTransportDisplay;
     private JScrollPane jScrollPaneDestinasiSummary;
@@ -63,28 +66,30 @@ public class PanelTransportStep extends JPanel {
     private JButton btnPrevStep;
     private JButton btnNextStep;
 
-    private DefaultListModel<String> listModelDestinasiDisplay;
+    private DefaultListModel<String> listModelDestinasiSummaryDisplay;
     private final List<String> currentDestinations;
-    private final String currentStartDate;
-    private final String currentEndDate;
+    private final List<CustomTripDetailModel> itineraryDetails;
     private double currentInitialEstimatedCost;
+    private String selectedTransportMode;
+    private String transportDetailsNotes;
 
-    private final String ACTIVE_STEP_ICON = "● "; 
+    private DestinasiController destinasiController; // <--- DEKLARASI INI DITAMBAHKAN
+
+    private final String ACTIVE_STEP_ICON = "● ";
     private final String INACTIVE_STEP_ICON = "○ ";
     private final String PLACEHOLDER_TEXT_DETAILS = "Contoh: Nama Maskapai/Nomor Kereta/Tipe Bus";
 
-    private JPanel panelMainHeader;
     private JPanel panelMainFooter;
-    private JPanel panelSummaryDates; // <--- DEKLARASI INI DITAMBAHKAN
+    private JPanel panelMainHeader;
 
 
-    public PanelTransportStep(MainAppFrame mainAppFrame, List<String> destinations, String startDate, String endDate, double initialEstimatedCost) {
+    public PanelTransportCostStep(MainAppFrame mainAppFrame, List<String> destinations, List<CustomTripDetailModel> itineraryDetails, double initialEstimatedCost) {
         this.mainAppFrame = mainAppFrame;
         this.currentDestinations = destinations != null ? new ArrayList<>(destinations) : new ArrayList<>();
-        this.currentStartDate = startDate;
-        this.currentEndDate = endDate;
+        this.itineraryDetails = itineraryDetails != null ? new ArrayList<>(itineraryDetails) : new ArrayList<>();
         this.currentInitialEstimatedCost = initialEstimatedCost;
-        this.listModelDestinasiDisplay = new DefaultListModel<>();
+        this.listModelDestinasiSummaryDisplay = new DefaultListModel<>();
+        this.destinasiController = new DestinasiController(); // <--- INISIALISASI DI SINI
 
         initializeUI();
         applyAppTheme();
@@ -106,19 +111,17 @@ public class PanelTransportStep extends JPanel {
         EmptyBorder stepLabelBorder = new EmptyBorder(8, 15, 8, 10);
 
         lblStep1Destinasi = new JLabel(); lblStep1Destinasi.setBorder(stepLabelBorder); lblStep1Destinasi.setAlignmentX(Component.LEFT_ALIGNMENT);
-        lblStep2Tanggal = new JLabel();   lblStep2Tanggal.setBorder(stepLabelBorder);   lblStep2Tanggal.setAlignmentX(Component.LEFT_ALIGNMENT);
-        lblStep3Transport = new JLabel(); lblStep3Transport.setBorder(stepLabelBorder); lblStep3Transport.setAlignmentX(Component.LEFT_ALIGNMENT);
-        lblStep4Akomodasi = new JLabel(); lblStep4Akomodasi.setBorder(stepLabelBorder); lblStep4Akomodasi.setAlignmentX(Component.LEFT_ALIGNMENT);
-        lblStep5Kegiatan = new JLabel();  lblStep5Kegiatan.setBorder(stepLabelBorder);  lblStep5Kegiatan.setAlignmentX(Component.LEFT_ALIGNMENT);
-        lblStep6Final = new JLabel();     lblStep6Final.setBorder(stepLabelBorder);     lblStep6Final.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lblStep2Itinerary = new JLabel(); lblStep2Itinerary.setBorder(stepLabelBorder); lblStep2Itinerary.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lblStep3TransportCost = new JLabel(); lblStep3TransportCost.setBorder(stepLabelBorder); lblStep3TransportCost.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lblStep4Participants = new JLabel(); lblStep4Participants.setBorder(stepLabelBorder); lblStep4Participants.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lblStep5Final = new JLabel();     lblStep5Final.setBorder(stepLabelBorder);     lblStep5Final.setAlignmentX(Component.LEFT_ALIGNMENT);
         
         panelBuildSteps.add(lblStep1Destinasi);
-        panelBuildSteps.add(lblStep2Tanggal);
-        panelBuildSteps.add(lblStep3Transport);
-        panelBuildSteps.add(lblStep4Akomodasi);
-        panelBuildSteps.add(lblStep5Kegiatan);
-        panelBuildSteps.add(lblStep6Final);
-        panelBuildSteps.add(Box.createVerticalGlue()); 
+        panelBuildSteps.add(lblStep2Itinerary);
+        panelBuildSteps.add(lblStep3TransportCost);
+        panelBuildSteps.add(lblStep4Participants);
+        panelBuildSteps.add(lblStep5Final);
+        panelBuildSteps.add(Box.createVerticalGlue());
 
         add(panelBuildSteps, BorderLayout.WEST);
 
@@ -126,7 +129,7 @@ public class PanelTransportStep extends JPanel {
         panelCustomTripMain.setBorder(new EmptyBorder(0, 10, 0, 0));
 
         this.panelMainHeader = new JPanel(new BorderLayout());
-        lblCustomTripBuilderTitle = new JLabel("Custom Trip Builder - Pilih Transportasi"); 
+        lblCustomTripBuilderTitle = new JLabel("Custom Trip Builder - Biaya Transport");
         btnSaveTrip = new JButton("Simpan Draf Trip");
         panelMainHeader.add(lblCustomTripBuilderTitle, BorderLayout.WEST);
         panelMainHeader.add(btnSaveTrip, BorderLayout.EAST);
@@ -134,13 +137,13 @@ public class PanelTransportStep extends JPanel {
 
         panelLeftContent = new JPanel();
         panelLeftContent.setLayout(new BoxLayout(panelLeftContent, BoxLayout.Y_AXIS));
-        panelLeftContent.setBorder(new EmptyBorder(0,0,0,5)); 
+        panelLeftContent.setBorder(new EmptyBorder(0,0,0,5));
 
         panelRightContent = new JPanel();
         panelRightContent.setLayout(new BoxLayout(panelRightContent, BoxLayout.Y_AXIS));
-        panelRightContent.setBorder(new EmptyBorder(0,5,0,0)); 
+        panelRightContent.setBorder(new EmptyBorder(0,5,0,0));
 
-        panelTransportSelection = new JPanel(new GridBagLayout());
+        panelTransportCostSelection = new JPanel(new GridBagLayout());
         GridBagConstraints gbcTransport = new GridBagConstraints();
         gbcTransport.insets = new Insets(5, 10, 5, 10);
         gbcTransport.anchor = GridBagConstraints.WEST;
@@ -148,42 +151,56 @@ public class PanelTransportStep extends JPanel {
 
         lblTransportMode = new JLabel("Mode Transportasi:");
         gbcTransport.gridx = 0; gbcTransport.gridy = 0;
-        panelTransportSelection.add(lblTransportMode, gbcTransport);
+        panelTransportCostSelection.add(lblTransportMode, gbcTransport);
 
-        String[] transportModes = {"Pilih Mode", "Pesawat", "Kereta", "Bus", "Mobil Pribadi"};
+        String[] transportModes = {"Pilih Mode", "Pesawat", "Kereta", "Bus", "Mobil Pribadi", "Lainnya"};
         cmbTransportMode = new JComboBox<>(transportModes);
         gbcTransport.gridx = 1; gbcTransport.gridy = 0; gbcTransport.weightx = 1.0;
-        panelTransportSelection.add(cmbTransportMode, gbcTransport);
+        panelTransportCostSelection.add(cmbTransportMode, gbcTransport);
 
         lblTransportDetails = new JLabel("Detail Transportasi:");
         gbcTransport.gridx = 0; gbcTransport.gridy = 1; gbcTransport.weightx = 0;
-        panelTransportSelection.add(lblTransportDetails, gbcTransport);
+        panelTransportCostSelection.add(lblTransportDetails, gbcTransport);
 
         txtTransportDetails = new JTextField(20);
         gbcTransport.gridx = 1; gbcTransport.gridy = 1; gbcTransport.weightx = 1.0;
-        panelTransportSelection.add(txtTransportDetails, gbcTransport);
+        panelTransportCostSelection.add(txtTransportDetails, gbcTransport);
         
         gbcTransport.gridx = 0; gbcTransport.gridy = 2; gbcTransport.gridwidth = 2; gbcTransport.weighty = 1.0;
-        panelTransportSelection.add(new JLabel(), gbcTransport);
+        panelTransportCostSelection.add(new JLabel(), gbcTransport);
 
-        panelLeftContent.add(panelTransportSelection);
+        panelLeftContent.add(panelTransportCostSelection);
         panelLeftContent.add(Box.createVerticalGlue());
+
+        panelRightContent = new JPanel(); // Re-initialize to ensure no old content
+        panelRightContent.setLayout(new BoxLayout(panelRightContent, BoxLayout.Y_AXIS));
+        panelRightContent.setBorder(new EmptyBorder(0,5,0,0));
 
         panelTripSummary = new JPanel(new BorderLayout(5,5));
         
-        this.panelSummaryDates = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2)); // <--- INISIALISASI DI SINI
-        lblSummaryDatesDisplay = new JLabel("Tanggal: - s/d -");
-        panelSummaryDates.add(lblSummaryDatesDisplay, BorderLayout.NORTH);
-
-        listModelDestinasiDisplay = new DefaultListModel<>();
-        listDestinasiSummary = new JList<>(listModelDestinasiDisplay);
+        lblSummaryDestinationsDisplay = new JLabel("Destinasi Terpilih:");
+        listModelDestinasiSummaryDisplay = new DefaultListModel<>();
+        listDestinasiSummary = new JList<>(listModelDestinasiSummaryDisplay);
         listDestinasiSummary.setEnabled(false);
         jScrollPaneDestinasiSummary = new JScrollPane(listDestinasiSummary);
         jScrollPaneDestinasiSummary.setPreferredSize(new Dimension(0, 100));
-        panelTripSummary.add(jScrollPaneDestinasiSummary, BorderLayout.CENTER);
 
-        lblSummaryTransportDisplay = new JLabel("Transportasi: -");
-        panelTripSummary.add(lblSummaryTransportDisplay, BorderLayout.SOUTH);
+        JPanel summaryContentTop = new JPanel();
+        summaryContentTop.setLayout(new BoxLayout(summaryContentTop, BoxLayout.Y_AXIS));
+        summaryContentTop.setOpaque(false);
+        summaryContentTop.add(lblSummaryDestinationsDisplay);
+        summaryContentTop.add(jScrollPaneDestinasiSummary);
+        summaryContentTop.add(Box.createRigidArea(new Dimension(0, 10)));
+        
+        lblSummaryDatesDisplay = new JLabel("Tanggal Trip Keseluruhan: -");
+        summaryContentTop.add(lblSummaryDatesDisplay);
+        summaryContentTop.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        lblSummaryTransportDisplay = new JLabel("Transportasi Dipilih: -");
+        summaryContentTop.add(lblSummaryTransportDisplay);
+        summaryContentTop.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        panelTripSummary.add(summaryContentTop, BorderLayout.NORTH);
 
         panelRightContent.add(panelTripSummary);
         panelRightContent.add(Box.createRigidArea(new Dimension(0,10)));
@@ -194,7 +211,7 @@ public class PanelTransportStep extends JPanel {
         lblEstimasiHargaValue.setHorizontalAlignment(SwingConstants.RIGHT);
         panelEstimatedCost.add(lblTripSummaryTitleInfo, BorderLayout.WEST);
         panelEstimatedCost.add(lblEstimasiHargaValue, BorderLayout.CENTER);
-        panelEstimatedCost.setPreferredSize(new Dimension(0, 60)); 
+        panelEstimatedCost.setPreferredSize(new Dimension(0, 60));
         panelRightContent.add(panelEstimatedCost);
         panelRightContent.add(Box.createVerticalGlue());
 
@@ -205,14 +222,16 @@ public class PanelTransportStep extends JPanel {
         panelCustomTripMain.add(splitPaneContent, BorderLayout.CENTER);
 
         this.panelMainFooter = new JPanel(new BorderLayout());
-        btnPrevStep = new JButton("< Kembali ke Tanggal"); 
-        btnNextStep = new JButton("Lanjut ke Akomodasi >");
-        panelMainFooter.add(btnPrevStep, BorderLayout.WEST); 
-        panelMainFooter.add(btnNextStep, BorderLayout.EAST); 
-        panelMainFooter.setBorder(new EmptyBorder(10,0,0,0)); 
+        btnPrevStep = new JButton("< Kembali ke Itinerary");
+        btnNextStep = new JButton("Lanjut ke Peserta >");
+        panelMainFooter.add(btnPrevStep, BorderLayout.WEST);
+        panelMainFooter.add(btnNextStep, BorderLayout.EAST);
+        panelMainFooter.setBorder(new EmptyBorder(10,0,0,0));
         panelCustomTripMain.add(panelMainFooter, BorderLayout.SOUTH);
 
-        add(panelCustomTripMain, BorderLayout.CENTER);
+        this.add(panelMainHeader, BorderLayout.NORTH);
+        this.add(splitPaneContent, BorderLayout.CENTER);
+        this.add(panelMainFooter, BorderLayout.SOUTH);
     }
 
     private void applyAppTheme() {
@@ -220,8 +239,8 @@ public class PanelTransportStep extends JPanel {
 
         panelBuildSteps.setBackground(AppTheme.BACKGROUND_LIGHT_GRAY);
         panelBuildSteps.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 0, 0, 1, AppTheme.BORDER_COLOR), 
-            new EmptyBorder(10, 0, 10, 0) 
+            BorderFactory.createMatteBorder(0, 0, 0, 1, AppTheme.BORDER_COLOR),
+            new EmptyBorder(10, 0, 10, 0)
         ));
         lblBuildStepsTitle.setFont(AppTheme.FONT_SUBTITLE);
         lblBuildStepsTitle.setForeground(AppTheme.PRIMARY_BLUE_DARK);
@@ -243,23 +262,23 @@ public class PanelTransportStep extends JPanel {
         Font titledBorderFont = AppTheme.FONT_SUBTITLE;
         Color titledBorderColor = AppTheme.PRIMARY_BLUE_DARK;
 
-        panelTransportSelection.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(AppTheme.BORDER_COLOR), "Pilih Transportasi", 
-            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, 
+        panelTransportCostSelection.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(AppTheme.BORDER_COLOR), "Pilih Transportasi",
+            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
             titledBorderFont, titledBorderColor));
+        
         panelTripSummary.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(AppTheme.BORDER_COLOR), "Ringkasan Trip (Transportasi)",
-            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, 
+            BorderFactory.createLineBorder(AppTheme.BORDER_COLOR), "Ringkasan Trip",
+            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
             titledBorderFont, titledBorderColor));
         panelEstimatedCost.setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(AppTheme.BORDER_COLOR), "Estimasi Biaya",
-            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, 
+            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
             titledBorderFont, titledBorderColor));
         
-        panelTransportSelection.setOpaque(false);
+        panelTransportCostSelection.setOpaque(false);
         panelTripSummary.setOpaque(false);
         panelEstimatedCost.setOpaque(false);
-        if (panelSummaryDates != null) panelSummaryDates.setOpaque(false); // Cast removed because it's JPanel now
 
         lblTransportMode.setFont(AppTheme.FONT_LABEL_FORM);
         lblTransportMode.setForeground(AppTheme.TEXT_DARK);
@@ -272,14 +291,17 @@ public class PanelTransportStep extends JPanel {
         lblTransportDetails.setForeground(AppTheme.TEXT_DARK);
         styleInputField(txtTransportDetails, PLACEHOLDER_TEXT_DETAILS);
         
+        lblSummaryDestinationsDisplay.setFont(AppTheme.FONT_LABEL_FORM);
+        lblSummaryDestinationsDisplay.setForeground(AppTheme.PRIMARY_BLUE_DARK);
+        listDestinasiSummary.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
+        listDestinasiSummary.setBackground(new Color(0,0,0,0));
+        listDestinasiSummary.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+        jScrollPaneDestinasiSummary.setBorder(BorderFactory.createEmptyBorder());
+        jScrollPaneDestinasiSummary.getViewport().setOpaque(false);
+
         lblSummaryDatesDisplay.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
         lblSummaryDatesDisplay.setForeground(AppTheme.TEXT_SECONDARY_DARK);
-
-        listDestinasiSummary.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
-        listDestinasiSummary.setBackground(AppTheme.INPUT_BACKGROUND);
-        listDestinasiSummary.setForeground(AppTheme.INPUT_TEXT);
-        jScrollPaneDestinasiSummary.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER_COLOR));
-
+        
         lblSummaryTransportDisplay.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
         lblSummaryTransportDisplay.setForeground(AppTheme.TEXT_SECONDARY_DARK);
 
@@ -289,11 +311,49 @@ public class PanelTransportStep extends JPanel {
         lblEstimasiHargaValue.setFont(AppTheme.FONT_TITLE_MEDIUM);
         lblEstimasiHargaValue.setForeground(AppTheme.ACCENT_ORANGE);
 
-        styleSecondaryButton(btnPrevStep, "< Kembali ke Tanggal");
-        stylePrimaryButton(btnNextStep, "Lanjut ke Akomodasi >");
-        
-        if (panelMainHeader != null) panelMainHeader.setOpaque(false);
         if (panelMainFooter != null) panelMainFooter.setOpaque(false);
+        styleSecondaryButton(btnPrevStep, "< Kembali ke Itinerary");
+        stylePrimaryButton(btnNextStep, "Lanjut ke Peserta >");
+    }
+    
+    private void stylePrimaryButton(JButton button, String text) {
+        button.setText(text);
+        button.setFont(AppTheme.FONT_BUTTON);
+        button.setBackground(AppTheme.BUTTON_PRIMARY_BACKGROUND);
+        button.setForeground(AppTheme.BUTTON_PRIMARY_TEXT);
+        button.setOpaque(true);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setBorder(new EmptyBorder(8, 15, 8, 15));
+        addHoverEffect(button, AppTheme.BUTTON_PRIMARY_BACKGROUND.darker(), AppTheme.BUTTON_PRIMARY_BACKGROUND);
+    }
+
+    private void styleSecondaryButton(JButton button, String text) {
+        button.setText(text);
+        button.setFont(AppTheme.FONT_BUTTON);
+        button.setBackground(AppTheme.BUTTON_SECONDARY_BACKGROUND);
+        button.setForeground(AppTheme.BUTTON_SECONDARY_TEXT);
+        button.setOpaque(true);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setBorder(new EmptyBorder(8, 15, 8, 15));
+        addHoverEffect(button, AppTheme.BUTTON_SECONDARY_BACKGROUND.darker(), AppTheme.BUTTON_SECONDARY_BACKGROUND);
+    }
+    
+    private void addHoverEffect(JButton button, Color hoverColor, Color originalColor) {
+        if (button == null) return;
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                button.setBackground(hoverColor);
+            }
+            @Override
+            public void mouseExited(MouseEvent e) {
+                button.setBackground(originalColor);
+            }
+        });
     }
 
     private void styleInputField(JTextField textField, String placeholder) {
@@ -328,55 +388,11 @@ public class PanelTransportStep extends JPanel {
             }
         });
     }
-
-    private void stylePrimaryButton(JButton button, String text) {
-        button.setText(text);
-        button.setFont(AppTheme.FONT_BUTTON);
-        button.setBackground(AppTheme.BUTTON_PRIMARY_BACKGROUND);
-        button.setForeground(AppTheme.BUTTON_PRIMARY_TEXT);
-        button.setOpaque(true);
-        button.setBorderPainted(false);
-        button.setFocusPainted(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setBorder(new EmptyBorder(8, 15, 8, 15));
-        addHoverEffect(button, AppTheme.BUTTON_PRIMARY_BACKGROUND.darker(), AppTheme.BUTTON_PRIMARY_BACKGROUND);
-    }
-
-    private void styleSecondaryButton(JButton button, String text) {
-        button.setText(text);
-        button.setFont(AppTheme.FONT_BUTTON);
-        button.setBackground(AppTheme.BUTTON_SECONDARY_BACKGROUND);
-        button.setForeground(AppTheme.BUTTON_SECONDARY_TEXT);
-        button.setOpaque(true);
-        button.setBorderPainted(false);
-        button.setFocusPainted(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setBorder(new EmptyBorder(8, 15, 8, 15));
-        addHoverEffect(button, AppTheme.BUTTON_SECONDARY_BACKGROUND.darker(), AppTheme.BUTTON_SECONDARY_BACKGROUND);
-    }
-    
-    private void addHoverEffect(JButton button, Color hoverColor, Color originalColor) {
-        button.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                button.setBackground(hoverColor);
-            }
-            @Override
-            public void mouseExited(MouseEvent e) {
-                button.setBackground(originalColor);
-            }
-        });
-    }
     
     private void setupLogicAndVisuals() {
-        updateBuildStepLabels(3); // Active step
+        updateBuildStepLabels(3); // Active step is 3 (Transport Cost)
         
-        if (currentDestinations != null) {
-            for (String dest : currentDestinations) {
-                listModelDestinasiDisplay.addElement(dest);
-            }
-        }
-        lblSummaryDatesDisplay.setText("Tanggal: " + currentStartDate + " s/d " + currentEndDate);
+        populateSummaryDisplay();
 
         styleInputField(txtTransportDetails, PLACEHOLDER_TEXT_DETAILS);
 
@@ -394,6 +410,43 @@ public class PanelTransportStep extends JPanel {
 
         updateEstimatedCost();
         updateNextStepButtonState();
+    }
+
+    private void populateSummaryDisplay() {
+        listModelDestinasiSummaryDisplay.clear();
+        LocalDate overallStartDate = null;
+        LocalDate overallEndDate = null;
+
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd MMMMyyyy");
+
+        for (int i = 0; i < itineraryDetails.size(); i++) {
+            CustomTripDetailModel detail = itineraryDetails.get(i);
+            String destinasiName = "";
+            DestinasiModel destModel = destinasiController.getDestinasiById(detail.getDestinasiId());
+            if(destModel != null) {
+                destinasiName = destModel.getNamaDestinasi();
+            }
+
+            LocalDate visitDate = detail.getTanggalKunjungan();
+            String dateString = (visitDate != null) ? visitDate.format(dtf) : "Belum diatur";
+
+            listModelDestinasiSummaryDisplay.addElement((i + 1) + ". " + destinasiName + " (" + dateString + ")");
+
+            if (visitDate != null) {
+                if (overallStartDate == null || visitDate.isBefore(overallStartDate)) {
+                    overallStartDate = visitDate;
+                }
+                if (overallEndDate == null || visitDate.isAfter(overallEndDate)) {
+                    overallEndDate = visitDate;
+                }
+            }
+        }
+        
+        String startDateFormatted = (overallStartDate != null) ? overallStartDate.format(dtf) : "-";
+        String endDateFormatted = (overallEndDate != null) ? overallEndDate.format(dtf) : "-";
+        lblSummaryDatesDisplay.setText("Tanggal Trip Keseluruhan: " + startDateFormatted + " s/d " + endDateFormatted);
+
+        lblSummaryDestinationsDisplay.setText("Destinasi Terpilih:");
     }
 
     private void updateNextStepButtonState() {
@@ -420,51 +473,48 @@ public class PanelTransportStep extends JPanel {
             currentCost += 200000;
         } else if ("Mobil Pribadi".equals(selectedMode)) {
             currentCost += 300000;
+        } else if ("Lainnya".equals(selectedMode)) {
+            currentCost += 100000;
         }
 
         lblEstimasiHargaValue.setText(AppTheme.formatCurrency(currentCost));
-        lblSummaryTransportDisplay.setText("Transportasi: " + selectedMode + " (" + txtTransportDetails.getText().trim() + ")");
+        String transportDetailsPreview = txtTransportDetails.getText().trim();
+        if (transportDetailsPreview.isEmpty()) {
+            transportDetailsPreview = "Belum ada detail";
+        }
+        lblSummaryTransportDisplay.setText("Transportasi Dipilih: " + selectedMode + " (" + transportDetailsPreview + ")");
     }
 
     private void btnSaveTripActionPerformed(ActionEvent evt) {
-        String transportMode = (String) cmbTransportMode.getSelectedItem();
-        String transportDetails = txtTransportDetails.getText().trim();
+        selectedTransportMode = (String) cmbTransportMode.getSelectedItem();
+        transportDetailsNotes = txtTransportDetails.getText().trim();
 
         if (cmbTransportMode.getSelectedIndex() == 0) {
-            JOptionPane.showMessageDialog(this, "Pilih mode transportasi sebelum menyimpan.", "Input Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Pilih mode transportasi sebelum menyimpan draf.", "Input Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        double currentEstimatedCostForSaving = 0.0;
-        try {
-            // Parse nilai dari JLabel lblEstimasiHargaValue, hapus format mata uang
-            String formattedCost = lblEstimasiHargaValue.getText().replace(NumberFormat.getCurrencyInstance(new Locale("id", "ID")).getCurrency().getSymbol(), "").replace(".", "").replace(",", ".");
-            currentEstimatedCostForSaving = NumberFormat.getInstance(new Locale("id", "ID")).parse(formattedCost).doubleValue();
-        } catch (ParseException e) {
-            System.err.println("Error parsing estimated cost from label in TransportStep (Save): " + e.getMessage());
-            currentEstimatedCostForSaving = currentInitialEstimatedCost; // Fallback jika parsing gagal
-        }
-
         String message = String.format(
-            "Draf Trip Disimpan (Simulasi):\nDestinasi: %s\nTanggal: %s s/d %s\nTransportasi: %s (%s)\nEstimasi Biaya: %s",
-            currentDestinations, currentStartDate, currentEndDate,
-            transportMode, transportDetails.isEmpty() ? "-" : transportDetails,
-            AppTheme.formatCurrency(currentEstimatedCostForSaving) // Gunakan formatCurrency
+            "Draf Trip Disimpan (Simulasi):\nDestinasi: %s\nTanggal: %s\nTransportasi: %s (%s)\nEstimasi Biaya: %s",
+            currentDestinations, 
+            lblSummaryDatesDisplay.getText(),
+            selectedTransportMode, transportDetailsNotes.isEmpty() ? "-" : transportDetailsNotes,
+            lblEstimasiHargaValue.getText()
         );
         JOptionPane.showMessageDialog(this, message, "Simpan Draf Trip Berhasil (Simulasi)", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void btnPrevStepActionPerformed(ActionEvent evt) {
         if (mainAppFrame != null) {
-            mainAppFrame.showPanel(MainAppFrame.PANEL_DATE_STEP, currentDestinations, currentInitialEstimatedCost);
+            mainAppFrame.showPanel(MainAppFrame.PANEL_ITINERARY_STEP, currentDestinations, itineraryDetails, currentInitialEstimatedCost);
         } else {
-            System.err.println("MainAppFrame reference is null in PanelTransportStep (Prev).");
+            System.err.println("MainAppFrame reference is null in PanelTransportCostStep (Prev).");
         }
     }
 
     private void btnNextStepActionPerformed(ActionEvent evt) {
-        String transportMode = (String) cmbTransportMode.getSelectedItem();
-        String transportDetails = txtTransportDetails.getText().trim();
+        selectedTransportMode = (String) cmbTransportMode.getSelectedItem();
+        transportDetailsNotes = txtTransportDetails.getText().trim();
 
         if (cmbTransportMode.getSelectedIndex() == 0) {
             JOptionPane.showMessageDialog(this, "Pilih mode transportasi untuk melanjutkan.", "Input Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
@@ -473,38 +523,42 @@ public class PanelTransportStep extends JPanel {
 
         double currentTotalEstimatedCost = 0.0;
         try {
-        // Parse nilai dari JLabel lblEstimasiHargaValue untuk mendapatkan total biaya kumulatif
             String formattedCost = lblEstimasiHargaValue.getText().replace(NumberFormat.getCurrencyInstance(new Locale("id", "ID")).getCurrency().getSymbol(), "").replace(".", "").replace(",", ".");
             currentTotalEstimatedCost = NumberFormat.getInstance(new Locale("id", "ID")).parse(formattedCost).doubleValue();
         } catch (ParseException e) {
-            System.err.println("Error parsing estimated cost from label in TransportStep (Next): " + e.getMessage());
-            currentTotalEstimatedCost = currentInitialEstimatedCost; // Fallback jika parsing gagal
+            System.err.println("Error parsing estimated cost from label in TransportCostStep: " + e.getMessage());
+            currentTotalEstimatedCost = currentInitialEstimatedCost;
         }
 
         if (mainAppFrame != null) {
-            mainAppFrame.showPanel(MainAppFrame.PANEL_ACCOMMODATION_STEP,
+            mainAppFrame.showPanel(MainAppFrame.PANEL_PARTICIPANTS_STEP,
                                    currentDestinations,
-                                   currentStartDate,
-                                   currentEndDate,
-                                   transportMode,
-                                   transportDetails,
-                                   currentTotalEstimatedCost);
+                                   itineraryDetails,
+                                   currentTotalEstimatedCost,
+                                   selectedTransportMode,
+                                   transportDetailsNotes);
         } else {
-            System.err.println("MainAppFrame reference is null in PanelTransportStep (Next).");
+            System.err.println("MainAppFrame reference is null in PanelTransportCostStep (Next).");
         }
     }
 
     private void updateBuildStepLabels(int activeStep) {
         JLabel[] stepLabels = {
-            lblStep1Destinasi, lblStep2Tanggal, lblStep3Transport,
-            lblStep4Akomodasi, lblStep5Kegiatan, lblStep6Final
+            lblStep1Destinasi,
+            lblStep2Itinerary,
+            lblStep3TransportCost,
+            lblStep4Participants,
+            lblStep5Final
         };
         String[] stepTexts = {
-            "1. Destinasi", "2. Tanggal", "3. Transportasi",
-            "4. Akomodasi", "5. Kegiatan", "6. Finalisasi"
+            "1. Destinasi",
+            "2. Itinerary",
+            "3. Biaya Transport",
+            "4. Peserta",
+            "5. Finalisasi"
         };
 
-        for (int i = 0; i < stepLabels.length; i++) {
+        for (int i = 0; i < 5; i++) {
             if (stepLabels[i] != null) {
                 boolean isActive = (i + 1 == activeStep);
                 stepLabels[i].setText((isActive ? ACTIVE_STEP_ICON : INACTIVE_STEP_ICON) + stepTexts[i]);

@@ -4,10 +4,13 @@ import Asset.AppTheme;
 import managementtrevel.MainAppFrame;
 import controller.ReservasiController;
 import controller.CustomTripController;
+import controller.DestinasiController; // Import DestinasiController for getting DestinasiModel by name
 import model.ReservasiModel;
 import model.CustomTripModel;
 import model.Session;
 import model.UserModel;
+import model.CustomTripDetailModel; // Import CustomTripDetailModel
+import model.DestinasiModel; // Import DestinasiModel
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -39,11 +42,10 @@ public class PanelFinalStep extends JPanel {
 
     private JLabel lblBuildStepsTitle;
     private JLabel lblStep1Destinasi;
-    private JLabel lblStep2Tanggal;
-    private JLabel lblStep3Transport;
-    private JLabel lblStep4Akomodasi;
-    private JLabel lblStep5Kegiatan;
-    private JLabel lblStep6Final;
+    private JLabel lblStep2Itinerary; // Updated label
+    private JLabel lblStep3TransportCost; // Updated label
+    private JLabel lblStep4Participants; // Updated label
+    private JLabel lblStep5Final;     // Updated label
 
     private JLabel lblCustomTripBuilderTitle;
     private JButton btnSaveTrip;
@@ -51,6 +53,18 @@ public class PanelFinalStep extends JPanel {
     private JLabel lblFinalReviewMessage;
     private JTextArea txtAreaFinalNotes;
     private JScrollPane scrollPaneFinalNotes;
+
+    // --- Passenger Input Components (from previous version, re-added for consistency) ---
+    private JPanel panelPassengerInput; // This is now just a placeholder for summary, not input
+    private JTextField txtJumlahPeserta; // Display field
+    private JTextField txtNamaPenumpang1; // Display field
+    private JTextField txtNamaPenumpang2; // Display field
+    private JTextField txtNamaPenumpang3; // Display field
+    private JLabel lblJumlahPesertaTitle;
+    private JLabel lblPenumpang1Title;
+    private JLabel lblPenumpang2Title;
+    private JLabel lblPenumpang3Title;
+
 
     private JPanel panelTripSummaryFull;
     private JScrollPane scrollPaneTripSummaryFull;
@@ -62,38 +76,33 @@ public class PanelFinalStep extends JPanel {
     private JLabel lblTransportSummaryDisplay;
     private JLabel lblAccommodationSummaryDisplay;
     private JLabel lblActivitiesSummaryDisplay;
+    private JLabel lblParticipantsSummaryDisplay; // New label for participants summary
     private JList<String> listActivitiesDisplay;
     private JScrollPane scrollPaneActivitiesDisplay;
-    private JPanel panelPassengerInput;
-    private JTextField txtJumlahPeserta;
-    private JTextField txtNamaPenumpang1;
-    private JTextField txtNamaPenumpang2;
-    private JTextField txtNamaPenumpang3;
-    private JLabel lblJumlahPesertaTitle;
-    private JLabel lblPenumpang1Title;
-    private JLabel lblPenumpang2Title;
-    private JLabel lblPenumpang3Title;
     
     private JPanel panelEstimatedCost;
     private JLabel lblTripSummaryTitleInfo; 
     private JLabel lblEstimasiHargaValue;
 
     private JButton btnPrevStep;
-    private JButton btnFinishTrip;
+    private JButton btnFinishTrip; // "Selesaikan & Pesan Trip"
 
     private final DefaultListModel<String> listModelDestinasiDisplay;
     private final DefaultListModel<String> listModelActivitiesDisplay;
 
-    private final List<String> currentDestinations;
-    private final String currentStartDate;
-    private final String currentEndDate;
-    private final String currentTransportMode;
-    private final String currentTransportDetails;
-    private final String currentAccommodationName;
-    private final String currentRoomType;
-    private final String currentAccommodationNotes;
-    private final List<String> currentActivities;
-    private double currentInitialEstimatedCost;
+    // --- ALL DATA PASSED FROM PREVIOUS STEPS ---
+    private final List<String> currentDestinations; // From DestinationStep
+    private final List<CustomTripDetailModel> itineraryDetails; // From ItineraryStep
+    private final String currentTransportMode;      // From TransportCostStep
+    private final String currentTransportDetails;   // From TransportCostStep
+    private final String currentAccommodationName;  // From AccommodationStep
+    private final String currentRoomType;           // From AccommodationStep
+    private final String currentAccommodationNotes; // From AccommodationStep
+    private final List<String> currentActivities;   // From ActivityStep
+    private final double currentInitialEstimatedCost; // Cumulative cost from ActivityStep
+    private final int numberOfParticipants; // From ParticipantsStep
+
+    private DestinasiController destinasiController; // To get destinasi name for summary
 
     private final String ACTIVE_STEP_ICON = "● ";
     private final String INACTIVE_STEP_ICON = "○ ";
@@ -101,24 +110,26 @@ public class PanelFinalStep extends JPanel {
     private JPanel panelMainFooter;
     private JPanel panelMainHeader;
 
-    public PanelFinalStep(MainAppFrame mainAppFrame, List<String> destinations, String startDate, String endDate, 
-                          String transportMode, String transportDetails,
-                          String accommodationName, String roomType, String accommodationNotes,
-                          List<String> activities, double initialEstimatedCost) {
+    // Constructor updated to receive all data for the final summary
+    public PanelFinalStep(MainAppFrame mainAppFrame, List<String> destinations, List<CustomTripDetailModel> itineraryDetails,
+                          String transportMode, String transportDetails, String accommodationName, 
+                          String roomType, String accommodationNotes, List<String> activities, 
+                          double totalEstimatedCost, int numberOfParticipants) {
         this.mainAppFrame = mainAppFrame;
         this.currentDestinations = destinations != null ? new ArrayList<>(destinations) : new ArrayList<>();
-        this.currentStartDate = startDate;
-        this.currentEndDate = endDate;
+        this.itineraryDetails = itineraryDetails != null ? new ArrayList<>(itineraryDetails) : new ArrayList<>();
         this.currentTransportMode = transportMode;
         this.currentTransportDetails = transportDetails;
         this.currentAccommodationName = accommodationName;
         this.currentRoomType = roomType;
         this.currentAccommodationNotes = accommodationNotes;
         this.currentActivities = activities != null ? new ArrayList<>(activities) : new ArrayList<>();
-        this.currentInitialEstimatedCost = initialEstimatedCost;
-        
+        this.currentInitialEstimatedCost = totalEstimatedCost; // Now currentInitialEstimatedCost is the final total
+        this.numberOfParticipants = numberOfParticipants;
+
         this.listModelDestinasiDisplay = new DefaultListModel<>();
         this.listModelActivitiesDisplay = new DefaultListModel<>();
+        this.destinasiController = new DestinasiController(); // Initialize destinasiController
 
         initializeUI();
         applyAppTheme();
@@ -140,18 +151,16 @@ public class PanelFinalStep extends JPanel {
         EmptyBorder stepLabelBorder = new EmptyBorder(8, 15, 8, 10);
 
         lblStep1Destinasi = new JLabel(); lblStep1Destinasi.setBorder(stepLabelBorder); lblStep1Destinasi.setAlignmentX(Component.LEFT_ALIGNMENT);
-        lblStep2Tanggal = new JLabel();   lblStep2Tanggal.setBorder(stepLabelBorder);   lblStep2Tanggal.setAlignmentX(Component.LEFT_ALIGNMENT);
-        lblStep3Transport = new JLabel(); lblStep3Transport.setBorder(stepLabelBorder); lblStep3Transport.setAlignmentX(Component.LEFT_ALIGNMENT);
-        lblStep4Akomodasi = new JLabel(); lblStep4Akomodasi.setBorder(stepLabelBorder); lblStep4Akomodasi.setAlignmentX(Component.LEFT_ALIGNMENT);
-        lblStep5Kegiatan = new JLabel();  lblStep5Kegiatan.setBorder(stepLabelBorder);  lblStep5Kegiatan.setAlignmentX(Component.LEFT_ALIGNMENT);
-        lblStep6Final = new JLabel();     lblStep6Final.setBorder(stepLabelBorder);     lblStep6Final.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lblStep2Itinerary = new JLabel(); lblStep2Itinerary.setBorder(stepLabelBorder); lblStep2Itinerary.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lblStep3TransportCost = new JLabel(); lblStep3TransportCost.setBorder(stepLabelBorder); lblStep3TransportCost.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lblStep4Participants = new JLabel(); lblStep4Participants.setBorder(stepLabelBorder); lblStep4Participants.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lblStep5Final = new JLabel();     lblStep5Final.setBorder(stepLabelBorder);     lblStep5Final.setAlignmentX(Component.LEFT_ALIGNMENT);
         
         panelBuildSteps.add(lblStep1Destinasi);
-        panelBuildSteps.add(lblStep2Tanggal);
-        panelBuildSteps.add(lblStep3Transport);
-        panelBuildSteps.add(lblStep4Akomodasi);
-        panelBuildSteps.add(lblStep5Kegiatan);
-        panelBuildSteps.add(lblStep6Final);
+        panelBuildSteps.add(lblStep2Itinerary);
+        panelBuildSteps.add(lblStep3TransportCost);
+        panelBuildSteps.add(lblStep4Participants);
+        panelBuildSteps.add(lblStep5Final);
         panelBuildSteps.add(Box.createVerticalGlue()); 
 
         add(panelBuildSteps, BorderLayout.WEST);
@@ -180,11 +189,11 @@ public class PanelFinalStep extends JPanel {
         scrollPaneFinalNotes = new JScrollPane(txtAreaFinalNotes);
         scrollPaneFinalNotes.setPreferredSize(new Dimension(0, 150));
         panelLeftContent.add(scrollPaneFinalNotes);
-        panelLeftContent.add(Box.createVerticalGlue());
         panelLeftContent.add(Box.createRigidArea(new Dimension(0,10)));
 
+        // --- Passenger Display Panel (No longer input fields, just display) ---
         panelPassengerInput = new JPanel(new GridBagLayout());
-        panelPassengerInput.setOpaque(false); // Make transparent
+        panelPassengerInput.setOpaque(false);
         panelPassengerInput.setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(AppTheme.BORDER_COLOR), "Detail Peserta",
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
@@ -195,36 +204,40 @@ public class PanelFinalStep extends JPanel {
         gbcPass.anchor = GridBagConstraints.WEST;
         gbcPass.fill = GridBagConstraints.HORIZONTAL;
 
-        lblJumlahPesertaTitle = new JLabel("Jumlah Peserta (maks 3):");
+        lblJumlahPesertaTitle = new JLabel("Jumlah Peserta:");
         gbcPass.gridx = 0; gbcPass.gridy = 0; gbcPass.weightx = 0;
         panelPassengerInput.add(lblJumlahPesertaTitle, gbcPass);
-        txtJumlahPeserta = new JTextField(5);
+        txtJumlahPeserta = new JTextField(5); // This will now display the number of participants
+        txtJumlahPeserta.setEditable(false); // Make it read-only
         gbcPass.gridx = 1; gbcPass.gridy = 0; gbcPass.weightx = 1.0;
         panelPassengerInput.add(txtJumlahPeserta, gbcPass);
 
         lblPenumpang1Title = new JLabel("Nama Peserta 1:");
         gbcPass.gridx = 0; gbcPass.gridy = 1;
         panelPassengerInput.add(lblPenumpang1Title, gbcPass);
-        txtNamaPenumpang1 = new JTextField(20);
+        txtNamaPenumpang1 = new JTextField(20); // Display field
+        txtNamaPenumpang1.setEditable(false); // Make it read-only
         gbcPass.gridx = 1; gbcPass.gridy = 1;
         panelPassengerInput.add(txtNamaPenumpang1, gbcPass);
 
         lblPenumpang2Title = new JLabel("Nama Peserta 2:");
         gbcPass.gridx = 0; gbcPass.gridy = 2;
         panelPassengerInput.add(lblPenumpang2Title, gbcPass);
-        txtNamaPenumpang2 = new JTextField(20);
+        txtNamaPenumpang2 = new JTextField(20); // Display field
+        txtNamaPenumpang2.setEditable(false); // Make it read-only
         gbcPass.gridx = 1; gbcPass.gridy = 2;
         panelPassengerInput.add(txtNamaPenumpang2, gbcPass);
 
         lblPenumpang3Title = new JLabel("Nama Peserta 3:");
         gbcPass.gridx = 0; gbcPass.gridy = 3;
         panelPassengerInput.add(lblPenumpang3Title, gbcPass);
-        txtNamaPenumpang3 = new JTextField(20);
+        txtNamaPenumpang3 = new JTextField(20); // Display field
+        txtNamaPenumpang3.setEditable(false); // Make it read-only
         gbcPass.gridx = 1; gbcPass.gridy = 3;
         panelPassengerInput.add(txtNamaPenumpang3, gbcPass);
         
         panelLeftContent.add(panelPassengerInput);
-        panelLeftContent.add(Box.createVerticalGlue()); 
+        panelLeftContent.add(Box.createVerticalGlue());
 
         panelRightContent = new JPanel(new BorderLayout());
 
@@ -258,6 +271,10 @@ public class PanelFinalStep extends JPanel {
         scrollPaneActivitiesDisplay.setPreferredSize(new Dimension(300, 100));
         panelTripSummaryFull.add(lblActivitiesSummaryDisplay);
         panelTripSummaryFull.add(scrollPaneActivitiesDisplay);
+
+        lblParticipantsSummaryDisplay = new JLabel("Jumlah Peserta:"); // New summary label for participants
+        panelTripSummaryFull.add(Box.createRigidArea(new Dimension(0,10)));
+        panelTripSummaryFull.add(lblParticipantsSummaryDisplay);
         
         scrollPaneTripSummaryFull = new JScrollPane(panelTripSummaryFull);
         scrollPaneTripSummaryFull.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -279,7 +296,7 @@ public class PanelFinalStep extends JPanel {
         panelCustomTripMain.add(splitPaneContent, BorderLayout.CENTER);
 
         this.panelMainFooter = new JPanel(new BorderLayout());
-        btnPrevStep = new JButton("< Kembali ke Kegiatan"); 
+        btnPrevStep = new JButton("< Kembali ke Peserta"); // Changed Prev button text
         btnFinishTrip = new JButton("Selesaikan & Pesan Trip");
         panelMainFooter.add(btnPrevStep, BorderLayout.WEST);
         panelMainFooter.add(btnFinishTrip, BorderLayout.EAST);
@@ -289,9 +306,6 @@ public class PanelFinalStep extends JPanel {
         add(panelCustomTripMain, BorderLayout.CENTER);
     }
 
-    /**
-     * Applies the defined AppTheme styles to all UI components.
-     */
     private void applyAppTheme() {
         this.setBackground(AppTheme.PANEL_BACKGROUND);
 
@@ -312,32 +326,6 @@ public class PanelFinalStep extends JPanel {
         lblCustomTripBuilderTitle.setForeground(AppTheme.PRIMARY_BLUE_DARK);
         styleSecondaryButton(btnSaveTrip, "Simpan Draf Trip");
 
-        if (panelPassengerInput != null) {
-            panelPassengerInput.setOpaque(false);
-            panelPassengerInput.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(AppTheme.BORDER_COLOR), "Detail Peserta",
-                TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
-                AppTheme.FONT_SUBTITLE, AppTheme.PRIMARY_BLUE_DARK));
-        }
-        
-        JLabel[] passengerLabels = {lblJumlahPesertaTitle, lblPenumpang1Title, lblPenumpang2Title, lblPenumpang3Title};
-        for (JLabel label : passengerLabels) {
-            if (label != null) {
-                label.setFont(AppTheme.FONT_LABEL_FORM);
-                label.setForeground(AppTheme.TEXT_DARK);
-            }
-        }
-        JTextField[] passengerTextFields = {txtJumlahPeserta, txtNamaPenumpang1, txtNamaPenumpang2, txtNamaPenumpang3};
-        for (JTextField textField : passengerTextFields) {
-            if (textField != null) {
-                styleInputField(textField, ""); // Gunakan placeholder jika Anda mau
-                addFocusBorderEffect(textField);
-            }
-        }
-        if (txtNamaPenumpang1 != null) txtNamaPenumpang1.setEnabled(false);
-        if (txtNamaPenumpang2 != null) txtNamaPenumpang2.setEnabled(false);
-        if (txtNamaPenumpang3 != null) txtNamaPenumpang3.setEnabled(false);
-
         panelLeftContent.setOpaque(false);
         panelRightContent.setOpaque(false);
         splitPaneContent.setOpaque(false);
@@ -346,8 +334,13 @@ public class PanelFinalStep extends JPanel {
         Font titledBorderFont = AppTheme.FONT_SUBTITLE;
         Color titledBorderColor = AppTheme.PRIMARY_BLUE_DARK;
 
+        // Styling for main sections
         panelLeftContent.setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(AppTheme.BORDER_COLOR), "Catatan Akhir & Konfirmasi",
+            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
+            titledBorderFont, titledBorderColor));
+        panelPassengerInput.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(AppTheme.BORDER_COLOR), "Detail Peserta",
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
             titledBorderFont, titledBorderColor));
         
@@ -360,6 +353,7 @@ public class PanelFinalStep extends JPanel {
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
             titledBorderFont, titledBorderColor));
         
+        panelPassengerInput.setOpaque(false);
         panelTripSummaryFull.setOpaque(false);
         panelEstimatedCost.setOpaque(false);
         if(scrollPaneTripSummaryFull.getViewport() != null) scrollPaneTripSummaryFull.getViewport().setOpaque(false);
@@ -375,6 +369,26 @@ public class PanelFinalStep extends JPanel {
         txtAreaFinalNotes.setMargin(new Insets(5,5,5,5));
         scrollPaneFinalNotes.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER_COLOR));
         
+        // Styling for passenger display fields (now read-only)
+        JLabel[] passengerLabels = {lblJumlahPesertaTitle, lblPenumpang1Title, lblPenumpang2Title, lblPenumpang3Title};
+        for (JLabel label : passengerLabels) {
+            if (label != null) {
+                label.setFont(AppTheme.FONT_LABEL_FORM);
+                label.setForeground(AppTheme.TEXT_DARK);
+            }
+        }
+        JTextField[] passengerTextFields = {txtJumlahPeserta, txtNamaPenumpang1, txtNamaPenumpang2, txtNamaPenumpang3};
+        for (JTextField textField : passengerTextFields) {
+            if (textField != null) {
+                styleInputField(textField, ""); // No placeholder for display fields
+                textField.setBorder(null); // No border for read-only display
+                textField.setOpaque(false); // Transparent background
+                textField.setEditable(false);
+                textField.setForeground(AppTheme.TEXT_DARK); // Text color for display
+            }
+        }
+
+        // Summary Display Labels and Lists
         Font summaryHeaderFont = AppTheme.FONT_SUBTITLE;
         Font summaryDetailFont = AppTheme.FONT_PRIMARY_DEFAULT;
         Color summaryHeaderColor = AppTheme.PRIMARY_BLUE_DARK;
@@ -406,6 +420,9 @@ public class PanelFinalStep extends JPanel {
         scrollPaneActivitiesDisplay.setBorder(BorderFactory.createEmptyBorder());
         scrollPaneActivitiesDisplay.getViewport().setOpaque(false);
 
+        lblParticipantsSummaryDisplay.setFont(summaryHeaderFont); // Style for new participants label
+        lblParticipantsSummaryDisplay.setForeground(summaryHeaderColor);
+
 
         lblTripSummaryTitleInfo.setFont(AppTheme.FONT_LABEL_FORM);
         lblTripSummaryTitleInfo.setForeground(AppTheme.TEXT_DARK);
@@ -413,51 +430,8 @@ public class PanelFinalStep extends JPanel {
         lblEstimasiHargaValue.setForeground(AppTheme.ACCENT_ORANGE);
         
         if (panelMainFooter != null) panelMainFooter.setOpaque(false);
-        styleSecondaryButton(btnPrevStep, "< Kembali ke Kegiatan");
+        styleSecondaryButton(btnPrevStep, "< Kembali ke Peserta"); // Updated Prev button text
         stylePrimaryButton(btnFinishTrip, "Selesaikan & Pesan Trip");
-    }
-
-    private void styleInputField(JTextField textField, String placeholder) {
-        if (textField == null) return;
-        textField.setFont(AppTheme.FONT_TEXT_FIELD);
-        textField.setBackground(AppTheme.INPUT_BACKGROUND);
-        String currentText = textField.getText();
-        if (currentText == null || currentText.isEmpty() || currentText.equals(placeholder)) {
-            textField.setText(placeholder);
-            textField.setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
-        } else {
-            textField.setForeground(AppTheme.INPUT_TEXT);
-        }
-        textField.setBorder(AppTheme.createDefaultInputBorder());
-        textField.setMargin(new Insets(5, 8, 5, 8));
-    }
-
-    // Helper method to add focus border effect (for JTextField)
-    private void addFocusBorderEffect(JTextField textField) {
-        if (textField == null) return;
-        textField.addFocusListener(new FocusAdapter() {
-            public void focusGained(FocusEvent e) {
-                textField.setBorder(AppTheme.createFocusBorder());
-            }
-            public void focusLost(FocusEvent e) {
-                textField.setBorder(AppTheme.createDefaultInputBorder());
-            }
-        });
-    }
-
-    // Helper method to add focus border effect (for JTextArea)
-    private void addFocusBorderEffect(JTextArea textArea) {
-        if (textArea == null) return;
-        textArea.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                textArea.setBorder(AppTheme.createFocusBorder());
-            }
-            @Override
-            public void focusLost(FocusEvent e) {
-                textArea.setBorder(AppTheme.createDefaultInputBorder());
-            }
-        });
     }
     
     private void stylePrimaryButton(JButton button, String text) {
@@ -500,86 +474,84 @@ public class PanelFinalStep extends JPanel {
         });
     }
     
+    private void styleInputField(JTextField textField, String placeholder) { // Helper for JTextField styling
+        if (textField == null) return;
+        textField.setFont(AppTheme.FONT_TEXT_FIELD);
+        textField.setBackground(AppTheme.INPUT_BACKGROUND);
+        String currentText = textField.getText();
+        if (currentText == null || currentText.isEmpty() || currentText.equals(placeholder)) {
+            textField.setText(placeholder);
+            textField.setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
+        } else {
+            textField.setForeground(AppTheme.INPUT_TEXT);
+        }
+        textField.setBorder(AppTheme.createDefaultInputBorder());
+        textField.setMargin(new Insets(5, 8, 5, 8));
+        textField.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                textField.setBorder(AppTheme.createFocusBorder());
+                if (textField.getText().equals(placeholder)) {
+                    textField.setText("");
+                    textField.setForeground(AppTheme.INPUT_TEXT);
+                }
+            }
+            @Override
+            public void focusLost(FocusEvent e) {
+                textField.setBorder(AppTheme.createDefaultInputBorder());
+                if (textField.getText().isEmpty()) {
+                    textField.setText(placeholder);
+                    textField.setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
+                }
+            }
+        });
+    }
+
+    private void addFocusBorderEffect(JTextField textField) { // Helper for JTextField focus (no placeholder logic)
+        if (textField == null) return; 
+        
+        textField.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                textField.setBorder(AppTheme.createFocusBorder());
+            }
+            @Override
+            public void focusLost(FocusEvent e) {
+                textField.setBorder(AppTheme.createDefaultInputBorder());
+            }
+        });
+    }
+    
+    private void addFocusBorderEffect(JTextArea textArea) { // Helper for JTextArea focus
+        if (textArea == null) return;
+        textArea.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                textArea.setBorder(AppTheme.createFocusBorder());
+            }
+            @Override
+            public void focusLost(FocusEvent e) {
+                textArea.setBorder(AppTheme.createDefaultInputBorder());
+            }
+        });
+    }
+
     /**
      * Sets up the logic and populates initial visuals based on constructor data.
      */
     private void setupLogicAndVisuals() {
-        updateBuildStepLabels(6); // Set step 6 (Final) as active
+        updateBuildStepLabels(5); // Set step 5 (Final) as active
 
-        // Populate destination list
-        if (currentDestinations != null) {
-            for (String dest : currentDestinations) {
-                listModelDestinasiDisplay.addElement(dest);
-            }
-        }
-        // Populate activities list
-        if (currentActivities != null) {
-            for (String activity : currentActivities) {
-                listModelActivitiesDisplay.addElement(activity);
-            }
-        }
-        
-        // Populate summary labels
-        lblDatesSummaryDisplay.setText(String.format("<html><b>Tanggal:</b> %s s/d %s</html>", 
-            (currentStartDate != null ? currentStartDate : "-"), 
-            (currentEndDate != null ? currentEndDate : "-")));
+        // Populate summary displays from previous steps
+        populateSummaryDisplay();
 
-        String transportInfo = (currentTransportMode != null && !currentTransportMode.isEmpty() ? currentTransportMode : "-");
-        if (currentTransportDetails != null && !currentTransportDetails.isEmpty()){
-            transportInfo += " (<i>" + currentTransportDetails + "</i>)";
-        }
-        lblTransportSummaryDisplay.setText("<html><b>Transportasi:</b> " + transportInfo + "</html>");
-        
-        String accommodationInfo = (currentAccommodationName != null && !currentAccommodationName.isEmpty() ? currentAccommodationName : "-");
-        if (currentRoomType != null && !currentRoomType.isEmpty()){
-            accommodationInfo += " (<i>Kamar: " + currentRoomType + "</i>)";
-        }
-        if (currentAccommodationNotes != null && !currentAccommodationNotes.isEmpty()){
-            accommodationInfo += " - <i>Catatan: " + currentAccommodationNotes + "</i>";
-        }
-        lblAccommodationSummaryDisplay.setText("<html><b>Akomodasi:</b> " + accommodationInfo + "</html>");
-
-        if(listModelActivitiesDisplay.isEmpty()){
-            listModelActivitiesDisplay.addElement("Tidak ada kegiatan spesifik yang direncanakan.");
-        }
-        lblActivitiesSummaryDisplay.setText("<html><b>Kegiatan:</b></html>");
-
-        if (txtJumlahPeserta != null) {
-            txtJumlahPeserta.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-                private void updatePassengerFields() {
-                    try {
-                        int jumlah = Integer.parseInt(txtJumlahPeserta.getText().trim());
-                        if (jumlah < 0) {
-                            txtJumlahPeserta.setText("0"); // Minimum 0
-                            jumlah = 0;
-                        } else if (jumlah > 3) {
-                            JOptionPane.showMessageDialog(PanelFinalStep.this, "Jumlah peserta maksimal 3 orang.", "Batas Peserta", JOptionPane.WARNING_MESSAGE);
-                            txtJumlahPeserta.setText("3"); // Set to max 3
-                            jumlah = 3;
-                        }
-                        txtNamaPenumpang1.setEnabled(jumlah >= 1);
-                        txtNamaPenumpang2.setEnabled(jumlah >= 2);
-                        txtNamaPenumpang3.setEnabled(jumlah >= 3);
-
-                        if (jumlah < 1) txtNamaPenumpang1.setText("");
-                        if (jumlah < 2) txtNamaPenumpang2.setText("");
-                        if (jumlah < 3) txtNamaPenumpang3.setText("");
-
-                    } catch (NumberFormatException e) {
-                        txtNamaPenumpang1.setEnabled(false);
-                        txtNamaPenumpang2.setEnabled(false);
-                        txtNamaPenumpang3.setEnabled(false);
-                    }
-                }
-                @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { updatePassengerFields(); }
-                @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { updatePassengerFields(); }
-                @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { updatePassengerFields(); }
-            });
-        }
-
-        // Calculate and display estimated price
-        // In FinalStep, this mostly just reflects the cumulative cost from previous steps.
-        lblEstimasiHargaValue.setText(AppTheme.formatCurrency(currentInitialEstimatedCost));
+        // Populate participant display fields (now read-only)
+        txtJumlahPeserta.setText(String.valueOf(numberOfParticipants));
+        // For names, you'd need to store actual names passed from ParticipantsStep,
+        // but currently, only the count is passed. For now, display placeholders.
+        txtNamaPenumpang1.setText(numberOfParticipants >= 1 ? "Peserta 1" : "-");
+        txtNamaPenumpang2.setText(numberOfParticipants >= 2 ? "Peserta 2" : "-");
+        txtNamaPenumpang3.setText(numberOfParticipants >= 3 ? "Peserta 3" : "-");
         
         // Setup action listeners for buttons
         btnSaveTrip.addActionListener(this::btnSaveTripActionPerformed);
@@ -588,29 +560,26 @@ public class PanelFinalStep extends JPanel {
     }
     
     /**
-     * Placeholder method to calculate estimated custom trip price.
-     * In FinalStep, this should mostly just reflect the cumulative cost from previous steps.
-     * @return The estimated total price (cumulative from previous steps).
-     */
-    private double calculateEstimatedCustomTripPrice() {
-        return currentInitialEstimatedCost; // Final step mostly just reflects the cumulative cost
-    }
-
-    /**
      * Updates the visual state of the build step labels in the sidebar.
-     * @param activeStep The current active step number (1-6).
+     * @param activeStep The current active step number (1-5).
      */
     private void updateBuildStepLabels(int activeStep) {
         JLabel[] stepLabels = {
-            lblStep1Destinasi, lblStep2Tanggal, lblStep3Transport,
-            lblStep4Akomodasi, lblStep5Kegiatan, lblStep6Final
+            lblStep1Destinasi,
+            lblStep2Itinerary,
+            lblStep3TransportCost,
+            lblStep4Participants,
+            lblStep5Final
         };
         String[] stepTexts = {
-            "1. Destinasi", "2. Tanggal", "3. Transportasi",
-            "4. Akomodasi", "5. Kegiatan", "6. Finalisasi"
+            "1. Destinasi",
+            "2. Itinerary",
+            "3. Biaya Transport",
+            "4. Peserta",
+            "5. Finalisasi"
         };
 
-        for (int i = 0; i < stepLabels.length; i++) {
+        for (int i = 0; i < 5; i++) { // Iterate through 5 steps
             if (stepLabels[i] != null) {
                 boolean isActive = (i + 1 == activeStep);
                 stepLabels[i].setText((isActive ? ACTIVE_STEP_ICON : INACTIVE_STEP_ICON) + stepTexts[i]);
@@ -619,93 +588,154 @@ public class PanelFinalStep extends JPanel {
             }
         }
     }
-    
-    /**
-     * Action performed when the "Simpan Draf Trip" button is clicked.
-     * This simulates saving the current custom trip configuration.
-     */
-    private void btnSaveTripActionPerformed(ActionEvent evt) {
-        String finalNotes = txtAreaFinalNotes.getText().trim();
-        
-        int jumlahPesertaDraf = 0;
-        List<String> penumpangListDraf = new ArrayList<>();
-        try {
-            if (!txtJumlahPeserta.getText().trim().isEmpty()) {
-                jumlahPesertaDraf = Integer.parseInt(txtJumlahPeserta.getText().trim());
-            }
-            if (jumlahPesertaDraf < 0 || jumlahPesertaDraf > 3) {
-                JOptionPane.showMessageDialog(this, "Jumlah peserta harus antara 0 dan 3.", "Validasi Peserta", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            if (jumlahPesertaDraf >= 1) penumpangListDraf.add(txtNamaPenumpang1.getText().trim());
-            if (jumlahPesertaDraf >= 2) penumpangListDraf.add(txtNamaPenumpang2.getText().trim());
-            if (jumlahPesertaDraf >= 3) penumpangListDraf.add(txtNamaPenumpang3.getText().trim());
 
-            for (int i = 0; i < jumlahPesertaDraf; i++) {
-                if (penumpangListDraf.get(i).isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Nama peserta ke-" + (i+1) + " harus diisi untuk draf.", "Validasi Peserta", JOptionPane.WARNING_MESSAGE);
-                    return;
+    /**
+     * Populates the trip summary display based on data from previous steps.
+     */
+    private void populateSummaryDisplay() {
+        // Populate destinations list
+        listModelDestinasiDisplay.clear();
+        for (String destName : currentDestinations) {
+            listModelDestinasiDisplay.addElement(destName);
+        }
+
+        // Calculate and display overall trip dates from itineraryDetails
+        LocalDate overallStartDate = null;
+        LocalDate overallEndDate = null;
+        for (CustomTripDetailModel detail : itineraryDetails) {
+            LocalDate visitDate = detail.getTanggalKunjungan();
+            if (visitDate != null) {
+                if (overallStartDate == null || visitDate.isBefore(overallStartDate)) {
+                    overallStartDate = visitDate;
+                }
+                if (overallEndDate == null || visitDate.isAfter(overallEndDate)) {
+                    overallEndDate = visitDate;
                 }
             }
-        } catch (NumberFormatException e) {
-            // Biarkan jumlahPesertaDraf 0 jika input tidak valid untuk draf
         }
+        String startDateFormatted = (overallStartDate != null) ? overallStartDate.format(DateTimeFormatter.ofPattern("dd MMMMyyyy")) : "-";
+        String endDateFormatted = (overallEndDate != null) ? overallEndDate.format(DateTimeFormatter.ofPattern("dd MMMMyyyy")) : "-";
+        lblDatesSummaryDisplay.setText("Tanggal Trip Keseluruhan: " + startDateFormatted + " s/d " + endDateFormatted);
+
+        // Populate transport summary
+        String transportInfo = (currentTransportMode != null && !currentTransportMode.isEmpty() ? currentTransportMode : "-");
+        if (currentTransportDetails != null && !currentTransportDetails.isEmpty()){
+            transportInfo += " (" + currentTransportDetails + ")";
+        }
+        lblTransportSummaryDisplay.setText("Transportasi: " + transportInfo);
+
+        // Populate accommodation summary
+        String accommodationInfo = (currentAccommodationName != null && !currentAccommodationName.isEmpty() ? currentAccommodationName : "-");
+        if (currentRoomType != null && !currentRoomType.isEmpty()){
+            accommodationInfo += " (Kamar: " + currentRoomType + ")";
+        }
+        if (currentAccommodationNotes != null && !currentAccommodationNotes.isEmpty()){
+            accommodationInfo += " - Catatan: " + currentAccommodationNotes;
+        }
+        lblAccommodationSummaryDisplay.setText("Akomodasi: " + accommodationInfo);
+
+        // Populate activities list
+        if(listModelActivitiesDisplay.isEmpty() && currentActivities != null){ // Populate only if empty and activities exist
+            for(String activity : currentActivities){
+                listModelActivitiesDisplay.addElement(activity);
+            }
+        }
+        if(listModelActivitiesDisplay.isEmpty()){
+            listModelActivitiesDisplay.addElement("Tidak ada kegiatan spesifik yang direncanakan.");
+        }
+        lblActivitiesSummaryDisplay.setText("Kegiatan:"); // Label for activities list
+
+        // Populate participants summary
+        lblParticipantsSummaryDisplay.setText("Jumlah Peserta: " + numberOfParticipants + " Orang");
         
+        // Display final estimated cost
+        lblEstimasiHargaValue.setText(AppTheme.formatCurrency(currentInitialEstimatedCost));
+    }
+    
+    /**
+     * Placeholder method to calculate estimated custom trip price.
+     * In FinalStep, this mostly just reflects the cumulative cost from previous steps.
+     * @return The estimated total price (cumulative from previous steps).
+     */
+    private double calculateEstimatedCustomTripPrice() {
+        return currentInitialEstimatedCost; // Final step mostly just reflects the cumulative cost
+    }
+
+    /**
+     * Action performed when the "Simpan Draf Trip" button is clicked.
+     */
+    private void btnSaveTripActionPerformed(ActionEvent evt) {
+        // Validate login and participants
         if (Session.currentUser == null || Session.currentUser.getId() == 0) {
             JOptionPane.showMessageDialog(this, "Anda harus login untuk menyimpan draf trip kustom.", "Login Diperlukan", JOptionPane.WARNING_MESSAGE);
             return;
         }
+        if (numberOfParticipants <= 0) { // Check if participants is valid for saving draft
+            JOptionPane.showMessageDialog(this, "Masukkan jumlah peserta (minimal 1) untuk menyimpan draf.", "Validasi Peserta", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
-        // --- Persiapan CustomTripModel untuk Draf ---
+        // --- Prepare CustomTripModel for Draft ---
         String namaTripDraf = currentDestinations.isEmpty() ? "Custom Trip" : String.join(", ", currentDestinations);
         if (namaTripDraf.length() > 100) namaTripDraf = namaTripDraf.substring(0, 97) + "...";
 
-        LocalDate parsedStartDateDraf = null;
-        if (currentStartDate != null && !currentStartDate.isEmpty()) {
-            try { parsedStartDateDraf = LocalDate.parse(currentStartDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")); } catch (Exception e) {}
-        }
-        LocalDate parsedEndDateDraf = null;
-        if (currentEndDate != null && !currentEndDate.isEmpty()) {
-            try { parsedEndDateDraf = LocalDate.parse(currentEndDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")); } catch (Exception e) {}
-        }
+        LocalDate parsedStartDateDraf = itineraryDetails.isEmpty() ? null : itineraryDetails.get(0).getTanggalKunjungan();
+        LocalDate parsedEndDateDraf = itineraryDetails.isEmpty() ? null : itineraryDetails.get(itineraryDetails.size()-1).getTanggalKunjungan();
         
         CustomTripModel customTripDraf = new CustomTripModel();
         customTripDraf.setUserId(Session.currentUser.getId());
         customTripDraf.setNamaTrip(namaTripDraf);
         customTripDraf.setTanggalMulai(parsedStartDateDraf);
         customTripDraf.setTanggalAkhir(parsedEndDateDraf);
-        customTripDraf.setJumlahPeserta(jumlahPesertaDraf); // Set jumlah peserta draf
-        customTripDraf.setStatus("draft"); // Status draf
-        customTripDraf.setTotalHarga(currentInitialEstimatedCost); // Gunakan total biaya kumulatif
+        customTripDraf.setJumlahPeserta(numberOfParticipants);
+        customTripDraf.setStatus("draft");
+        customTripDraf.setTotalHarga(currentInitialEstimatedCost);
         customTripDraf.setCatatanUser(txtAreaFinalNotes.getText().trim());
+        
+        // Set detailed fields for saving
+        customTripDraf.setDetailedTransportMode(currentTransportMode);
+        customTripDraf.setDetailedTransportDetails(currentTransportDetails);
+        customTripDraf.setDetailedAccommodationName(currentAccommodationName);
+        customTripDraf.setDetailedRoomType(currentRoomType);
+        customTripDraf.setDetailedAccommodationNotes(currentAccommodationNotes);
+        customTripDraf.setDetailedActivities(currentActivities); // Save activities list
 
-        // --- Simpan CustomTripModel Draf ke DB ---
+        // --- Add itinerary details (CustomTripDetailModel list) to CustomTripModel ---
+        customTripDraf.setDetailList(itineraryDetails); // Set the list of CustomTripDetailModel
+
+        // --- Save CustomTripModel Draft to DB ---
         CustomTripController customTripController = new CustomTripController();
         int customTripIdDraf = customTripController.saveCustomTrip(customTripDraf);
 
         if (customTripIdDraf != -1) {
-            customTripDraf.setId(customTripIdDraf);
+            customTripDraf.setId(customTripIdDraf); // Update ID in model after saving
 
-            // --- Buat ReservasiModel untuk Custom Trip Draf ---
+            // --- Create ReservasiModel for this Custom Trip Draft ---
             ReservasiModel reservasiDraf = new ReservasiModel();
             reservasiDraf.setUserId(Session.currentUser.getId());
             reservasiDraf.setTripType("custom_trip");
             reservasiDraf.setTripId(customTripIdDraf);
             reservasiDraf.setKodeReservasi("DRFCT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
             reservasiDraf.setTanggalReservasi(LocalDate.now());
-            reservasiDraf.setStatus("pending"); // Status reservasi pending untuk draf
+            reservasiDraf.setStatus("pending");
 
             ReservasiController reservasiController = new ReservasiController();
             int reservasiIdDraf = reservasiController.buatReservasi(reservasiDraf);
 
             if (reservasiIdDraf != -1) {
-                // Simpan penumpang untuk draf
+                // Passengers are collected in PanelParticipantsStep,
+                // but PanelFinalStep collects them directly via JTextfields if not passed.
+                // Assuming penumpangList holds actual names for the reservation from this point.
+                List<String> collectedPassengerNames = new ArrayList<>();
+                if (!txtNamaPenumpang1.getText().trim().isEmpty()) collectedPassengerNames.add(txtNamaPenumpang1.getText().trim());
+                if (!txtNamaPenumpang2.getText().trim().isEmpty()) collectedPassengerNames.add(txtNamaPenumpang2.getText().trim());
+                if (!txtNamaPenumpang3.getText().trim().isEmpty()) collectedPassengerNames.add(txtNamaPenumpang3.getText().trim());
+
+
                 boolean allPassengersSavedDraf = true;
-                for (String penumpangNamaDraf : penumpangListDraf) {
-                    if (!penumpangNamaDraf.isEmpty()) { // Hanya simpan yang tidak kosong
-                        if (!reservasiController.tambahPenumpang(reservasiIdDraf, penumpangNamaDraf)) {
-                            allPassengersSavedDraf = false;
-                        }
+                for (String penumpangNamaDraf : collectedPassengerNames) {
+                    if (!reservasiController.tambahPenumpang(reservasiIdDraf, penumpangNamaDraf)) {
+                        allPassengersSavedDraf = false;
                     }
                 }
                 
@@ -715,11 +745,10 @@ public class PanelFinalStep extends JPanel {
                 }
                 JOptionPane.showMessageDialog(this, msg + "\nAnda akan dialihkan ke halaman Pesanan Saya.", "Draf Disimpan", JOptionPane.INFORMATION_MESSAGE);
                 
-                // --- Arahkan ke PanelUserOrder ---
                 mainAppFrame.showPanel(MainAppFrame.PANEL_PESANAN_SAYA);
             } else {
                 JOptionPane.showMessageDialog(this, "Gagal membuat reservasi draf untuk Custom Trip Anda.", "Error Draf", JOptionPane.ERROR_MESSAGE);
-                customTripController.deleteCustomTrip(customTripIdDraf); // Bersihkan custom trip jika reservasi gagal
+                customTripController.deleteCustomTrip(customTripIdDraf); // Clean up custom trip if reservation fails
             }
         } else {
             JOptionPane.showMessageDialog(this, "Gagal menyimpan Custom Trip sebagai draf.", "Error Draf", JOptionPane.ERROR_MESSAGE);
@@ -727,16 +756,20 @@ public class PanelFinalStep extends JPanel {
     }
 
     /**
-     * Action performed when the "Kembali ke Kegiatan" (Prev Step) button is clicked.
-     * Navigates back to the previous step (PanelActivityStep).
+     * Action performed when the "Kembali ke Peserta" (Prev Step) button is clicked.
+     * Navigates back to PanelParticipantsStep.
      */
     private void btnPrevStepActionPerformed(ActionEvent evt) {
         if (mainAppFrame != null) {
-            mainAppFrame.showPanel(MainAppFrame.PANEL_ACTIVITY_STEP, 
-                                   currentDestinations, currentStartDate, currentEndDate, 
-                                   currentTransportMode, currentTransportDetails,
-                                   currentAccommodationName, currentRoomType, currentAccommodationNotes,
-                                   currentInitialEstimatedCost); // Pass current cost back
+            mainAppFrame.showPanel(MainAppFrame.PANEL_PARTICIPANTS_STEP,
+                                   currentDestinations,
+                                   itineraryDetails,
+                                   currentInitialEstimatedCost, // Cost up to Accommodation/Activities
+                                   currentTransportMode,
+                                   currentTransportDetails,
+                                   currentAccommodationName,
+                                   currentRoomType,
+                                   currentAccommodationNotes); // Pass all data back to ParticipantsStep
         } else {
             System.err.println("MainAppFrame reference is null in PanelFinalStep (Prev). Cannot navigate.");
         }
@@ -748,90 +781,56 @@ public class PanelFinalStep extends JPanel {
      * navigating to the payment screen.
      */
     private void btnFinishTripActionPerformed(ActionEvent evt) {
-        // --- Validasi Login (PENTING) ---
         if (Session.currentUser == null || Session.currentUser.getId() == 0) {
             JOptionPane.showMessageDialog(this, "Anda harus login untuk menyelesaikan dan memesan trip kustom.", "Login Diperlukan", JOptionPane.WARNING_MESSAGE);
             return;
         }
-
-        LocalDate parsedStartDate = null;
-        LocalDate parsedEndDate = null;
-        int jumlahPeserta = 0;
-        String statusCustomTrip;
-        double totalHargaEstimasi;
-        CustomTripModel customTrip = new CustomTripModel();
-        List<String> penumpangList = new ArrayList<>();
-        try {
-            if (txtJumlahPeserta.getText().trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Jumlah peserta harus diisi.", "Validasi Peserta", JOptionPane.WARNING_MESSAGE);
-                txtJumlahPeserta.requestFocusInWindow();
-                return;
-            }
-            jumlahPeserta = Integer.parseInt(txtJumlahPeserta.getText().trim());
-            if (jumlahPeserta <= 0 || jumlahPeserta > 3) {
-                JOptionPane.showMessageDialog(this, "Jumlah peserta harus antara 1 dan 3.", "Validasi Peserta", JOptionPane.WARNING_MESSAGE);
-                txtJumlahPeserta.requestFocusInWindow();
-                return;
-            }
-
-            if (jumlahPeserta >= 1 && txtNamaPenumpang1.getText().trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Nama peserta 1 harus diisi.", "Validasi Peserta", JOptionPane.WARNING_MESSAGE);
-                txtNamaPenumpang1.requestFocusInWindow(); return;
-            }
-            if (jumlahPeserta >= 2 && txtNamaPenumpang2.getText().trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Nama peserta 2 harus diisi.", "Validasi Peserta", JOptionPane.WARNING_MESSAGE);
-                txtNamaPenumpang2.requestFocusInWindow(); return;
-            }
-            if (jumlahPeserta >= 3 && txtNamaPenumpang3.getText().trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Nama peserta 3 harus diisi.", "Validasi Peserta", JOptionPane.WARNING_MESSAGE);
-                txtNamaPenumpang3.requestFocusInWindow(); return;
-            }
-            // Kumpulkan nama penumpang yang valid
-            if (jumlahPeserta >= 1) penumpangList.add(txtNamaPenumpang1.getText().trim());
-            if (jumlahPeserta >= 2) penumpangList.add(txtNamaPenumpang2.getText().trim());
-            if (jumlahPeserta >= 3) penumpangList.add(txtNamaPenumpang3.getText().trim());
-
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Jumlah peserta harus berupa angka valid.", "Validasi Peserta", JOptionPane.WARNING_MESSAGE);
-            txtJumlahPeserta.requestFocusInWindow();
+        if (numberOfParticipants <= 0) {
+            JOptionPane.showMessageDialog(this, "Jumlah peserta harus lebih dari 0 untuk memesan trip.", "Validasi Peserta", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // --- 1. Prepare CustomTripModel ---
+        // --- Prepare CustomTripModel ---
         String namaTrip = currentDestinations.isEmpty() ? "Custom Trip" : String.join(", ", currentDestinations);
         if (namaTrip.length() > 100) namaTrip = namaTrip.substring(0, 97) + "...";
         
-        try { parsedStartDate = LocalDate.parse(currentStartDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")); } catch (Exception e) {
-            System.err.println("Error parsing start date for CustomTripModel: " + e.getMessage());
-            JOptionPane.showMessageDialog(this, "Format tanggal mulai tidak valid. Periksa kembali tanggal.", "Error Tanggal", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        try { parsedEndDate = LocalDate.parse(currentEndDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")); } catch (Exception e) {
-            System.err.println("Error parsing end date for CustomTripModel: " + e.getMessage());
-            JOptionPane.showMessageDialog(this, "Format tanggal akhir tidak valid. Periksa kembali tanggal.", "Error Tanggal", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        LocalDate parsedStartDate = itineraryDetails.isEmpty() ? null : itineraryDetails.get(0).getTanggalKunjungan();
+        LocalDate parsedEndDate = itineraryDetails.isEmpty() ? null : itineraryDetails.get(itineraryDetails.size()-1).getTanggalKunjungan();
         
-        totalHargaEstimasi = calculateEstimatedCustomTripPrice(); // Gunakan total biaya kumulatif
-        statusCustomTrip = "dipesan"; // Status awal setelah membuat trip, siap untuk pembayaran
+        // Use currentInitialEstimatedCost as the final total price
+        double totalHargaEstimasi = currentInitialEstimatedCost; 
+        String statusCustomTrip = "dipesan";
 
-        customTrip.setUserId(Session.currentUser.getId()); // Use logged-in user's ID
+        CustomTripModel customTrip = new CustomTripModel();
+        customTrip.setUserId(Session.currentUser.getId());
         customTrip.setNamaTrip(namaTrip);
         customTrip.setTanggalMulai(parsedStartDate);
         customTrip.setTanggalAkhir(parsedEndDate);
-        customTrip.setJumlahPeserta(jumlahPeserta); // Set jumlah peserta
+        customTrip.setJumlahPeserta(numberOfParticipants);
         customTrip.setStatus(statusCustomTrip);
         customTrip.setTotalHarga(totalHargaEstimasi);
         customTrip.setCatatanUser(txtAreaFinalNotes.getText().trim());
 
-        // --- 2. Save CustomTripModel to DB ---
+        // Set detailed fields for saving
+        customTrip.setDetailedTransportMode(currentTransportMode);
+        customTrip.setDetailedTransportDetails(currentTransportDetails);
+        customTrip.setDetailedAccommodationName(currentAccommodationName);
+        customTrip.setDetailedRoomType(currentRoomType);
+        customTrip.setDetailedAccommodationNotes(currentAccommodationNotes);
+        customTrip.setDetailedActivities(currentActivities); // Save activities list
+
+        // --- Add itinerary details (CustomTripDetailModel list) to CustomTripModel ---
+        customTrip.setDetailList(itineraryDetails); // Set the list of CustomTripDetailModel
+
+
+        // --- Save CustomTripModel to DB ---
         CustomTripController customTripController = new CustomTripController();
         int customTripId = customTripController.saveCustomTrip(customTrip);
 
         if (customTripId != -1) {
-            customTrip.setId(customTripId);
+            customTrip.setId(customTripId); // Update ID in model after saving
 
-            // --- 3. Create ReservasiModel untuk Custom Trip ---
+            // --- Create ReservasiModel for this Custom Trip ---
             ReservasiModel reservasi = new ReservasiModel();
             reservasi.setUserId(Session.currentUser.getId());
             reservasi.setTripType("custom_trip");
@@ -844,9 +843,14 @@ public class PanelFinalStep extends JPanel {
             int reservasiId = reservasiController.buatReservasi(reservasi);
 
             if (reservasiId != -1) {
-                // Simpan penumpang untuk reservasi ini
+                // Simpan penumpang
+                List<String> collectedPassengerNames = new ArrayList<>();
+                collectedPassengerNames.add(txtNamaPenumpang1.getText().trim()); // Assuming txtJumlahPeserta correctly controls active fields
+                if (numberOfParticipants >= 2) collectedPassengerNames.add(txtNamaPenumpang2.getText().trim());
+                if (numberOfParticipants >= 3) collectedPassengerNames.add(txtNamaPenumpang3.getText().trim());
+                
                 boolean allPassengersSaved = true;
-                for (String penumpangNama : penumpangList) {
+                for (String penumpangNama : collectedPassengerNames) {
                     if (!reservasiController.tambahPenumpang(reservasiId, penumpangNama)) {
                         allPassengersSaved = false;
                     }
@@ -862,10 +866,10 @@ public class PanelFinalStep extends JPanel {
                 String emailKontak = Session.currentUser.getEmail();
                 String teleponKontak = Session.currentUser.getNomorTelepon();
                 
-                mainAppFrame.showPaymentPanel(reservasiId, namaKontak, emailKontak, teleponKontak, penumpangList);
+                mainAppFrame.showPaymentPanel(reservasiId, namaKontak, emailKontak, teleponKontak, collectedPassengerNames);
             } else {
                 JOptionPane.showMessageDialog(this, "Gagal membuat reservasi untuk Custom Trip Anda. Silakan coba lagi.", "Error Reservasi", JOptionPane.ERROR_MESSAGE);
-                customTripController.deleteCustomTrip(customTripId); // Bersihkan custom trip jika reservasi gagal
+                customTripController.deleteCustomTrip(customTripId); // Clean up custom trip if reservation failed
             }
         } else {
             JOptionPane.showMessageDialog(this, "Gagal menyimpan Custom Trip Anda. Silakan coba lagi.", "Error Penyimpanan", JOptionPane.ERROR_MESSAGE);
