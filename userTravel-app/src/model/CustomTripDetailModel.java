@@ -10,6 +10,7 @@ public class CustomTripDetailModel {
     private int urutanKunjungan;
     private double hargaDestinasi;
     private double biayaTransport;
+    private int customTripId;   
 
     // Setter
     public void setId(int id) {
@@ -69,7 +70,7 @@ public class CustomTripDetailModel {
         return biayaTransport;
     }
 
-    public void setCustomTripId(int aInt) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public void setCustomTripId(int customTripId) {
+    this.customTripId = customTripId; 
     }
 }

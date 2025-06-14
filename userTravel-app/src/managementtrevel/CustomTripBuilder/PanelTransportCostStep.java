@@ -5,6 +5,7 @@ import managementtrevel.MainAppFrame;
 import controller.DestinasiController; // Import ini
 import model.CustomTripDetailModel;
 import model.DestinasiModel; // Import ini
+import model.TransportOption;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -58,6 +59,7 @@ public class PanelTransportCostStep extends JPanel {
     private JLabel lblSummaryTransportDisplay;
     private JScrollPane jScrollPaneDestinasiSummary;
     private JList<String> listDestinasiSummary;
+    private List<JComboBox<TransportOption>> transportOptionCombos;
     
     private JPanel panelEstimatedCost;
     private JLabel lblTripSummaryTitleInfo; 
@@ -72,6 +74,7 @@ public class PanelTransportCostStep extends JPanel {
     private double currentInitialEstimatedCost;
     private String selectedTransportMode;
     private String transportDetailsNotes;
+    
 
     private DestinasiController destinasiController; // <--- DEKLARASI INI DITAMBAHKAN
 
@@ -99,128 +102,97 @@ public class PanelTransportCostStep extends JPanel {
     private void initializeUI() {
         this.setLayout(new BorderLayout(5, 5));
         this.setBorder(new EmptyBorder(10, 10, 10, 10));
-
         panelBuildSteps = new JPanel();
         panelBuildSteps.setLayout(new BoxLayout(panelBuildSteps, BoxLayout.Y_AXIS));
         panelBuildSteps.setPreferredSize(new Dimension(230, 0));
-
         lblBuildStepsTitle = new JLabel(" Langkah Pembangunan");
         lblBuildStepsTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
         panelBuildSteps.add(lblBuildStepsTitle);
-
         EmptyBorder stepLabelBorder = new EmptyBorder(8, 15, 8, 10);
-
         lblStep1Destinasi = new JLabel(); lblStep1Destinasi.setBorder(stepLabelBorder); lblStep1Destinasi.setAlignmentX(Component.LEFT_ALIGNMENT);
         lblStep2Itinerary = new JLabel(); lblStep2Itinerary.setBorder(stepLabelBorder); lblStep2Itinerary.setAlignmentX(Component.LEFT_ALIGNMENT);
         lblStep3TransportCost = new JLabel(); lblStep3TransportCost.setBorder(stepLabelBorder); lblStep3TransportCost.setAlignmentX(Component.LEFT_ALIGNMENT);
         lblStep4Participants = new JLabel(); lblStep4Participants.setBorder(stepLabelBorder); lblStep4Participants.setAlignmentX(Component.LEFT_ALIGNMENT);
-        lblStep5Final = new JLabel();     lblStep5Final.setBorder(stepLabelBorder);     lblStep5Final.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+        lblStep5Final = new JLabel(); lblStep5Final.setBorder(stepLabelBorder); lblStep5Final.setAlignmentX(Component.LEFT_ALIGNMENT);
         panelBuildSteps.add(lblStep1Destinasi);
         panelBuildSteps.add(lblStep2Itinerary);
         panelBuildSteps.add(lblStep3TransportCost);
         panelBuildSteps.add(lblStep4Participants);
         panelBuildSteps.add(lblStep5Final);
         panelBuildSteps.add(Box.createVerticalGlue());
-
         add(panelBuildSteps, BorderLayout.WEST);
-
         panelCustomTripMain = new JPanel(new BorderLayout(10, 10));
         panelCustomTripMain.setBorder(new EmptyBorder(0, 10, 0, 0));
-
         this.panelMainHeader = new JPanel(new BorderLayout());
         lblCustomTripBuilderTitle = new JLabel("Custom Trip Builder - Biaya Transport");
         btnSaveTrip = new JButton("Simpan Draf Trip");
         panelMainHeader.add(lblCustomTripBuilderTitle, BorderLayout.WEST);
         panelMainHeader.add(btnSaveTrip, BorderLayout.EAST);
         panelCustomTripMain.add(panelMainHeader, BorderLayout.NORTH);
-
         panelLeftContent = new JPanel();
         panelLeftContent.setLayout(new BoxLayout(panelLeftContent, BoxLayout.Y_AXIS));
         panelLeftContent.setBorder(new EmptyBorder(0,0,0,5));
-
         panelRightContent = new JPanel();
         panelRightContent.setLayout(new BoxLayout(panelRightContent, BoxLayout.Y_AXIS));
         panelRightContent.setBorder(new EmptyBorder(0,5,0,0));
-
-        panelTransportCostSelection = new JPanel(new GridBagLayout());
         GridBagConstraints gbcTransport = new GridBagConstraints();
         gbcTransport.insets = new Insets(5, 10, 5, 10);
         gbcTransport.anchor = GridBagConstraints.WEST;
         gbcTransport.fill = GridBagConstraints.HORIZONTAL;
-
         lblTransportMode = new JLabel("Mode Transportasi:");
         gbcTransport.gridx = 0; gbcTransport.gridy = 0;
-        panelTransportCostSelection.add(lblTransportMode, gbcTransport);
-
         String[] transportModes = {"Pilih Mode", "Pesawat", "Kereta", "Bus", "Mobil Pribadi", "Lainnya"};
         cmbTransportMode = new JComboBox<>(transportModes);
         gbcTransport.gridx = 1; gbcTransport.gridy = 0; gbcTransport.weightx = 1.0;
-        panelTransportCostSelection.add(cmbTransportMode, gbcTransport);
-
         lblTransportDetails = new JLabel("Detail Transportasi:");
         gbcTransport.gridx = 0; gbcTransport.gridy = 1; gbcTransport.weightx = 0;
-        panelTransportCostSelection.add(lblTransportDetails, gbcTransport);
-
         txtTransportDetails = new JTextField(20);
         gbcTransport.gridx = 1; gbcTransport.gridy = 1; gbcTransport.weightx = 1.0;
-        panelTransportCostSelection.add(txtTransportDetails, gbcTransport);
-        
         gbcTransport.gridx = 0; gbcTransport.gridy = 2; gbcTransport.gridwidth = 2; gbcTransport.weighty = 1.0;
-        panelTransportCostSelection.add(new JLabel(), gbcTransport);
-
-        panelLeftContent.add(panelTransportCostSelection);
+        
+        // This is the only change in initializeUI: calling the styled component creation.
+        panelLeftContent.add(createPerDestinationCostPanel());
+        
         panelLeftContent.add(Box.createVerticalGlue());
-
-        panelRightContent = new JPanel(); // Re-initialize to ensure no old content
+        panelRightContent = new JPanel();
         panelRightContent.setLayout(new BoxLayout(panelRightContent, BoxLayout.Y_AXIS));
         panelRightContent.setBorder(new EmptyBorder(0,5,0,0));
-
         panelTripSummary = new JPanel(new BorderLayout(5,5));
-        
         lblSummaryDestinationsDisplay = new JLabel("Destinasi Terpilih:");
         listModelDestinasiSummaryDisplay = new DefaultListModel<>();
         listDestinasiSummary = new JList<>(listModelDestinasiSummaryDisplay);
         listDestinasiSummary.setEnabled(false);
         jScrollPaneDestinasiSummary = new JScrollPane(listDestinasiSummary);
         jScrollPaneDestinasiSummary.setPreferredSize(new Dimension(0, 100));
-
         JPanel summaryContentTop = new JPanel();
         summaryContentTop.setLayout(new BoxLayout(summaryContentTop, BoxLayout.Y_AXIS));
         summaryContentTop.setOpaque(false);
         summaryContentTop.add(lblSummaryDestinationsDisplay);
         summaryContentTop.add(jScrollPaneDestinasiSummary);
         summaryContentTop.add(Box.createRigidArea(new Dimension(0, 10)));
-        
         lblSummaryDatesDisplay = new JLabel("Tanggal Trip Keseluruhan: -");
         summaryContentTop.add(lblSummaryDatesDisplay);
         summaryContentTop.add(Box.createRigidArea(new Dimension(0, 10)));
-
         lblSummaryTransportDisplay = new JLabel("Transportasi Dipilih: -");
         summaryContentTop.add(lblSummaryTransportDisplay);
         summaryContentTop.add(Box.createRigidArea(new Dimension(0, 10)));
-
         panelTripSummary.add(summaryContentTop, BorderLayout.NORTH);
-
         panelRightContent.add(panelTripSummary);
         panelRightContent.add(Box.createRigidArea(new Dimension(0,10)));
-
         panelEstimatedCost = new JPanel(new BorderLayout(10,0));
-        lblTripSummaryTitleInfo = new JLabel("Total Estimasi Biaya:"); 
-        lblEstimasiHargaValue = new JLabel("Rp 0"); 
+        lblTripSummaryTitleInfo = new JLabel("Total Estimasi Biaya:");
+        lblEstimasiHargaValue = new JLabel("Rp 0");
         lblEstimasiHargaValue.setHorizontalAlignment(SwingConstants.RIGHT);
         panelEstimatedCost.add(lblTripSummaryTitleInfo, BorderLayout.WEST);
         panelEstimatedCost.add(lblEstimasiHargaValue, BorderLayout.CENTER);
         panelEstimatedCost.setPreferredSize(new Dimension(0, 60));
         panelRightContent.add(panelEstimatedCost);
         panelRightContent.add(Box.createVerticalGlue());
-
         splitPaneContent = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelLeftContent, panelRightContent);
         splitPaneContent.setDividerLocation(420);
         splitPaneContent.setResizeWeight(0.48);
         splitPaneContent.setContinuousLayout(true);
         panelCustomTripMain.add(splitPaneContent, BorderLayout.CENTER);
-
         this.panelMainFooter = new JPanel(new BorderLayout());
         btnPrevStep = new JButton("< Kembali ke Itinerary");
         btnNextStep = new JButton("Lanjut ke Peserta >");
@@ -228,10 +200,103 @@ public class PanelTransportCostStep extends JPanel {
         panelMainFooter.add(btnNextStep, BorderLayout.EAST);
         panelMainFooter.setBorder(new EmptyBorder(10,0,0,0));
         panelCustomTripMain.add(panelMainFooter, BorderLayout.SOUTH);
-
         this.add(panelMainHeader, BorderLayout.NORTH);
         this.add(splitPaneContent, BorderLayout.CENTER);
         this.add(panelMainFooter, BorderLayout.SOUTH);
+    }
+
+    // =================================================================================
+    // == STYLED COMPONENT CREATION - THIS IS WHERE THE DESIGN MAGIC HAPPENS
+    // =================================================================================
+    private JScrollPane createPerDestinationCostPanel() {
+        JPanel mainListPanel = new JPanel();
+        mainListPanel.setLayout(new BoxLayout(mainListPanel, BoxLayout.Y_AXIS));
+        mainListPanel.setBackground(Color.WHITE); // White background for the container
+
+        this.transportOptionCombos = new ArrayList<>();
+
+        TransportOption[] options = {
+            new TransportOption("- Pilih Transportasi -", 0),
+            new TransportOption("Mobil Pribadi (Sewa)", 350000),
+            new TransportOption("Taksi Online (Mobil)", 150000),
+            new TransportOption("Taksi Online (Motor)", 50000),
+            new TransportOption("Bus Umum / Angkot", 15000),
+            new TransportOption("Jalan Kaki", 0)
+        };
+
+        for (int i = 0; i < itineraryDetails.size(); i++) {
+            CustomTripDetailModel detail = itineraryDetails.get(i);
+            DestinasiModel destModel = destinasiController.getDestinasiById(detail.getDestinasiId());
+
+            // --- Create a styled panel for each row ---
+            JPanel rowPanel = new JPanel(new GridBagLayout());
+            rowPanel.setBackground(Color.WHITE);
+            // Add a clean bottom border to separate rows
+            rowPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, AppTheme.BORDER_COLOR));
+
+            GridBagConstraints gbcRow = new GridBagConstraints();
+            gbcRow.insets = new Insets(10, 5, 10, 5); // Padding for each row
+            gbcRow.anchor = GridBagConstraints.WEST;
+
+            // --- Destination Info (Name and Date) ---
+            JPanel infoPanel = new JPanel();
+            infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+            infoPanel.setOpaque(false);
+
+            String destinasiName = (destModel != null) ? destModel.getNamaDestinasi() : "Destinasi " + (i + 1);
+            JLabel destinationNameLabel = new JLabel("Transportasi ke " + destinasiName);
+            destinationNameLabel.setFont(AppTheme.FONT_SUBTITLE);
+            destinationNameLabel.setForeground(AppTheme.PRIMARY_BLUE_DARK);
+            
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd MMMM yyyy");
+            String dateString = "Kunjungan: " + detail.getTanggalKunjungan().format(dtf);
+            JLabel dateLabel = new JLabel(dateString);
+            dateLabel.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
+            dateLabel.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+            
+            infoPanel.add(destinationNameLabel);
+            infoPanel.add(Box.createRigidArea(new Dimension(0, 4)));
+            infoPanel.add(dateLabel);
+
+            gbcRow.gridx = 0;
+            gbcRow.gridy = 0;
+            gbcRow.weightx = 1.0; // Allow info to take up space
+            gbcRow.fill = GridBagConstraints.HORIZONTAL;
+            rowPanel.add(infoPanel, gbcRow);
+
+            // --- ComboBox for transport selection ---
+            JComboBox<TransportOption> optionCombo = new JComboBox<>(options);
+            optionCombo.setFont(AppTheme.FONT_TEXT_FIELD);
+            optionCombo.setPreferredSize(new Dimension(220, 30));
+            optionCombo.addItemListener(e -> {
+                if (e.getItemSelectable() == e.getSource()) {
+                    updateEstimatedCost();
+                    updateNextStepButtonState();
+                }
+            });
+
+            gbcRow.gridx = 1;
+            gbcRow.weightx = 0; // Don't allow combo box to grow
+            gbcRow.fill = GridBagConstraints.NONE;
+            rowPanel.add(optionCombo, gbcRow);
+            
+            // Add the fully styled row to the main list
+            mainListPanel.add(rowPanel);
+            transportOptionCombos.add(optionCombo);
+        }
+
+        // --- Final container with TitledBorder ---
+        JPanel container = new JPanel(new BorderLayout());
+        container.setBackground(Color.WHITE);
+        container.setBorder(BorderFactory.createTitledBorder(null, "Rincian Biaya Transportasi",
+                TitledBorder.LEADING, TitledBorder.TOP, AppTheme.FONT_TITLE_MEDIUM, AppTheme.PRIMARY_BLUE_DARK));
+        container.add(mainListPanel, BorderLayout.NORTH);
+
+        JScrollPane scrollPane = new JScrollPane(container);
+        scrollPane.setBorder(null);
+        scrollPane.getViewport().setBackground(Color.WHITE);
+        
+        return scrollPane;
     }
 
     private void applyAppTheme() {
@@ -262,10 +327,10 @@ public class PanelTransportCostStep extends JPanel {
         Font titledBorderFont = AppTheme.FONT_SUBTITLE;
         Color titledBorderColor = AppTheme.PRIMARY_BLUE_DARK;
 
-        panelTransportCostSelection.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(AppTheme.BORDER_COLOR), "Pilih Transportasi",
-            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
-            titledBorderFont, titledBorderColor));
+//        panelTransportCostSelection.setBorder(BorderFactory.createTitledBorder(
+//            BorderFactory.createLineBorder(AppTheme.BORDER_COLOR), "Pilih Transportasi",
+//            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
+//            titledBorderFont, titledBorderColor));
         
         panelTripSummary.setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(AppTheme.BORDER_COLOR), "Ringkasan Trip",
@@ -276,7 +341,7 @@ public class PanelTransportCostStep extends JPanel {
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
             titledBorderFont, titledBorderColor));
         
-        panelTransportCostSelection.setOpaque(false);
+//        panelTransportCostSelection.setOpaque(false);
         panelTripSummary.setOpaque(false);
         panelEstimatedCost.setOpaque(false);
 
@@ -314,7 +379,7 @@ public class PanelTransportCostStep extends JPanel {
         if (panelMainFooter != null) panelMainFooter.setOpaque(false);
         styleSecondaryButton(btnPrevStep, "< Kembali ke Itinerary");
         stylePrimaryButton(btnNextStep, "Lanjut ke Peserta >");
-    }
+    }   
     
     private void stylePrimaryButton(JButton button, String text) {
         button.setText(text);
@@ -450,8 +515,19 @@ public class PanelTransportCostStep extends JPanel {
     }
 
     private void updateNextStepButtonState() {
-        boolean isTransportSelected = cmbTransportMode.getSelectedIndex() > 0;
-        btnNextStep.setEnabled(isTransportSelected);
+        boolean allOptionsSelected = true;
+        if (transportOptionCombos == null || transportOptionCombos.isEmpty()) {
+            allOptionsSelected = false;
+        } else {
+            for (JComboBox<TransportOption> combo : transportOptionCombos) {
+                // The button is enabled only if every combo box does NOT have the first item ("- Pilih -") selected.
+                if (combo.getSelectedIndex() == 0) {
+                    allOptionsSelected = false;
+                    break; // Found one that isn't selected, no need to check further.
+                }
+            }
+        }
+        btnNextStep.setEnabled(allOptionsSelected);
     }
 
     private void cmbTransportModeItemStateChanged(ItemEvent evt) {
@@ -462,27 +538,21 @@ public class PanelTransportCostStep extends JPanel {
     }
 
     private void updateEstimatedCost() {
-        double currentCost = currentInitialEstimatedCost;
+        double baseCost = this.currentInitialEstimatedCost;
+        double transportTotal = 0;
 
-        String selectedMode = (String) cmbTransportMode.getSelectedItem();
-        if ("Pesawat".equals(selectedMode)) {
-            currentCost += 1500000;
-        } else if ("Kereta".equals(selectedMode)) {
-            currentCost += 500000;
-        } else if ("Bus".equals(selectedMode)) {
-            currentCost += 200000;
-        } else if ("Mobil Pribadi".equals(selectedMode)) {
-            currentCost += 300000;
-        } else if ("Lainnya".equals(selectedMode)) {
-            currentCost += 100000;
+        // Calculate total from the selected options in our combo boxes
+        if (transportOptionCombos != null) { // Check if list is initialized
+            for (JComboBox<TransportOption> combo : transportOptionCombos) {
+                TransportOption selected = (TransportOption) combo.getSelectedItem();
+                if (selected != null) {
+                    transportTotal += selected.getCost();
+                }
+            }
         }
 
-        lblEstimasiHargaValue.setText(AppTheme.formatCurrency(currentCost));
-        String transportDetailsPreview = txtTransportDetails.getText().trim();
-        if (transportDetailsPreview.isEmpty()) {
-            transportDetailsPreview = "Belum ada detail";
-        }
-        lblSummaryTransportDisplay.setText("Transportasi Dipilih: " + selectedMode + " (" + transportDetailsPreview + ")");
+        double finalTotalCost = baseCost + transportTotal;
+        lblEstimasiHargaValue.setText(AppTheme.formatCurrency(finalTotalCost));
     }
 
     private void btnSaveTripActionPerformed(ActionEvent evt) {
@@ -513,30 +583,41 @@ public class PanelTransportCostStep extends JPanel {
     }
 
     private void btnNextStepActionPerformed(ActionEvent evt) {
+        // These are for the overall trip, can still be useful
         selectedTransportMode = (String) cmbTransportMode.getSelectedItem();
         transportDetailsNotes = txtTransportDetails.getText().trim();
+        
+        double totalTransportCost = 0;
 
-        if (cmbTransportMode.getSelectedIndex() == 0) {
-            JOptionPane.showMessageDialog(this, "Pilih mode transportasi untuk melanjutkan.", "Input Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
-            return;
+        // --- CRUCIAL PART: Update the model objects ---
+        for (int i = 0; i < itineraryDetails.size(); i++) {
+            JComboBox<TransportOption> combo = transportOptionCombos.get(i);
+            TransportOption selected = (TransportOption) combo.getSelectedItem();
+
+            if (selected == null || selected.getCost() == 0 && !selected.getName().equals("Jalan Kaki")) {
+                // This checks if a meaningful option was selected
+                if(combo.getSelectedIndex() == 0){
+                    JOptionPane.showMessageDialog(this, "Silakan pilih opsi transportasi untuk semua destinasi.", "Input Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
+                    return; // Stop processing
+                }
+            }
+            
+            // UPDATE THE MODEL with the cost from the selected option
+            itineraryDetails.get(i).setBiayaTransport(selected.getCost());
+            totalTransportCost += selected.getCost();
         }
 
-        double currentTotalEstimatedCost = 0.0;
-        try {
-            String formattedCost = lblEstimasiHargaValue.getText().replace(NumberFormat.getCurrencyInstance(new Locale("id", "ID")).getCurrency().getSymbol(), "").replace(".", "").replace(",", ".");
-            currentTotalEstimatedCost = NumberFormat.getInstance(new Locale("id", "ID")).parse(formattedCost).doubleValue();
-        } catch (ParseException e) {
-            System.err.println("Error parsing estimated cost from label in TransportCostStep: " + e.getMessage());
-            currentTotalEstimatedCost = currentInitialEstimatedCost;
-        }
+        // Recalculate the final total cost reliably
+        double finalTotalCost = this.currentInitialEstimatedCost + totalTransportCost;
 
+        // Proceed to the next step
         if (mainAppFrame != null) {
             mainAppFrame.showPanel(MainAppFrame.PANEL_PARTICIPANTS_STEP,
-                                   currentDestinations,
-                                   itineraryDetails,
-                                   currentTotalEstimatedCost,
-                                   selectedTransportMode,
-                                   transportDetailsNotes);
+                    currentDestinations,
+                    itineraryDetails, // This list now contains the correct transport costs!
+                    finalTotalCost,
+                    selectedTransportMode,
+                    transportDetailsNotes);
         } else {
             System.err.println("MainAppFrame reference is null in PanelTransportCostStep (Next).");
         }

@@ -196,12 +196,17 @@ public class MainAppFrame extends JFrame {
     
     public void showPaymentPanel(int reservasiId, String namaKontak, String emailKontak, String teleponKontak, List<String> penumpangList) {
         removePanelIfExists(PANEL_PAYMENT);
-        PanelPayment panel = new PanelPayment(this, reservasiId, namaKontak, emailKontak, teleponKontak, penumpangList);
+
+        // --- FIXED: Removed the extra 'teleponKontak' argument to match the new constructor ---
+        PanelPayment panel = new PanelPayment(this, reservasiId, namaKontak, emailKontak, penumpangList);
+
         panel.setName(PANEL_PAYMENT);
         mainPanelContainer.add(panel, PANEL_PAYMENT);
         cardLayout.show(mainPanelContainer, PANEL_PAYMENT);
         System.out.println("Menampilkan panel: " + PANEL_PAYMENT + " untuk reservasi ID: " + reservasiId);
-        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) sidebarPanel.collapsePublic();
+        if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) {
+            sidebarPanel.collapsePublic();
+        }
     }
 
     public void showPanel(String panelName, ReservasiModel reservasi) {
@@ -279,17 +284,19 @@ public class MainAppFrame extends JFrame {
     // 4. PanelParticipantsStep (NEW Step 4) -> PanelFinalStep (Step 5)
     // Menerima semua data yang dikumpulkan sebelumnya, ditambah jumlah peserta
     public void showPanel(String panelName, List<String> destinations, List<CustomTripDetailModel> itineraryDetails,
-                            String transportMode, String transportDetails, String accommodationName, 
-                            String roomType, String accommodationNotes, List<String> activities, 
-                            double totalEstimatedCost, int numberOfParticipants) { 
-        if (panelName.equals(PANEL_FINAL_STEP)) {
-            removePanelIfExists(panelName);
-            PanelFinalStep panel = new PanelFinalStep(this, destinations, itineraryDetails, transportMode, transportDetails, 
-                                                       accommodationName, roomType, accommodationNotes, activities, 
-                                                       totalEstimatedCost, numberOfParticipants);
-            panel.setName(panelName);
-            mainPanelContainer.add(panel, panelName);
-            cardLayout.show(mainPanelContainer, panelName);
+                      String transportMode, String transportDetails, String accommodationName, 
+                      String roomType, String accommodationNotes, List<String> participantNames, // <-- RENAMED
+                      double totalEstimatedCost, int numberOfParticipants) { 
+    if (panelName.equals(PANEL_FINAL_STEP)) {
+        removePanelIfExists(panelName);
+        // Make sure PanelFinalStep's constructor also accepts this new list
+        PanelFinalStep panel = new PanelFinalStep(this, destinations, itineraryDetails, transportMode, transportDetails, 
+                                                  accommodationName, roomType, accommodationNotes, 
+                                                  participantNames, // <-- Pass it here
+                                                  totalEstimatedCost, numberOfParticipants);
+        panel.setName(panelName);
+        mainPanelContainer.add(panel, panelName);
+        cardLayout.show(mainPanelContainer, panelName);
             System.out.println("Menampilkan panel: " + panelName + " dengan kegiatan dan estimasi biaya total: " + totalEstimatedCost + ", Peserta: " + numberOfParticipants);
         } else {
             System.err.println("Peringatan: showPanel(String, List<String>, List<CustomTripDetailModel>, String, String, String, String, String, List<String>, double, int) dipanggil untuk panel yang tidak sesuai: " + panelName);

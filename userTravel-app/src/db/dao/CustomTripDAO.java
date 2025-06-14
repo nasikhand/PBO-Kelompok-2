@@ -6,110 +6,95 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.time.LocalDate;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
-import model.CustomTripDetailModel; // Pastikan ini diimpor
+import model.CustomTripDetailModel;
 import model.CustomTripModel;
-import model.DestinasiModel; // Diperlukan untuk DestinasiModel.getNamaDestinasi()
+import java.util.Arrays;
 
 
+/**
+ * DAO (Data Access Object) for handling all database operations
+ * related to the 'custom_trip' and 'rincian_custom_trip' tables.
+ */
 public class CustomTripDAO {
 
-    private Connection conn;
+    private final Connection conn;
 
-    public CustomTripDAO() {
+    /**
+     * Constructor that gets a connection from the connection pool.
+     */
+    public CustomTripDAO(Connection conn) {
         this.conn = Koneksi.getConnection();
         if (this.conn == null) {
-            System.err.println("Koneksi ke database gagal didapatkan oleh CustomTripDAO.");
-        }
-    }
-
-    public CustomTripDAO(Connection conn) {
-        this.conn = conn;
-        if (this.conn == null) {
-            System.err.println("Koneksi yang diberikan ke CustomTripDAO adalah NULL.");
+            System.err.println("FATAL: CustomTripDAO failed to get a database connection.");
         }
     }
 
     /**
-     * Menyimpan objek CustomTripModel baru ke database, termasuk rincian detail trip.
-     * @param customTrip Objek CustomTripModel yang akan disimpan.
-     * @return ID dari custom trip yang baru dibuat, atau -1 jika gagal.
+     * Saves a new CustomTripModel to the database, including its detail items,
+     * within a single transaction.
+     * @param customTrip The CustomTripModel object to be saved.
+     * @return The auto-generated ID of the newly created custom trip, or -1 if failed.
      */
     public int save(CustomTripModel customTrip) {
         if (this.conn == null) {
-            System.err.println("Tidak ada koneksi database untuk operasi save CustomTrip.");
+            System.err.println("DAO Error: Database connection is null. Cannot save CustomTrip.");
             return -1;
         }
 
         int customTripId = -1;
-        // Query untuk menyimpan CustomTrip utama
-        String sqlCustomTrip = "INSERT INTO custom_trip (user_id, nama_trip, tanggal_mulai, tanggal_akhir, jumlah_peserta, status, total_harga, catatan_user, transport_mode, transport_details, accommodation_name, room_type, accommodation_notes, activities_summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        // Query untuk menyimpan rincian_custom_trip
+        String sqlCustomTrip = "INSERT INTO custom_trip (user_id, nama_trip, tanggal_mulai, tanggal_akhir, jumlah_peserta, status, total_harga, catatan_user) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         String sqlRincianCustomTrip = "INSERT INTO rincian_custom_trip (custom_trip_id, destinasi_id, tanggal_kunjungan, durasi_jam, urutan_kunjungan, harga_destinasi, biaya_transport) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try {
-            conn.setAutoCommit(false); // Mulai transaksi
+            // Start transaction
+            conn.setAutoCommit(false);
 
-            // 1. Simpan CustomTrip utama
+            // 1. Save the main CustomTrip record
             try (PreparedStatement ps = conn.prepareStatement(sqlCustomTrip, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setInt(1, customTrip.getUserId());
                 ps.setString(2, customTrip.getNamaTrip());
                 
-                if (customTrip.getTanggalMulai() != null) {
-                    ps.setDate(3, Date.valueOf(customTrip.getTanggalMulai()));
-                } else {
-                    ps.setNull(3, java.sql.Types.DATE);
-                }
-                if (customTrip.getTanggalAkhir() != null) {
-                    ps.setDate(4, Date.valueOf(customTrip.getTanggalAkhir()));
-                } else {
-                    ps.setNull(4, java.sql.Types.DATE);
-                }
+                if (customTrip.getTanggalMulai() != null) ps.setDate(3, Date.valueOf(customTrip.getTanggalMulai())); else ps.setNull(3, java.sql.Types.DATE);
+                if (customTrip.getTanggalAkhir() != null) ps.setDate(4, Date.valueOf(customTrip.getTanggalAkhir())); else ps.setNull(4, java.sql.Types.DATE);
                 
                 ps.setInt(5, customTrip.getJumlahPeserta());
                 ps.setString(6, customTrip.getStatus());
                 ps.setDouble(7, customTrip.getTotalHarga());
                 ps.setString(8, customTrip.getCatatanUser());
                 
-                // --- Tambahan untuk kolom baru di custom_trip ---
-                ps.setString(9, customTrip.getDetailedTransportMode());
-                ps.setString(10, customTrip.getDetailedTransportDetails());
-                ps.setString(11, customTrip.getDetailedAccommodationName());
-                ps.setString(12, customTrip.getDetailedRoomType());
-                ps.setString(13, customTrip.getDetailedAccommodationNotes());
-                ps.setString(14, customTrip.getDetailedActivities() != null ? String.join(";", customTrip.getDetailedActivities()) : ""); // Join activities
-                // --- End Tambahan ---
-
+                // Save new detailed columns
+//                ps.setString(9, customTrip.getDetailedTransportMode());
+//                ps.setString(10, customTrip.getDetailedTransportDetails());
+//                ps.setString(11, customTrip.getDetailedAccommodationName());
+//                ps.setString(12, customTrip.getDetailedRoomType());
+//                ps.setString(13, customTrip.getDetailedAccommodationNotes());
+//                ps.setString(14, customTrip.getDetailedActivities() != null ? String.join(";", customTrip.getDetailedActivities()) : "");
 
                 int affectedRows = ps.executeUpdate();
                 if (affectedRows > 0) {
                     try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
                         if (generatedKeys.next()) {
                             customTripId = generatedKeys.getInt(1);
-                            System.out.println("✅ Custom Trip berhasil disimpan dengan ID: " + customTripId);
+                            System.out.println("✅ DEBUG: Custom Trip saved successfully to 'custom_trip' table with ID: " + customTripId);
                         }
                     }
                 } else {
-                    System.err.println("❌ Tidak ada baris yang disisipkan ke database untuk Custom Trip utama.");
+                    System.err.println("❌ DAO Error: Failed to insert main Custom Trip record, no rows affected.");
                     conn.rollback();
                     return -1;
                 }
             }
 
-            // 2. Simpan rincian_custom_trip (detail destinasi)
+            // 2. Save the itinerary details (rincian_custom_trip)
             if (customTripId != -1 && customTrip.getDetailList() != null && !customTrip.getDetailList().isEmpty()) {
                 try (PreparedStatement psRincian = conn.prepareStatement(sqlRincianCustomTrip)) {
                     for (CustomTripDetailModel detail : customTrip.getDetailList()) {
-                        psRincian.setInt(1, customTripId); // Gunakan customTripId yang baru didapatkan
+                        psRincian.setInt(1, customTripId);
                         psRincian.setInt(2, detail.getDestinasiId());
-                        if (detail.getTanggalKunjungan() != null) {
-                            psRincian.setDate(3, Date.valueOf(detail.getTanggalKunjungan()));
-                        } else {
-                            psRincian.setNull(3, java.sql.Types.DATE);
-                        }
+                        if (detail.getTanggalKunjungan() != null) psRincian.setDate(3, Date.valueOf(detail.getTanggalKunjungan())); else psRincian.setNull(3, java.sql.Types.DATE);
                         psRincian.setInt(4, detail.getDurasiJam());
                         psRincian.setInt(5, detail.getUrutanKunjungan());
                         psRincian.setDouble(6, detail.getHargaDestinasi());
@@ -117,51 +102,48 @@ public class CustomTripDAO {
                         psRincian.addBatch();
                     }
                     psRincian.executeBatch();
-                    System.out.println("✅ Rincian Custom Trip berhasil disimpan untuk ID: " + customTripId);
+                    System.out.println("✅ DEBUG: Itinerary details saved successfully for Custom Trip ID: " + customTripId);
                 }
             } else {
-                System.out.println("DEBUG CustomTripDAO - Tidak ada rincian detail trip untuk disimpan.");
+                System.out.println("INFO: No itinerary details to save for Custom Trip ID: " + customTripId);
             }
 
+            // If everything is successful, commit the transaction
             conn.commit();
             return customTripId;
 
         } catch (SQLException e) {
+            System.err.println("❌ DAO Error: SQLException occurred during save operation. Rolling back transaction.");
+            e.printStackTrace();
             try {
                 if (conn != null) conn.rollback();
             } catch (SQLException ex) {
-                System.err.println("Error saat rollback transaksi save CustomTrip: " + ex.getMessage());
+                System.err.println("DAO Error: Failed to rollback transaction: " + ex.getMessage());
             }
-            System.err.println("❌ Error saat menyimpan Custom Trip atau rinciannya: " + e.getMessage());
-            e.printStackTrace();
         } finally {
             try {
                 if (conn != null) conn.setAutoCommit(true);
             } catch (SQLException ex) {
-                System.err.println("Error saat mengembalikan auto-commit (save CustomTrip): " + ex.getMessage());
+                System.err.println("DAO Error: Failed to restore auto-commit mode: " + ex.getMessage());
             }
         }
-        return -1;
+        return -1; // Return -1 if any error occurred
     }
 
     /**
-     * Mengambil objek CustomTripModel berdasarkan ID custom trip,
-     * termasuk detail destinasi dan rincian_custom_trip terkait.
+     * Retrieves a CustomTripModel object by its ID, complete with all its details.
+     * @param id The ID of the custom trip to retrieve.
+     * @return A complete CustomTripModel object, or null if not found or an error occurs.
      */
     public CustomTripModel getById(int id) {
         if (this.conn == null) {
-            System.err.println("Tidak ada koneksi database untuk operasi getById CustomTrip.");
+            System.err.println("DAO Error: Database connection is null. Cannot get CustomTrip by ID.");
             return null;
         }
 
         CustomTripModel customTrip = null;
-        // Query utama untuk CustomTrip, sekarang dengan kolom detail baru
-        String sqlCustomTrip = "SELECT ct.* FROM custom_trip ct WHERE ct.id = ?";
-        
-        // Query untuk detail destinasi terkait (dari rincian_custom_trip)
-        String sqlRincianCustomTrip = "SELECT rct.*, d.nama_destinasi FROM rincian_custom_trip rct " +
-                                      "JOIN destinasi d ON rct.destinasi_id = d.id " +
-                                      "WHERE rct.custom_trip_id = ? ORDER BY rct.urutan_kunjungan";
+        String sqlCustomTrip = "SELECT * FROM custom_trip WHERE id = ?";
+        String sqlRincian = "SELECT rct.*, d.nama_destinasi FROM rincian_custom_trip rct JOIN destinasi d ON rct.destinasi_id = d.id WHERE rct.custom_trip_id = ? ORDER BY rct.urutan_kunjungan";
 
         try (PreparedStatement psCustomTrip = conn.prepareStatement(sqlCustomTrip)) {
             psCustomTrip.setInt(1, id);
@@ -171,131 +153,106 @@ public class CustomTripDAO {
                     customTrip.setId(rs.getInt("id"));
                     customTrip.setUserId(rs.getInt("user_id"));
                     customTrip.setNamaTrip(rs.getString("nama_trip"));
-
-                    java.sql.Date sqlTanggalMulai = rs.getDate("tanggal_mulai");
-                    if (sqlTanggalMulai != null) {
-                        customTrip.setTanggalMulai(sqlTanggalMulai.toLocalDate());
-                    } else {
-                        customTrip.setTanggalMulai(null);
-                    }
-
-                    java.sql.Date sqlTanggalAkhir = rs.getDate("tanggal_akhir");
-                    if (sqlTanggalAkhir != null) {
-                        customTrip.setTanggalAkhir(sqlTanggalAkhir.toLocalDate());
-                    } else {
-                        customTrip.setTanggalAkhir(null);
-                    }
+                    
+                    Date tglMulai = rs.getDate("tanggal_mulai");
+                    if(tglMulai != null) customTrip.setTanggalMulai(tglMulai.toLocalDate());
+                    
+                    Date tglAkhir = rs.getDate("tanggal_akhir");
+                    if(tglAkhir != null) customTrip.setTanggalAkhir(tglAkhir.toLocalDate());
                     
                     customTrip.setJumlahPeserta(rs.getInt("jumlah_peserta"));
                     customTrip.setStatus(rs.getString("status"));
                     customTrip.setTotalHarga(rs.getDouble("total_harga"));
                     customTrip.setCatatanUser(rs.getString("catatan_user"));
-
-                    customTrip.setNamaKota(customTrip.getNamaTrip()); // Fallback for namaKota
-
-                    // --- Load Detailed Trip Components (Transport, Accommodation, Activities) ---
-                    customTrip.setDetailedTransportMode(rs.getString("transport_mode"));
-                    customTrip.setDetailedTransportDetails(rs.getString("transport_details"));
-                    customTrip.setDetailedAccommodationName(rs.getString("accommodation_name"));
-                    customTrip.setDetailedRoomType(rs.getString("room_type"));
-                    customTrip.setDetailedAccommodationNotes(rs.getString("accommodation_notes"));
                     
-                    // Activities are stored as a single string, parse it back to List<String>
-                    String activitiesSummary = rs.getString("activities_summary");
-                    if (activitiesSummary != null && !activitiesSummary.isEmpty()) {
-                        customTrip.setDetailedActivities(List.of(activitiesSummary.split(";"))); // Split by semicolon
-                    } else {
-                        customTrip.setDetailedActivities(new ArrayList<>());
-                    }
+                    // --- FIXED: Load all detailed fields from custom_trip table ---
+                    // customTrip.setDetailedTransportMode(rs.getString("transport_mode"));
+                    // customTrip.setDetailedTransportDetails(rs.getString("transport_details"));
+                    // customTrip.setDetailedAccommodationName(rs.getString("accommodation_name"));
+                    // customTrip.setDetailedRoomType(rs.getString("room_type"));
+                    // customTrip.setDetailedAccommodationNotes(rs.getString("accommodation_notes"));
+                    
+                    // String activitiesSummary = rs.getString("activities_summary");
+                    // if (activitiesSummary != null && !activitiesSummary.isEmpty()) {
+                    //     customTrip.setDetailedActivities(new ArrayList<>(Arrays.asList(activitiesSummary.split(";"))));
+                    // } else {
+                    //     customTrip.setDetailedActivities(new ArrayList<>());
+                    // }
 
-
-                    // --- Load Rincian Custom Trip Details (Destinations) ---
+                    // --- Load associated itinerary details ---
                     List<CustomTripDetailModel> detailList = new ArrayList<>();
-                    List<String> detailedDestinations = new ArrayList<>(); // Also for the list of destination names
-                    try (PreparedStatement psRincian = conn.prepareStatement(sqlRincianCustomTrip)) {
+                    try (PreparedStatement psRincian = conn.prepareStatement(sqlRincian)) {
                         psRincian.setInt(1, id);
                         try (ResultSet rsRincian = psRincian.executeQuery()) {
                             while (rsRincian.next()) {
                                 CustomTripDetailModel detail = new CustomTripDetailModel();
                                 detail.setId(rsRincian.getInt("id"));
-                                detail.setCustomTripId(rsRincian.getInt("custom_trip_id")); // Set custom_trip_id
+                                detail.setCustomTripId(rsRincian.getInt("custom_trip_id"));
                                 detail.setDestinasiId(rsRincian.getInt("destinasi_id"));
-                                
-                                java.sql.Date sqlTglKunjungan = rsRincian.getDate("tanggal_kunjungan");
-                                if (sqlTglKunjungan != null) detail.setTanggalKunjungan(sqlTglKunjungan.toLocalDate());
-                                
+                                Date tglKunjungan = rsRincian.getDate("tanggal_kunjungan");
+                                if(tglKunjungan != null) detail.setTanggalKunjungan(tglKunjungan.toLocalDate());
                                 detail.setDurasiJam(rsRincian.getInt("durasi_jam"));
                                 detail.setUrutanKunjungan(rsRincian.getInt("urutan_kunjungan"));
                                 detail.setHargaDestinasi(rsRincian.getDouble("harga_destinasi"));
                                 detail.setBiayaTransport(rsRincian.getDouble("biaya_transport"));
-
                                 detailList.add(detail);
-                                detailedDestinations.add(rsRincian.getString("nama_destinasi")); // Get destination name
                             }
                         }
                     }
                     customTrip.setDetailList(detailList);
-                    customTrip.setDetailedDestinations(detailedDestinations); // Set list of destination names
-
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error saat mengambil custom trip dengan ID " + id + ": " + e.getMessage());
+            System.err.println("❌ DAO Error: Failed to retrieve Custom Trip with ID " + id + ": " + e.getMessage());
             e.printStackTrace();
         }
         return customTrip;
     }
 
     /**
-     * Menghapus custom trip dari database.
-     * Termasuk menghapus rincian_custom_trip terkait.
+     * Deletes a custom trip and its associated details from the database within a transaction.
+     * @param id The ID of the custom trip to delete.
+     * @return true if deletion was successful, false otherwise.
      */
     public boolean deleteCustomTrip(int id) {
         if (this.conn == null) {
-            System.err.println("Tidak ada koneksi database untuk operasi delete CustomTrip.");
+            System.err.println("DAO Error: Database connection is null. Cannot delete CustomTrip.");
             return false;
         }
-        try {
-            conn.setAutoCommit(false); // Mulai transaksi
 
-            // 1. Hapus rincian_custom_trip terkait
-            String sqlDeleteRincian = "DELETE FROM rincian_custom_trip WHERE custom_trip_id = ?";
+        String sqlDeleteRincian = "DELETE FROM rincian_custom_trip WHERE custom_trip_id = ?";
+        String sqlDeleteCustomTrip = "DELETE FROM custom_trip WHERE id = ?";
+        
+        try {
+            conn.setAutoCommit(false);
+
+            // 1. Delete details first to avoid foreign key constraint violations
             try(PreparedStatement psRincian = conn.prepareStatement(sqlDeleteRincian)) {
                 psRincian.setInt(1, id);
                 psRincian.executeUpdate();
-                System.out.println("DEBUG CustomTripDAO - Dihapus rincian_custom_trip untuk custom trip ID: " + id);
             }
 
-            // 2. Hapus custom_trip itu sendiri
-            String sqlDeleteCustomTrip = "DELETE FROM custom_trip WHERE id = ?";
+            // 2. Delete the main custom trip record
             try (PreparedStatement ps = conn.prepareStatement(sqlDeleteCustomTrip)) {
                 ps.setInt(1, id);
                 int affectedRows = ps.executeUpdate();
                 if (affectedRows > 0) {
                     conn.commit();
-                    System.out.println("✅ Custom Trip ID: " + id + " berhasil dihapus.");
+                    System.out.println("✅ DEBUG: Custom Trip ID: " + id + " deleted successfully.");
                     return true;
                 } else {
+                    System.err.println("❌ DAO Warning: Custom Trip ID: " + id + " not found or could not be deleted. Rolling back.");
                     conn.rollback();
-                    System.err.println("❌ Custom Trip ID: " + id + " tidak ditemukan atau tidak dapat dihapus.");
                     return false;
                 }
             }
         } catch (SQLException e) {
-            try {
-                if (conn != null) conn.rollback();
-            } catch (SQLException ex) {
-                System.err.println("Error saat rollback delete CustomTrip: " + ex.getMessage());
-            }
-            System.err.println("❌ Error saat menghapus Custom Trip: " + e.getMessage());
+            System.err.println("❌ DAO Error: Failed to delete Custom Trip. Rolling back. " + e.getMessage());
+            try { if (conn != null) conn.rollback(); } catch (SQLException ex) { /* ignored */ }
             e.printStackTrace();
             return false;
         } finally {
-            try {
-                if (conn != null) conn.setAutoCommit(true);
-            } catch (SQLException ex) {
-                System.err.println("Error saat mengembalikan auto-commit (delete CustomTrip): " + ex.getMessage());
-            }
+            try { if (conn != null) conn.setAutoCommit(true); } catch (SQLException ex) { /* ignored */ }
         }
     }
 }

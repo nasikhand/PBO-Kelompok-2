@@ -46,6 +46,8 @@ public class PanelParticipantsStep extends JPanel {
     private JPanel panelParticipantsInput;
     private JLabel lblJumlahPeserta;
     private JTextField txtJumlahPeserta;
+    private JPanel dynamicNamesPanel; 
+    private List<JTextField> participantNameFields;
 
     private JPanel panelTripSummary;
     private JLabel lblSummaryDestinationsDisplay;
@@ -176,8 +178,17 @@ public class PanelParticipantsStep extends JPanel {
         gbcParticipants.gridx = 1; gbcParticipants.gridy = 0; gbcParticipants.weightx = 1.0;
         panelParticipantsInput.add(txtJumlahPeserta, gbcParticipants);
         
-        gbcParticipants.gridx = 0; gbcParticipants.gridy = 1; gbcParticipants.gridwidth = 2; gbcParticipants.weighty = 1.0;
-        panelParticipantsInput.add(new JLabel(), gbcParticipants); // Filler for vertical space
+        gbcParticipants.gridx = 0;
+        gbcParticipants.gridy = 1; // The next row
+        gbcParticipants.gridwidth = 2; // Span both columns
+        gbcParticipants.weighty = 1.0; // Allow this panel to take up vertical space
+        gbcParticipants.fill = GridBagConstraints.BOTH; // Fill the available space
+
+        dynamicNamesPanel = new JPanel();
+        dynamicNamesPanel.setLayout(new BoxLayout(dynamicNamesPanel, BoxLayout.Y_AXIS));
+        dynamicNamesPanel.setOpaque(false); // Use the parent panel's background
+
+        panelParticipantsInput.add(dynamicNamesPanel, gbcParticipants);
 
         panelLeftContent.add(panelParticipantsInput);
         panelLeftContent.add(Box.createVerticalGlue());
@@ -436,6 +447,42 @@ public class PanelParticipantsStep extends JPanel {
         updateParticipantsRelatedData();
     }
 
+    private void updateParticipantNameFields(int count) {
+        // Ensure the list to hold the text fields is ready
+        if (participantNameFields == null) {
+            participantNameFields = new ArrayList<>();
+        }
+        
+        // Clear any existing components
+        dynamicNamesPanel.removeAll();
+        participantNameFields.clear();
+
+        if (count > 0) {
+            // Create a label that acts as a sub-header
+            JLabel namesHeader = new JLabel("Nama Peserta");
+            namesHeader.setFont(AppTheme.FONT_LABEL_FORM_BOLD);
+            namesHeader.setForeground(AppTheme.TEXT_DARK);
+            namesHeader.setBorder(new EmptyBorder(15, 0, 5, 0)); // Add some space above
+            dynamicNamesPanel.add(namesHeader);
+        }
+        
+        // Loop to create the required number of fields
+        for (int i = 0; i < count; i++) {
+            // Create a styled text field for the participant's name
+            JTextField nameField = new JTextField(20);
+            styleInputField(nameField, "Nama Peserta " + (i + 1)); // Use our existing styling method
+            
+            participantNameFields.add(nameField); // Add to our list for later access
+            
+            dynamicNamesPanel.add(nameField);
+            dynamicNamesPanel.add(Box.createRigidArea(new Dimension(0, 8))); // Add a small gap
+        }
+
+        // Refresh the UI to show the new components
+        dynamicNamesPanel.revalidate();
+        dynamicNamesPanel.repaint();
+    }
+
     private void updateBuildStepLabels(int activeStep) {
         JLabel[] stepLabels = {
             lblStep1Destinasi,
@@ -507,24 +554,28 @@ public class PanelParticipantsStep extends JPanel {
 
     private void updateParticipantsRelatedData() {
         int parsedParticipants = 0;
-        try {
-            if (!txtJumlahPeserta.getText().trim().isEmpty()) {
-                parsedParticipants = Integer.parseInt(txtJumlahPeserta.getText().trim());
-                if (parsedParticipants < 1) {
-                    parsedParticipants = 1;
-                    txtJumlahPeserta.setText("1");
+        String text = txtJumlahPeserta.getText().trim();
+
+        // Check if the field is not empty and not the placeholder
+        if (!text.isEmpty() && !text.equals(PLACEHOLDER_TEXT_PARTICIPANTS)) {
+            try {
+                parsedParticipants = Integer.parseInt(text);
+                if (parsedParticipants < 0) { // Should not be negative
+                    parsedParticipants = 0;
                 }
+            } catch (NumberFormatException e) {
+                // Handle cases where user types non-numeric text
+                parsedParticipants = 0; 
             }
-        } catch (NumberFormatException e) {
-            parsedParticipants = 0;
         }
+        
         numberOfParticipants = parsedParticipants;
 
         lblSummaryParticipantsDisplay.setText("Jumlah Peserta: " + numberOfParticipants + " Orang");
-
         updateEstimatedCost();
-
         btnNextStep.setEnabled(numberOfParticipants > 0);
+
+        updateParticipantNameFields(numberOfParticipants);
     }
 
     private void updateEstimatedCost() {
@@ -571,6 +622,18 @@ public class PanelParticipantsStep extends JPanel {
             JOptionPane.showMessageDialog(this, "Masukkan jumlah peserta (minimal 1) untuk melanjutkan.", "Validasi Peserta", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
+        // --- NEW: Collect the names from the fields ---
+        List<String> participantNames = new ArrayList<>();
+        for (JTextField nameField : participantNameFields) {
+            String name = nameField.getText().trim();
+            if (name.isEmpty() || name.startsWith("Nama Peserta")) {
+                // You can choose to show an error or just add a placeholder
+                participantNames.add("Peserta " + (participantNames.size() + 1));
+            } else {
+                participantNames.add(name);
+            }
+        }
         
         double currentTotalEstimatedCost = 0.0;
         try {
@@ -581,18 +644,21 @@ public class PanelParticipantsStep extends JPanel {
             currentTotalEstimatedCost = currentInitialEstimatedCost;
         }
 
+        // --- MODIFIED: Call the new showPanel method ---
         if (mainAppFrame != null) {
+            // NOTE: The signature of this showPanel call has changed.
+            // We now pass 'participantNames' instead of an empty list for 'activities'.
             mainAppFrame.showPanel(MainAppFrame.PANEL_FINAL_STEP,
-                                   currentDestinations,
-                                   itineraryDetails,
-                                   currentTransportMode,
-                                   currentTransportDetails,
-                                   currentAccommodationName,
-                                   currentRoomType,
-                                   currentAccommodationNotes,
-                                   new ArrayList<>(), // Activities are not collected in this flow. Pass empty list.
-                                   currentTotalEstimatedCost,
-                                   numberOfParticipants);
+                    currentDestinations,
+                    itineraryDetails,
+                    currentTransportMode,
+                    currentTransportDetails,
+                    currentAccommodationName,
+                    currentRoomType,
+                    currentAccommodationNotes,
+                    participantNames, // Pass the collected names
+                    currentTotalEstimatedCost,
+                    numberOfParticipants);
         } else {
             System.err.println("MainAppFrame reference is null in PanelParticipantsStep (Next).");
         }
