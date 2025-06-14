@@ -1,7 +1,9 @@
 package managementtrevel.Payment;
 
 import Asset.AppTheme;
+import controller.ReservasiController;
 import db.Koneksi;
+import db.dao.CustomTripDAO;
 import db.dao.KotaDAO;
 import db.dao.PaketPerjalananDAO;
 import db.dao.PembayaranDAO;
@@ -13,8 +15,10 @@ import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.Connection;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -26,6 +30,7 @@ import model.PenumpangModel;
 import model.ReservasiModel;
 import model.Session;
 import java.util.List;
+import java.util.Locale;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -86,6 +91,10 @@ public class PanelPayment extends JPanel {
 
     // Mapping for UI payment method names to DB ENUM values
     private final Map<String, String> paymentMethodMap;
+    private CustomTripDAO customTripDAO;
+    private PenumpangDAO penumpangDAO;
+    private PembayaranDAO pembayaranDAO;
+    private ReservasiController reservasiController;
 
     public PanelPayment(MainAppFrame mainAppFrame, int reservasiId, String namaKontak, String emailKontak, String teleponKontak, List<String> penumpangList) {
         this.mainAppFrame = mainAppFrame;
@@ -122,10 +131,14 @@ public class PanelPayment extends JPanel {
         }
         this.reservasiDAO = new ReservasiDAO(conn); 
         this.paketPerjalananDAO = new PaketPerjalananDAO(conn); 
+        this.customTripDAO = new CustomTripDAO(conn); 
+        this.penumpangDAO = new PenumpangDAO(conn); 
+        this.pembayaranDAO = new PembayaranDAO(conn); 
         this.kotaDAO = new KotaDAO(conn); 
-        // if (customTripDAO == null) this.customTripDAO = new CustomTripDAO(conn); 
+        this.reservasiController = new ReservasiController(); // Controller inits its own DAOs (so this is fine)
 
-        // Load the existing reservation model using the provided reservasiId
+        // Load the current reservation model from DB
+        // currentReservasi harus dimuat SEBELUM UI diinisialisasi agar datanya ada saat UI dibangun
         this.currentReservasi = reservasiDAO.getReservasiById(this.reservasiId);
         
         // Handle case where currentReservasi is still null after loading (e.g. invalid ID)
@@ -459,7 +472,7 @@ public class PanelPayment extends JPanel {
         }
     }
 
-    private void styleFormLabel(JLabel label, String defaultText) {
+     private void styleFormLabel(JLabel label, String defaultText) {
         if (label != null) {
             if (label.getText() != null && label.getText().matches("jLabel\\d+")) {
                 label.setText(defaultText);
@@ -621,12 +634,22 @@ public class PanelPayment extends JPanel {
                     updateHargaDasarDanPajak(0);
                 }
             } else if ("custom_trip".equals(currentReservasi.getTripType())) {
-                // Uncomment and implement when CustomTripDAO is ready
-                // this.customTripDipesan = customTripDAO.getById(currentReservasi.getTripId());
-                // if (this.customTripDipesan != null) { /* populate labels and calculate price */ }
-                System.err.println("LOGIKA CUSTOM TRIP BELUM DIIMPLEMENTASIKAN SEPENUHNYA DI PANEL PAYMENT.");
-                if (lblRingkasanNamaTrip != null) lblRingkasanNamaTrip.setText("Custom Trip - Detail Belum Dimuat");
-                updateHargaDasarDanPajak(0); // Set actual custom trip price
+                this.customTripDipesan = customTripDAO.getById(currentReservasi.getTripId()); 
+                if (this.customTripDipesan != null) {
+                    lblRingkasanNamaTrip.setText(customTripDipesan.getNamaTrip());
+                    lblRingkasanKota.setText("Kota Tujuan: " + customTripDipesan.getNamaKota());
+                    // Format tanggal custom trip
+                    lblRingkasanTanggalTrip.setText("Tanggal: " + customTripDipesan.getTanggalMulai() + " s/d " + customTripDipesan.getTanggalAkhir());
+                    
+                    lblRingkasanDurasi.setText("Durasi: " + customTripDipesan.getDurasi() + " Hari");
+                    
+                    updateHargaDasarDanPajak(customTripDipesan.getTotalHarga());
+  
+                } else {
+                    System.err.println("Custom Trip dengan Id " + currentReservasi.getTripId() + " tidak ditemukan.");
+                    if (lblRingkasanNamaTrip != null) lblRingkasanNamaTrip.setText("Data Paket Tidak Ditemukan");
+                    updateHargaDasarDanPajak(0);
+                }
             } else {
                 System.err.println("Jenis Trip Tidak Dikenal: " + currentReservasi.getTripType());
                 if (lblRingkasanNamaTrip != null) lblRingkasanNamaTrip.setText("Jenis Trip Tidak Dikenal");

@@ -68,4 +68,8 @@ public class CustomTripDetailModel {
     public double getBiayaTransport() {
         return biayaTransport;
     }
+
+    public void setCustomTripId(int aInt) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }

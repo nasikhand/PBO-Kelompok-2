@@ -282,7 +282,7 @@ public class PanelOrderHistory extends JPanel {
         lblNamaTrip.setText(namaTrip);
         lblDetail1.setText(detailText);
         lblHarga.setText("Harga: " + hargaText);
-        lblTanggalPemesanan.setText("Tanggal Pemesanan: " + (reservasi.getTanggalReservasi() != null ? reservasi.getTanggalReservasi().format(DateTimeFormatter.ofPattern("dd MMMMвався")) : "N/A"));
+        lblTanggalPemesanan.setText("Tanggal Pemesanan: " + (reservasi.getTanggalReservasi() != null ? reservasi.getTanggalReservasi().format(DateTimeFormatter.ofPattern("dd MM YYYY")) : "N/A"));
         lblStatus.setText("Status: " + reservasi.getStatus()); // Display actual status
 
         cardPanel.add(detailPanel, BorderLayout.CENTER);
