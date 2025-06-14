@@ -106,12 +106,12 @@ public class PanelBeranda extends JPanel {
         mainContentPanel.add(sectionPerjalananSebelumnya);
         mainContentPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        JPanel sectionPenawaranSpesial = createSectionPanel("Penawaran Spesial");
-        panelPenawaranSpesialContentHolder = new JPanel();
-        panelPenawaranSpesialContentHolder.setOpaque(false);
-        sectionPenawaranSpesial.add(panelPenawaranSpesialContentHolder, BorderLayout.CENTER);
-        mainContentPanel.add(sectionPenawaranSpesial);
-        mainContentPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        // JPanel sectionPenawaranSpesial = createSectionPanel("Penawaran Spesial");
+        // panelPenawaranSpesialContentHolder = new JPanel();
+        // panelPenawaranSpesialContentHolder.setOpaque(false);
+        // sectionPenawaranSpesial.add(panelPenawaranSpesialContentHolder, BorderLayout.CENTER);
+        // mainContentPanel.add(sectionPenawaranSpesial);
+        // mainContentPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
         JPanel sectionDestinasiPopuler = createSectionPanel("Destinasi Populer");
         panelDestinasiPopulerContentHolder = new JPanel();
@@ -264,7 +264,7 @@ public class PanelBeranda extends JPanel {
     
     private void loadDynamicContent() {
         loadPerjalananSebelumnya();
-        loadPenawaranSpesial();
+//        loadPenawaranSpesial();
         loadDestinasiPopuler();
     }
 
@@ -307,31 +307,31 @@ public class PanelBeranda extends JPanel {
 
 
 
-    private void loadPenawaranSpesial() {
-        panelPenawaranSpesialContentHolder.removeAll();
-        panelPenawaranSpesialContentHolder.setLayout(new GridLayout(1, 3, 15, 15)); // misal 3 card max
+    // private void loadPenawaranSpesial() {
+    //     panelPenawaranSpesialContentHolder.removeAll();
+    //     panelPenawaranSpesialContentHolder.setLayout(new GridLayout(1, 3, 15, 15)); // misal 3 card max
 
-        PenawaranDAO penawaranDAO = new PenawaranDAO(Koneksi.getConnection());
-        List<PenawaranModel> penawaranList = penawaranDAO.getPenawaranSpesial();
+    //     PenawaranDAO penawaranDAO = new PenawaranDAO(Koneksi.getConnection());
+    //     List<PenawaranModel> penawaranList = penawaranDAO.getPenawaranSpesial();
 
-        if (penawaranList == null || penawaranList.isEmpty()) {
-            panelPenawaranSpesialContentHolder.setLayout(new BorderLayout());
-            JLabel noDataLabel = new JLabel("Penawaran spesial menarik akan segera tersedia!");
-            noDataLabel.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
-            noDataLabel.setForeground(AppTheme.TEXT_SECONDARY_DARK);
-            noDataLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            panelPenawaranSpesialContentHolder.add(noDataLabel, BorderLayout.CENTER);
-        } else {
-            int maxToShow = Math.min(3, penawaranList.size());
-            for (int i = 0; i < maxToShow; i++) {
-                PenawaranModel p = penawaranList.get(i);
-                panelPenawaranSpesialContentHolder.add(createPenawaranCard(p));
-            }
-        }
+    //     if (penawaranList == null || penawaranList.isEmpty()) {
+    //         panelPenawaranSpesialContentHolder.setLayout(new BorderLayout());
+    //         JLabel noDataLabel = new JLabel("Penawaran spesial menarik akan segera tersedia!");
+    //         noDataLabel.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
+    //         noDataLabel.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+    //         noDataLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    //         panelPenawaranSpesialContentHolder.add(noDataLabel, BorderLayout.CENTER);
+    //     } else {
+    //         int maxToShow = Math.min(3, penawaranList.size());
+    //        for (int i = 0; i < maxToShow; i++) {
+    //            PenawaranModel p = penawaranList.get(i);
+    //            panelPenawaranSpesialContentHolder.add(createPenawaranCard(p));
+    //        }
+    //     }
 
-        panelPenawaranSpesialContentHolder.revalidate();
-        panelPenawaranSpesialContentHolder.repaint();
-    }
+    //     panelPenawaranSpesialContentHolder.revalidate();
+    //     panelPenawaranSpesialContentHolder.repaint();
+    // }
 
     private void loadDestinasiPopuler() {
         panelDestinasiPopulerContentHolder.removeAll();
@@ -372,28 +372,28 @@ public class PanelBeranda extends JPanel {
         return kotaDAO.getNamaKotaById(kotaId); 
     }
 
-    private JPanel createPenawaranCard(PenawaranModel penawaran) {
-        JPanel card = new JPanel();
-        card.setLayout(new BorderLayout());
-        card.setBorder(BorderFactory.createLineBorder(Color.GRAY));
-        card.setBackground(Color.WHITE);
+    // private JPanel createPenawaranCard(PenawaranModel penawaran) {
+    //     JPanel card = new JPanel();
+    //     card.setLayout(new BorderLayout());
+    //     card.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+    //     card.setBackground(Color.WHITE);
 
-        JLabel titleLabel = new JLabel(penawaran.getNama());
-        titleLabel.setFont(AppTheme.FONT_PRIMARY_MEDIUM);
-        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        JTextArea deskripsiArea = new JTextArea(penawaran.getDeskripsi());
-        deskripsiArea.setLineWrap(true);
-        deskripsiArea.setWrapStyleWord(true);
-        deskripsiArea.setEditable(false);
-        deskripsiArea.setBackground(null);
-        deskripsiArea.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
-        deskripsiArea.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+    //     JLabel titleLabel = new JLabel(penawaran.getNama());
+    //     titleLabel.setFont(AppTheme.FONT_PRIMARY_MEDIUM);
+    //     titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    //     JTextArea deskripsiArea = new JTextArea(penawaran.getDeskripsi());
+    //     deskripsiArea.setLineWrap(true);
+    //     deskripsiArea.setWrapStyleWord(true);
+    //     deskripsiArea.setEditable(false);
+    //     deskripsiArea.setBackground(null);
+    //     deskripsiArea.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
+    //     deskripsiArea.setForeground(AppTheme.TEXT_SECONDARY_DARK);
 
-        card.add(titleLabel, BorderLayout.NORTH);
-        card.add(deskripsiArea, BorderLayout.CENTER);
+    //     card.add(titleLabel, BorderLayout.NORTH);
+    //     card.add(deskripsiArea, BorderLayout.CENTER);
 
-        return card;
-    }
+    //     return card;
+    // }
 
     private JPanel createTripPackageCard(PaketPerjalananModel paket, boolean isPreviousTrip) {
         JPanel cardPanel = new JPanel(new BorderLayout(5, 8)); 
