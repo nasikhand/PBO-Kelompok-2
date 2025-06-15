@@ -9,6 +9,9 @@ public class UserModel {
     private String alamat;
     private String gambar;
 
+    public UserModel() {
+    }
+
     // Constructor untuk registrasi (tanpa ID, telepon, alamat)
     public UserModel(String namaLengkap, String email, String password) {
         this.namaLengkap = namaLengkap;

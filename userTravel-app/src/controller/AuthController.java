@@ -9,12 +9,14 @@ public class AuthController {
 
     private final String DEFAULT_EMAIL = "123";
     private final String DEFAULT_PASSWORD = "123";
-
+    private final String DEFAULT_NO_TELP = "123";
+    private final String DEFAULT_ALAMAT = "surabaya";
+    
     public UserModel login(String email, String password) {
 
         // cek default login dulu
         if (email.equals(DEFAULT_EMAIL) && password.equals(DEFAULT_PASSWORD)) {
-            UserModel defaultUser = new UserModel(0, "Admin Default", DEFAULT_EMAIL, DEFAULT_PASSWORD);
+            UserModel defaultUser = new UserModel(0, "Admin Default", DEFAULT_EMAIL, DEFAULT_PASSWORD, DEFAULT_NO_TELP, DEFAULT_ALAMAT, null);
             return defaultUser;
         }
 
