@@ -179,6 +179,15 @@ public class CustomTripDAO {
                         }
                     }
                     customTrip.setDetailList(detailList);
+                     if (!detailList.isEmpty()) {
+                        // Ambil destinasi pertama dari itinerary
+                        int firstDestinationId = detailList.get(0).getDestinasiId();
+                        
+                        // Gunakan KotaDAO untuk mendapatkan nama kota berdasarkan destinasi
+                        KotaDAO kotaDAO = new KotaDAO(this.conn);
+                        String namaKota = kotaDAO.getNamaKotaByDestinasiId(firstDestinationId);
+                        customTrip.setNamaKota(namaKota);
+                    }
                 }
             }
         } catch (SQLException e) {

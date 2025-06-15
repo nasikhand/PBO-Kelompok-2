@@ -122,34 +122,48 @@ public class MainAppFrame extends JFrame {
     }
 
     // --- Overload showPanel methods - DIUPDATE UNTUK ALUR BARU ---
+    
 
     public void showPanel(String panelName) {
-        if (panelName.equals(PANEL_USER_PROFILE)) {
+        
+        // --- FIXED: Logika untuk membuat ulang panel secara paksa ---
+        if (panelName.equals(PANEL_BERANDA) || 
+            panelName.equals(PANEL_PESANAN_SAYA) || 
+            panelName.equals(PANEL_RIWAYAT_PESANAN) ||
+            panelName.equals(PANEL_DESTINATION_STEP)) {
+            
+            removePanelIfExists(panelName); // Selalu hapus instance lama
+            
+            System.out.println("INFO: Membuat instance baru untuk panel: " + panelName);
+
+            // Buat instance baru berdasarkan nama panel
+            switch (panelName) {
+                case PANEL_BERANDA:
+                    mainPanelContainer.add(new PanelBeranda(this), panelName);
+                    break;
+                case PANEL_PESANAN_SAYA:
+                    mainPanelContainer.add(new PanelUserOrder(this), panelName);
+                    break;
+                case PANEL_RIWAYAT_PESANAN:
+                    mainPanelContainer.add(new PanelOrderHistory(this), panelName);
+                    break;
+                case PANEL_DESTINATION_STEP:
+                     mainPanelContainer.add(new PanelDestinationStep(this), panelName);
+                    break;
+            }
+        } else if (panelName.equals(PANEL_USER_PROFILE)) {
+            // Panel profil tidak perlu dibuat ulang, cukup update datanya
             Component userProfilCard = getPanelByName(PANEL_USER_PROFILE);
-            if (userProfilCard instanceof PanelUserProfil) {
+            if (userProfilCard instanceof PanelUserProfil) { 
                 ((PanelUserProfil) userProfilCard).setProfileData(); 
             }
-        } else if (panelName.equals(PANEL_PESANAN_SAYA)) {
-            removePanelIfExists(panelName);
-            PanelUserOrder panel = new PanelUserOrder(this); 
-            panel.setName(panelName);
-            mainPanelContainer.add(panel, panelName);
-        } else if (panelName.equals(PANEL_RIWAYAT_PESANAN)) {
-            removePanelIfExists(panelName);
-            PanelOrderHistory panel = new PanelOrderHistory(this); 
-            panel.setName(panelName);
-            mainPanelContainer.add(panel, panelName);
-        } else if (panelName.equals(PANEL_DESTINATION_STEP)) {
-            removePanelIfExists(panelName);
-            PanelDestinationStep panel = new PanelDestinationStep(this);
-            panel.setName(panelName);
-            mainPanelContainer.add(panel, panelName);
         }
         
         cardLayout.show(mainPanelContainer, panelName);
         System.out.println("Menampilkan panel: " + panelName);
+        
         if (sidebarPanel != null && sidebarPanel.isExpandedPublic()) {
-           sidebarPanel.collapsePublic();
+            sidebarPanel.collapsePublic();
         }
     }
 

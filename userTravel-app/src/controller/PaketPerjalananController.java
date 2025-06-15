@@ -81,9 +81,19 @@ public class PaketPerjalananController {
      * @param namaKota Nama kota yang dicari.
      * @return List PaketPerjalananModel yang cocok.
      */
-     public List<PaketPerjalananModel> cariPaketByNamaKota(String namaKota) {
-        // Panggil metode DAO yang baru yang sudah otomatis memfilter tanggal
-        return paketDao.searchAvailablePaket(namaKota);
+    public List<PaketPerjalananModel> cariPaketByNamaDanTanggal(String namaKota, String tanggalStr) {
+        LocalDate searchDate;
+        try {
+            // Mengubah String tanggal (format yyyy-MM-dd) menjadi objek LocalDate
+            searchDate = LocalDate.parse(tanggalStr);
+        } catch (DateTimeParseException e) {
+            System.err.println("Format tanggal tidak valid: " + tanggalStr + ". Menggunakan tanggal hari ini sebagai fallback.");
+            // Jika format tanggal salah, gunakan tanggal hari ini sebagai cadangan
+            searchDate = LocalDate.now();
+        }
+        
+        // Panggil metode DAO baru dengan parameter tanggal
+        return paketDao.searchAvailablePaket(namaKota, searchDate);
     }
 
 

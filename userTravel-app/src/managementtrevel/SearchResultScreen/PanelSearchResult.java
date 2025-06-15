@@ -13,6 +13,8 @@ import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator; 
 import java.util.List;
@@ -79,14 +81,7 @@ public class PanelSearchResult extends JPanel {
         System.out.println("Tanggal: " + this.tanggalKeberangkatan);
     }
 
-    // getter 
-    public String getNamaKotaAtauDestinasi() {
-        return namaKotaAtauDestinasi;
-    }
-
-    public String getTanggalKeberangkatan() {
-        return tanggalKeberangkatan;
-    }
+    
     private void initializeUIProgrammatically() {
         this.setLayout(new BorderLayout(15, 0)); 
         this.setBorder(new EmptyBorder(15, 15, 15, 15)); 
@@ -133,7 +128,16 @@ public class PanelSearchResult extends JPanel {
         JPanel resultsHeaderPanel = new JPanel(new BorderLayout());
         resultsHeaderPanel.setOpaque(false);
         btn_back = new JButton("< Kembali ke Beranda");
-        jLabel4 = new JLabel("Hasil Pencarian untuk: " + this.namaKotaAtauDestinasi); 
+
+        String tanggalFormatted = "";
+        try {
+            LocalDate tgl = LocalDate.parse(this.tanggalKeberangkatan);
+            tanggalFormatted = tgl.format(DateTimeFormatter.ofPattern("dd MMMM yyyy"));
+        } catch (Exception e) {
+            tanggalFormatted = this.tanggalKeberangkatan; // fallback jika format salah
+        }
+        jLabel4 = new JLabel("Hasil Pencarian untuk: " + this.namaKotaAtauDestinasi + " (mulai " + tanggalFormatted + ")"); 
+    
         resultsHeaderPanel.add(btn_back, BorderLayout.WEST);
         resultsHeaderPanel.add(jLabel4, BorderLayout.CENTER); 
         panelResultsContainer.add(resultsHeaderPanel, BorderLayout.NORTH);
@@ -219,7 +223,7 @@ public class PanelSearchResult extends JPanel {
         }
         System.out.println("[PanelSearchResult] Mencari paket untuk kota: " + this.namaKotaAtauDestinasi);
         // Menggunakan controller untuk mencari berdasarkan nama kota
-        this.allFetchedPackages = paketController.cariPaketByNamaKota(this.namaKotaAtauDestinasi);
+        this.allFetchedPackages = paketController.cariPaketByNamaDanTanggal(this.namaKotaAtauDestinasi, this.tanggalKeberangkatan);
         
         // Tambahkan logging untuk melihat apa yang dikembalikan oleh controller
         if (this.allFetchedPackages == null) {
@@ -540,14 +544,6 @@ public class PanelSearchResult extends JPanel {
         System.out.println("Filter direset");
         fetchAndDisplayInitialResults(); 
     }       
-
-    private void btn_sebelumActionPerformed(java.awt.event.ActionEvent evt) {                                            
-        JOptionPane.showMessageDialog(this, "Tombol Sebelumnya diklik!", "Info", JOptionPane.INFORMATION_MESSAGE);
-    }                                           
-
-    private void btn_selanjutnyaActionPerformed(java.awt.event.ActionEvent evt) {                                            
-        JOptionPane.showMessageDialog(this, "Tombol Selanjutnya diklik!", "Info", JOptionPane.INFORMATION_MESSAGE);
-    }  
 
     private void btn_backActionPerformed(java.awt.event.ActionEvent evt) {                                         
         if (mainAppFrame != null) {

@@ -10,6 +10,7 @@ import db.dao.KotaDAO;
 import db.dao.PaketPerjalananDAO;
 import db.dao.ReservasiDAO;
 import managementtrevel.MainAppFrame;
+import model.CustomTripModel;
 import model.KotaModel; 
 import model.PaketPerjalananModel;
 import model.ReservasiModel;
@@ -262,11 +263,14 @@ public class PanelBeranda extends JPanel {
         dateChooserCariCepat.setDate(null); 
         // dateChooserCariCepat.setMinSelectableDate(new Date()); 
     }
-    
+
     private void loadDynamicContent() {
         loadPerjalananSebelumnya();
 //        loadPenawaranSpesial();
         loadDestinasiPopuler();
+
+        revalidate();
+        repaint();
     }
 
     private void loadPerjalananSebelumnya() {
@@ -295,9 +299,9 @@ public class PanelBeranda extends JPanel {
                 ReservasiModel r = previousTrips.get(i);
                 if (r.getTripType().equals("paket_perjalanan")) {
                     panelPerjalananSebelumnyaContentHolder.add(createTripPackageCard(r.getPaket(), true));
-                } // else {
-                //     panelPerjalananSebelumnyaContentHolder.add(createTripPackageCard(r.getCustomTrip(), true));
-                // }
+                } else if ("custom_trip".equals(r.getTripType()) && r.getCustomTrip() != null) {
+                panelPerjalananSebelumnyaContentHolder.add(createCustomTripCard(r.getCustomTrip()));
+                 }
             }
 
         }
@@ -395,6 +399,53 @@ public class PanelBeranda extends JPanel {
 
     //     return card;
     // }
+
+    private JPanel createCustomTripCard(CustomTripModel customTrip) {
+        // Metode ini mirip dengan createPaketCard, tetapi mengambil data dari CustomTripModel
+        JPanel card = new JPanel(new BorderLayout(0, 8));
+        card.setPreferredSize(new Dimension(220, 280)); // Sesuaikan ukurannya
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER_COLOR));
+
+        // Panel untuk detail teks
+        JPanel detailPanel = new JPanel();
+        detailPanel.setLayout(new BoxLayout(detailPanel, BoxLayout.Y_AXIS));
+        detailPanel.setOpaque(false);
+        detailPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        JLabel namaTrip = new JLabel(customTrip.getNamaTrip());
+        namaTrip.setFont(AppTheme.FONT_SUBTITLE);
+
+        JLabel tanggal = new JLabel(customTrip.getTanggalMulai().toString() + " - " + customTrip.getTanggalAkhir().toString());
+        tanggal.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
+
+        JLabel harga = new JLabel(AppTheme.formatCurrency(customTrip.getTotalHarga()));
+        harga.setFont(AppTheme.FONT_PRIMARY_MEDIUM_BOLD);
+        harga.setForeground(AppTheme.ACCENT_ORANGE);
+
+        JButton detailButton = new JButton("Lihat Detail");
+        AppTheme.stylePrimaryButton(detailButton, "Lihat Detail");
+        detailButton.addActionListener(e -> {
+            // Navigasi ke halaman detail pesanan
+            // Anda perlu mengambil ReservasiModel yang sesuai untuk custom trip ini
+            ReservasiDAO dao = new ReservasiDAO();
+            ReservasiModel reservasi = dao.getReservasiByCustomTripId(customTrip.getId());
+            if (reservasi != null) {
+                mainAppFrame.showPanel(MainAppFrame.PANEL_ORDER_DETAIL, reservasi);
+            }
+        });
+
+        detailPanel.add(namaTrip);
+        detailPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        detailPanel.add(tanggal);
+        detailPanel.add(Box.createVerticalGlue());
+        detailPanel.add(harga);
+        detailPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        detailPanel.add(detailButton);
+
+        card.add(detailPanel, BorderLayout.CENTER);
+        return card;
+    }
 
     private JPanel createTripPackageCard(PaketPerjalananModel paket, boolean isPreviousTrip) {
         JPanel cardPanel = new JPanel(new BorderLayout(5, 8)); 
@@ -557,13 +608,6 @@ public class PanelBeranda extends JPanel {
                                                 .toLocalDate();
             LocalDate today = LocalDate.now();
 
-            // Cek apakah tanggal yang dipilih adalah sebelum hari ini
-            if (selectedDate.isBefore(today)) {
-                JOptionPane.showMessageDialog(this, "Tanggal keberangkatan tidak boleh di masa lalu.", "Tanggal Tidak Valid", JOptionPane.WARNING_MESSAGE);
-                dateChooserCariCepat.requestFocus();
-                valid = false;
-            }
-            // --- AKHIR DARI LOGIKA BARU ---
         }
         
         // Jika semua validasi lolos, lanjutkan pencarian

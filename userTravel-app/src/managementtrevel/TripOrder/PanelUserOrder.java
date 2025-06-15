@@ -241,7 +241,7 @@ public class PanelUserOrder extends JPanel {
             PaketPerjalananModel paket = reservasi.getPaket();
             namaTrip = paket.getNamaPaket() + " (Kota: " + paket.getNamaKota() + ")";
             rating = paket.getRating();
-            detailText = paket.getJumlahHari() + " Hari | " + jumlahOrang + " Orang | Rating " + String.format("%.1f", rating);
+            detailText = paket.getDurasi() + " Hari | " + jumlahOrang + " Orang | Rating " + String.format("%.1f", rating);
             
             // Debug print: harga paket dasar
             System.out.println("DEBUG PanelUserOrder - Paket Harga Dasar: " + paket.getHarga());
@@ -268,7 +268,7 @@ public class PanelUserOrder extends JPanel {
             } else {
                 jumlahOrang = penumpangDAO.getJumlahPenumpangByReservasiId(reservasi.getId());
             }
-            detailText = customTrip.getJumlahHari() + " Hari | " + jumlahOrang + " Orang";
+            detailText = customTrip.getDurasi() + " Hari | " + jumlahOrang + " Orang";
             
             currentTotalHarga = customTrip.getTotalHarga(); // Mengambil total harga dari CustomTripModel
             hargaText = NumberFormat.getCurrencyInstance(new Locale("id", "ID")).format(currentTotalHarga);

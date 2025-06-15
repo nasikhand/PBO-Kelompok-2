@@ -37,7 +37,7 @@ public class PanelOrderDetail extends JPanel {
 
     // UI Components
     private JLabel lblTitle;
-    private JButton btnKembali, btnLanjutkanBooking, btnBayar, btnBatalkanPesanan;
+    private JButton btnKembali, btnLanjutkanBooking, btnBayar, btnBatalkanPesanan, btnSelesaikan;
 
     // Detail Labels
     private JLabel lblNamaKontak, lblEmailKontak, lblTeleponKontak;
@@ -150,9 +150,11 @@ public class PanelOrderDetail extends JPanel {
         btnLanjutkanBooking = new JButton("Lanjutkan Booking");
         btnBayar = new JButton("Bayar Sekarang");
         btnBatalkanPesanan = new JButton("Batalkan Pesanan");
+        btnSelesaikan = new JButton("Selesaikan Pesanan");
         actionButtonPanel.add(btnLanjutkanBooking);
         actionButtonPanel.add(btnBayar);
         actionButtonPanel.add(btnBatalkanPesanan);
+        actionButtonPanel.add(btnSelesaikan);
         //</editor-fold>
 
         this.add(mainContentArea, BorderLayout.CENTER); 
@@ -169,6 +171,7 @@ public class PanelOrderDetail extends JPanel {
         AppTheme.stylePrimaryButton(btnLanjutkanBooking, "Lanjutkan Booking");
         AppTheme.stylePrimaryButton(btnBayar, "Bayar Sekarang");
         AppTheme.styleSecondaryButton(btnBatalkanPesanan, "Batalkan Pesanan");
+        AppTheme.stylePrimaryButton(btnSelesaikan, "Selesaikan Pesanan");
         
         // --- STYLED: Terapkan gaya ke semua label ---
         styleDetailLabel(lblNamaKontak);
@@ -194,6 +197,7 @@ public class PanelOrderDetail extends JPanel {
         btnLanjutkanBooking.addActionListener(this::btnLanjutkanBookingActionPerformed);
         btnBayar.addActionListener(this::btnBayarActionPerformed);
         btnBatalkanPesanan.addActionListener(this::btnBatalkanPesananActionPerformed);
+        btnSelesaikan.addActionListener(this::btnSelesaikanActionPerformed);
     }
     
     private void loadOrderDetailData() {
@@ -251,9 +255,10 @@ public class PanelOrderDetail extends JPanel {
         lblTotalHargaFinal.setText(CURRENCY_FORMATTER.format(totalHarga));
         
         String status = displayedReservasi.getStatus();
-        btnLanjutkanBooking.setVisible("pending".equals(status));
+        btnLanjutkanBooking.setVisible("pending".equals(status) || "draft".equals(status));
         btnBayar.setVisible("dipesan".equals(status));
-        btnBatalkanPesanan.setVisible("pending".equals(status));
+        btnBatalkanPesanan.setVisible("pending".equals(status) || "draft".equals(status));
+        btnSelesaikan.setVisible("dibayar".equals(status));
     }
 
     //<editor-fold defaultstate="collapsed" desc="UI Helper Methods">
@@ -387,6 +392,30 @@ public class PanelOrderDetail extends JPanel {
             }
         } else {
             JOptionPane.showMessageDialog(this, "Pesanan hanya dapat dibatalkan jika berstatus 'pending'.", "Status Tidak Valid", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void btnSelesaikanActionPerformed(ActionEvent evt) {
+        if (!"dibayar".equals(displayedReservasi.getStatus())) {
+            JOptionPane.showMessageDialog(this, "Aksi ini hanya bisa dilakukan untuk pesanan yang sudah dibayar.", "Aksi Tidak Valid", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Apakah Anda yakin ingin menyelesaikan pesanan ini?\nStatus akan diubah menjadi 'selesai' dan tidak dapat diubah kembali.",
+                "Konfirmasi Selesaikan Pesanan",
+                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            boolean success = reservasiDAO.updateStatusReservasi(displayedReservasi.getId(), "selesai");
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Pesanan telah ditandai sebagai 'selesai'.\nTerima kasih telah menggunakan layanan kami!", "Berhasil", JOptionPane.INFORMATION_MESSAGE);
+                // Refresh the panel to show the new status
+                this.displayedReservasi = reservasiDAO.getReservasiById(this.displayedReservasi.getId());
+                loadOrderDetailData();
+            } else {
+                JOptionPane.showMessageDialog(this, "Gagal memperbarui status pesanan. Silakan coba lagi.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
     //</editor-fold>

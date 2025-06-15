@@ -259,7 +259,7 @@ public class PanelOrderHistory extends JPanel {
             PaketPerjalananModel paket = reservasi.getPaket();
             namaTrip = paket.getNamaPaket() + " (Kota: " + paket.getNamaKota() + ")";
             rating = paket.getRating();
-            detailText = paket.getJumlahHari() + " Hari | " + jumlahOrang + " Orang | Rating " + String.format("%.1f", rating);
+            detailText = paket.getDurasi() + " Hari | " + jumlahOrang + " Orang | Rating " + String.format("%.1f", rating);
             
             Double hargaLunas = pembayaranDAO.getJumlahPembayaranByReservasiId(reservasi.getId());
             if (hargaLunas != null && hargaLunas > 0) {
@@ -278,7 +278,7 @@ public class PanelOrderHistory extends JPanel {
             } else {
                 jumlahOrang = penumpangDAO.getJumlahPenumpangByReservasiId(reservasi.getId());
             }
-            detailText = customTrip.getJumlahHari() + " Hari | " + jumlahOrang + " Orang";
+            detailText = customTrip.getDurasi() + " Hari | " + jumlahOrang + " Orang";
             
             currentTotalHarga = customTrip.getTotalHarga();
             hargaText = NumberFormat.getCurrencyInstance(new Locale("id", "ID")).format(currentTotalHarga);
