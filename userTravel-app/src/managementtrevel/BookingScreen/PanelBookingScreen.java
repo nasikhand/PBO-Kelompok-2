@@ -409,8 +409,8 @@ public class PanelBookingScreen extends JPanel {
         }
     }
 
-    private void btn_lanjutActionPerformed(ActionEvent evt) { handleBooking("pending"); }
-    private void btnSimpanDrafActionPerformed(ActionEvent evt) { handleBooking("draft"); }
+    private void btn_lanjutActionPerformed(ActionEvent evt) { handleBooking("dipesan"); }
+    private void btnSimpanDrafActionPerformed(ActionEvent evt) { handleBooking("pending"); }
     
     private void handleBooking(String status) {
         if (!Session.isLoggedIn()) {
@@ -449,7 +449,7 @@ public class PanelBookingScreen extends JPanel {
                 }
             }
             
-            if ("pending".equals(status)) {
+            if ("dipesan".equals(status)) {
                  JOptionPane.showMessageDialog(this, "Reservasi berhasil dibuat. Lanjutkan ke pembayaran.", "Reservasi Berhasil", JOptionPane.INFORMATION_MESSAGE);
                  mainAppFrame.showPaymentPanel(newReservasiId, namaKontak, emailKontak, teleponKontak, namaPenumpangSaja);
             } else {
