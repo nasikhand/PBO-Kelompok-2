@@ -110,4 +110,38 @@ public class PenumpangDAO {
             return false;
         }
     }
+
+    public List<PenumpangModel> getDetailPenumpangByReservasiId(int reservasiId) {
+        List<PenumpangModel> penumpangList = new ArrayList<>();
+        String sql = "SELECT * FROM penumpang WHERE reservasi_id = ?";
+        
+        try (Connection conn = Koneksi.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, reservasiId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    PenumpangModel penumpang = new PenumpangModel();
+                    penumpang.setId(rs.getInt("id"));
+                    penumpang.setReservasiId(rs.getInt("reservasi_id"));
+                    penumpang.setNamaPenumpang(rs.getString("nama_penumpang"));
+                    penumpang.setJenisKelamin(rs.getString("jenis_kelamin"));
+                    
+                    java.sql.Date dob = rs.getDate("tanggal_lahir");
+                    if (dob != null) {
+                        penumpang.setTanggalLahir(dob);
+                    }
+                    
+                    penumpang.setNomorTelepon(rs.getString("nomor_telepon"));
+                    penumpang.setEmail(rs.getString("email"));
+                    
+                    penumpangList.add(penumpang);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error saat mengambil detail penumpang: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return penumpangList;
+    }
 }

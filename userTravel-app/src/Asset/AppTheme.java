@@ -218,29 +218,29 @@ public class AppTheme {
     }
 
     public static void styleInputField(JTextArea textArea, String placeholder) {
-    if (textArea == null) return;
-    textArea.setFont(AppTheme.FONT_TEXT_FIELD);
-    textArea.setBackground(AppTheme.INPUT_BACKGROUND);
-    textArea.setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
-    textArea.setText(placeholder);
-    textArea.setBorder(AppTheme.createDefaultInputBorder());
-    textArea.setMargin(new Insets(5, 8, 5, 8));
-    
-    textArea.addFocusListener(new FocusAdapter() {
-        @Override public void focusGained(FocusEvent e) {
-            textArea.setBorder(AppTheme.createFocusBorder());
-            if (textArea.getText().equals(placeholder)) {
-                textArea.setText("");
-                textArea.setForeground(AppTheme.INPUT_TEXT);
+        if (textArea == null) return;
+        textArea.setFont(AppTheme.FONT_TEXT_FIELD);
+        textArea.setBackground(AppTheme.INPUT_BACKGROUND);
+        textArea.setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
+        textArea.setText(placeholder);
+        textArea.setBorder(AppTheme.createDefaultInputBorder());
+        textArea.setMargin(new Insets(5, 8, 5, 8));
+        
+        textArea.addFocusListener(new FocusAdapter() {
+            @Override public void focusGained(FocusEvent e) {
+                textArea.setBorder(AppTheme.createFocusBorder());
+                if (textArea.getText().equals(placeholder)) {
+                    textArea.setText("");
+                    textArea.setForeground(AppTheme.INPUT_TEXT);
+                }
             }
-        }
-        @Override public void focusLost(FocusEvent e) {
-            textArea.setBorder(AppTheme.createDefaultInputBorder());
-            if (textArea.getText().isEmpty()) {
-                textArea.setText(placeholder);
-                textArea.setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
+            @Override public void focusLost(FocusEvent e) {
+                textArea.setBorder(AppTheme.createDefaultInputBorder());
+                if (textArea.getText().isEmpty()) {
+                    textArea.setText(placeholder);
+                    textArea.setForeground(AppTheme.PLACEHOLDER_TEXT_COLOR);
+                }
             }
-        }
-    });
-}
+        });
+    }
 }

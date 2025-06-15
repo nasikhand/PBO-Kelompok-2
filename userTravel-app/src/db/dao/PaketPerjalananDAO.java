@@ -1,6 +1,4 @@
 package db.dao;
-
-import static com.mysql.cj.util.TimeUtil.DATE_FORMATTER;
 import db.Koneksi;
 import java.sql.*; // Untuk mendapatkan koneksi jika tidak di-inject
 import java.time.LocalDate;
@@ -8,11 +6,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import model.PaketPerjalananModel;
-import java.time.format.DateTimeFormatter;
 
 public class PaketPerjalananDAO {
     private Connection conn;
-    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd MMMM YYYY");
 
     // Konstruktor default, bisa mengambil koneksi dari kelas Koneksi
     public PaketPerjalananDAO() {
@@ -348,7 +345,7 @@ public class PaketPerjalananDAO {
                     java.sql.Date sqlTanggalMulai = rs.getDate("tanggal_mulai");
                     if (sqlTanggalMulai != null) {
                         // Konversi java.sql.Date ke LocalDate lalu format ke String
-                        paket.setTanggalMulai(sqlTanggalMulai.toLocalDate().format(DATE_FORMATTER));
+                        paket.setTanggalMulai(sqlTanggalMulai.toLocalDate().format(dateFormatter));
                     } else {
                         paket.setTanggalMulai(null); // Penting: set null jika memang null dari DB
                     }
@@ -356,7 +353,7 @@ public class PaketPerjalananDAO {
                     java.sql.Date sqlTanggalAkhir = rs.getDate("tanggal_akhir");
                     if (sqlTanggalAkhir != null) {
                         // Konversi java.sql.Date ke LocalDate lalu format ke String
-                        paket.setTanggalAkhir(sqlTanggalAkhir.toLocalDate().format(DATE_FORMATTER));
+                        paket.setTanggalAkhir(sqlTanggalAkhir.toLocalDate().format(dateFormatter));
                     } else {
                         paket.setTanggalAkhir(null); // Penting: set null jika memang null dari DB
                     }

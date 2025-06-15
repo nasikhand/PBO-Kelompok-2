@@ -344,6 +344,14 @@ public class MainAppFrame extends JFrame {
     }
 
     public static void main(String[] args) {
+        try {
+            // Atur Look and Feel ke tema sistem (Windows) sebelum komponen apa pun dibuat.
+            // Ini sering kali memperbaiki masalah stabilitas dan interaksi dengan OS.
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ex) {
+            System.err.println("Gagal menerapkan System Look and Feel.");
+            ex.printStackTrace();
+        }
         SwingUtilities.invokeLater(() -> {
             MainAppFrame mainAppFrame = new MainAppFrame(); 
             mainAppFrame.setVisible(true);

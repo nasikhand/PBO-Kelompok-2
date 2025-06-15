@@ -490,7 +490,7 @@ public class PanelBeranda extends JPanel {
              JButton btnPesanLagi = new JButton("Pesan Lagi");
             styleSecondaryButton(btnPesanLagi, "Pesan Lagi");
             btnPesanLagi.addActionListener(e -> {
-                 JOptionPane.showMessageDialog(this, "Fitur 'Pesan Lagi' untuk '" + paket.getNamaPaket() + "' belum diimplementasikan.", "Info", JOptionPane.INFORMATION_MESSAGE);
+                 mainAppFrame.showPanel(MainAppFrame.PANEL_BOOKING_SCREEN, paket);
             });
             buttonPanelCard.add(btnPesanLagi);
         }
