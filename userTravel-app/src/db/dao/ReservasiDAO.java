@@ -141,7 +141,7 @@ public class ReservasiDAO {
     public List<ReservasiModel> getHistoryReservasiByUser(int userId) {
         List<ReservasiModel> listReservasi = new ArrayList<>();
         // Query ini mengambil reservasi yang statusnya 'dibayar' atau 'selesai'
-        String sql = "SELECT * FROM reservasi WHERE user_id = ? AND status IN ('dibayar', 'selesai') ORDER BY tanggal_reservasi DESC";
+        String sql = "SELECT * FROM reservasi WHERE user_id = ? AND status IN ( 'selesai') ORDER BY tanggal_reservasi DESC";
         
         try (Connection conn = this.conn != null ? this.conn : Koneksi.getConnection(); // Gunakan koneksi yang ada atau buat baru
             PreparedStatement ps = conn.prepareStatement(sql)) {
