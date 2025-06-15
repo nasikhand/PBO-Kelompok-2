@@ -23,58 +23,45 @@ import java.util.List;
 
 public class FormPerjalananDialog extends JDialog {
 
-    // Deklarasi Komponen UI
-    private JTextField txtNamaPaket, txtTanggalMulai, txtTanggalAkhir, txtKuota, txtHarga;
+    private JTextField txtNamaPaket, txtKuota, txtHarga;
     private JTextArea txtDeskripsi;
     private JComboBox<Kota> cmbKota;
     private JComboBox<String> cmbStatus;
     private JButton btnSimpan;
     private JButton btnPilihGambar;
     private JLabel lblNamaFileGambar;
+    private com.toedter.calendar.JDateChooser dateChooserMulai, dateChooserAkhir; // Menggunakan JDateChooser
 
-    // Atribut untuk data dan logic
     private PerjalananController controller;
     private File fileGambarDipilih;
     private PaketPerjalanan paketToEdit;
 
-    /**
-     * Constructor untuk membuat dialog form.
-     * @param owner Frame induk dari dialog ini.
-     * @param paket Objek PaketPerjalanan (null jika membuat baru, terisi jika mengedit).
-     */
     public FormPerjalananDialog(Frame owner, PaketPerjalanan paket) {
         super(owner, "Formulir Paket Perjalanan", true);
         
         this.paketToEdit = paket;
         this.controller = new PerjalananController();
 
-        // Pengaturan dasar JDialog
         setSize(550, 650);
         setLocationRelativeTo(owner);
         setLayout(new BorderLayout(10, 10));
 
-        // Panel utama untuk form dengan padding
         JPanel panelForm = new JPanel(new GridBagLayout());
         panelForm.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         
-        // Inisialisasi, pengaturan layout, dan pengisian data komponen
         inisialisasiKomponen();
         muatDataKota();
         aturLayoutKomponen(panelForm);
 
-        // Menambahkan panel form ke dialog
         add(panelForm, BorderLayout.CENTER);
 
-        // Panel untuk tombol Simpan
         JPanel panelTombol = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         panelTombol.setBorder(BorderFactory.createEmptyBorder(0, 15, 10, 15));
         panelTombol.add(btnSimpan);
         add(panelTombol, BorderLayout.SOUTH);
 
-        // Menambahkan action listener untuk tombol-tombol
         aturActionListeners();
 
-        // Jika ini adalah mode "Ubah", isi form dengan data yang ada
         if (paketToEdit != null) {
             setTitle("Ubah Paket Perjalanan");
             btnSimpan.setText("Perbarui");
@@ -82,14 +69,13 @@ public class FormPerjalananDialog extends JDialog {
         }
     }
 
-    /**
-     * Inisialisasi semua komponen Swing.
-     */
     private void inisialisasiKomponen() {
         txtNamaPaket = new JTextField(20);
         cmbKota = new JComboBox<>();
-        txtTanggalMulai = new JTextField("yyyy-mm-dd");
-        txtTanggalAkhir = new JTextField("yyyy-mm-dd");
+        dateChooserMulai = new com.toedter.calendar.JDateChooser();
+        dateChooserAkhir = new com.toedter.calendar.JDateChooser();
+        dateChooserMulai.setDateFormatString("yyyy-MM-dd");
+        dateChooserAkhir.setDateFormatString("yyyy-MM-dd");
         txtKuota = new JTextField();
         txtHarga = new JTextField();
         txtDeskripsi = new JTextArea(5, 20);
@@ -99,9 +85,6 @@ public class FormPerjalananDialog extends JDialog {
         btnSimpan = new JButton("Simpan");
     }
 
-    /**
-     * Mengambil data kota dari controller dan mengisinya ke JComboBox.
-     */
     private void muatDataKota() {
         List<Kota> daftarKota = controller.getAllKota();
         for (Kota kota : daftarKota) {
@@ -109,75 +92,57 @@ public class FormPerjalananDialog extends JDialog {
         }
     }
     
-    /**
-     * Mengatur posisi semua komponen UI di dalam panel menggunakan GridBagLayout.
-     * @param panelForm Panel tempat komponen akan diletakkan.
-     */
     private void aturLayoutKomponen(JPanel panelForm) {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
 
-        // Baris 0: Nama Paket
-        gbc.gridx = 0; gbc.gridy = 0; panelForm.add(new JLabel("Nama Paket:"), gbc);
-        gbc.gridx = 1; panelForm.add(txtNamaPaket, gbc);
+        int y = 0;
+        gbc.gridx = 0; gbc.gridy = y; panelForm.add(new JLabel("Nama Paket:"), gbc);
+        gbc.gridx = 1; gbc.gridy = y++; panelForm.add(txtNamaPaket, gbc);
         
-        // Baris 1: Kota Tujuan
-        gbc.gridy++;
-        gbc.gridx = 0; panelForm.add(new JLabel("Kota Tujuan:"), gbc);
-        gbc.gridx = 1; panelForm.add(cmbKota, gbc);
+        gbc.gridx = 0; gbc.gridy = y; panelForm.add(new JLabel("Kota Tujuan:"), gbc);
+        gbc.gridx = 1; gbc.gridy = y++; panelForm.add(cmbKota, gbc);
         
-        // Baris-baris selanjutnya
-        gbc.gridy++;
-        gbc.gridx = 0; panelForm.add(new JLabel("Tanggal Mulai:"), gbc);
-        gbc.gridx = 1; panelForm.add(txtTanggalMulai, gbc);
+        gbc.gridx = 0; gbc.gridy = y; panelForm.add(new JLabel("Tanggal Mulai:"), gbc);
+        gbc.gridx = 1; gbc.gridy = y++; panelForm.add(dateChooserMulai, gbc);
         
-        gbc.gridy++;
-        gbc.gridx = 0; panelForm.add(new JLabel("Tanggal Akhir:"), gbc);
-        gbc.gridx = 1; panelForm.add(txtTanggalAkhir, gbc);
+        gbc.gridx = 0; gbc.gridy = y; panelForm.add(new JLabel("Tanggal Akhir:"), gbc);
+        gbc.gridx = 1; gbc.gridy = y++; panelForm.add(dateChooserAkhir, gbc);
         
-        gbc.gridy++;
-        gbc.gridx = 0; panelForm.add(new JLabel("Harga (Rp):"), gbc);
-        gbc.gridx = 1; panelForm.add(txtHarga, gbc);
+        gbc.gridx = 0; gbc.gridy = y; panelForm.add(new JLabel("Harga (Rp):"), gbc);
+        gbc.gridx = 1; gbc.gridy = y++; panelForm.add(txtHarga, gbc);
         
-        gbc.gridy++;
-        gbc.gridx = 0; panelForm.add(new JLabel("Kuota:"), gbc);
-        gbc.gridx = 1; panelForm.add(txtKuota, gbc);
+        gbc.gridx = 0; gbc.gridy = y; panelForm.add(new JLabel("Kuota:"), gbc);
+        gbc.gridx = 1; gbc.gridy = y++; panelForm.add(txtKuota, gbc);
         
-        gbc.gridy++;
-        gbc.gridx = 0; panelForm.add(new JLabel("Status:"), gbc);
-        gbc.gridx = 1; panelForm.add(cmbStatus, gbc);
+        gbc.gridx = 0; gbc.gridy = y; panelForm.add(new JLabel("Status:"), gbc);
+        gbc.gridx = 1; gbc.gridy = y++; panelForm.add(cmbStatus, gbc);
         
         gbc.gridy++;
         gbc.anchor = GridBagConstraints.NORTHWEST;
-        gbc.gridx = 0; panelForm.add(new JLabel("Deskripsi:"), gbc);
+        gbc.gridx = 0; gbc.gridy = y; panelForm.add(new JLabel("Deskripsi:"), gbc);
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.gridx = 1; panelForm.add(new JScrollPane(txtDeskripsi), gbc);
+        gbc.gridx = 1; gbc.gridy = y++; gbc.weightx = 1.0; panelForm.add(new JScrollPane(txtDeskripsi), gbc); gbc.weightx = 0;
         
         gbc.gridy++;
-        gbc.gridx = 0; panelForm.add(new JLabel("Gambar Paket:"), gbc);
+        gbc.gridx = 0; gbc.gridy = y; panelForm.add(new JLabel("Gambar Paket:"), gbc);
         JPanel panelGambar = new JPanel(new BorderLayout(5, 0));
         panelGambar.add(btnPilihGambar, BorderLayout.WEST);
         panelGambar.add(lblNamaFileGambar, BorderLayout.CENTER);
-        gbc.gridx = 1; panelForm.add(panelGambar, gbc);
+        gbc.gridx = 1; gbc.gridy = y++; panelForm.add(panelGambar, gbc);
     }
 
-    /**
-     * Menetapkan action listener untuk tombol-tombol interaktif.
-     */
     private void aturActionListeners() {
         btnPilihGambar.addActionListener(e -> pilihGambar());
         btnSimpan.addActionListener(e -> simpanData());
     }
     
-    /**
-     * Jika dalam mode Ubah, metode ini mengisi semua field form dengan data dari objek paket.
-     */
     private void isiDataForm() {
         txtNamaPaket.setText(paketToEdit.getNamaPaket());
-        txtTanggalMulai.setText(paketToEdit.getTanggalMulai().toString());
-        txtTanggalAkhir.setText(paketToEdit.getTanggalAkhir().toString());
+        dateChooserMulai.setDate(paketToEdit.getTanggalMulai());
+        dateChooserAkhir.setDate(paketToEdit.getTanggalAkhir());
         txtKuota.setText(String.valueOf(paketToEdit.getKuota()));
         txtHarga.setText(paketToEdit.getHarga().toPlainString());
         txtDeskripsi.setText(paketToEdit.getDeskripsi());
@@ -195,9 +160,6 @@ public class FormPerjalananDialog extends JDialog {
         }
     }
 
-    /**
-     * Membuka JFileChooser untuk memilih file gambar.
-     */
     private void pilihGambar() {
         JFileChooser chooser = new JFileChooser();
         FileNameExtensionFilter filter = new FileNameExtensionFilter("Gambar (JPG, PNG, GIF)", "jpg", "png", "gif");
@@ -208,14 +170,13 @@ public class FormPerjalananDialog extends JDialog {
         }
     }
 
-    /**
-     * Menyalin file gambar yang dipilih ke folder tujuan dan mengganti spasi di nama filenya.
-     * @return String nama file baru yang telah disalin, atau null jika gagal.
-     */
     private String simpanGambarKeFolder() {
         if (fileGambarDipilih == null) return null;
 
-        Path folderTujuan = Paths.get("images/paket_perjalanan");
+        // <<< PERUBAHAN PATH DIMULAI DI SINI >>>
+        Path folderTujuan = Paths.get("../SharedAppImages/paket_perjalanan");
+        // <<< AKHIR PERUBAHAN PATH >>>
+
         if (!Files.exists(folderTujuan)) {
             try { Files.createDirectories(folderTujuan); } catch (IOException e) {
                 e.printStackTrace();
@@ -238,61 +199,78 @@ public class FormPerjalananDialog extends JDialog {
         }
     }
 
-    /**
-     * Mengumpulkan semua data dari form, memvalidasi, dan menyimpannya ke database.
-     * Menangani logika untuk mode Tambah dan Ubah.
-     */
     private void simpanData() {
-        try {
-            String namaFileGambar = (paketToEdit != null) ? paketToEdit.getGambar() : null;
+        // ... (Kode validasi yang sudah kita buat sebelumnya tetap sama)
+        String namaPaketStr = txtNamaPaket.getText().trim();
+        java.util.Date tglMulaiUtil = dateChooserMulai.getDate();
+        java.util.Date tglAkhirUtil = dateChooserAkhir.getDate();
+        String hargaStr = txtHarga.getText().trim();
+        String kuotaStr = txtKuota.getText().trim();
+        Kota kotaTerpilih = (Kota) cmbKota.getSelectedItem();
 
-            // Jika ada file gambar BARU yang dipilih
-            if (fileGambarDipilih != null) {
-                String namaFileLama = namaFileGambar;
-                namaFileGambar = simpanGambarKeFolder();
-                if (namaFileGambar == null) return; // Proses simpan gambar gagal
-                
-                // Hapus gambar lama jika ada (hanya dalam mode Ubah)
-                if (namaFileLama != null && !namaFileLama.isEmpty()) {
-                    File fileLama = new File("images/paket_perjalanan/" + namaFileLama);
-                    if (fileLama.exists()) {
-                        fileLama.delete();
-                    }
+        if (namaPaketStr.isEmpty() || tglMulaiUtil == null || tglAkhirUtil == null || hargaStr.isEmpty() || kuotaStr.isEmpty() || kotaTerpilih == null) {
+            JOptionPane.showMessageDialog(this, "Semua field wajib diisi.", "Input Tidak Valid", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        Date tanggalMulai = new Date(tglMulaiUtil.getTime());
+        Date tanggalAkhir = new Date(tglAkhirUtil.getTime());
+        BigDecimal harga;
+        int kuota;
+
+        try {
+            harga = new BigDecimal(hargaStr);
+            kuota = Integer.parseInt(kuotaStr);
+            if (harga.compareTo(BigDecimal.ZERO) < 0 || kuota < 0) {
+                JOptionPane.showMessageDialog(this, "Harga dan Kuota tidak boleh negatif.", "Input Tidak Valid", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Harga dan Kuota harus angka.", "Input Tidak Valid", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (tanggalMulai.after(tanggalAkhir)) {
+            JOptionPane.showMessageDialog(this, "Tanggal Mulai tidak boleh setelah Tanggal Akhir.", "Input Tidak Valid", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        String namaFileGambar = (paketToEdit != null) ? paketToEdit.getGambar() : null;
+        if (fileGambarDipilih != null) {
+            String namaFileLama = namaFileGambar;
+            namaFileGambar = simpanGambarKeFolder();
+            if (namaFileGambar == null) return;
+            
+            if (namaFileLama != null && !namaFileLama.isEmpty()) {
+                // <<< PERUBAHAN PATH HAPUS GAMBAR LAMA >>>
+                File fileLama = new File("../SharedAppImages/paket_perjalanan/" + namaFileLama);
+                if (fileLama.exists()) {
+                    fileLama.delete();
                 }
             }
+        }
 
-            // Siapkan objek PaketPerjalanan dengan data dari form
-            PaketPerjalanan paket = new PaketPerjalanan();
-            paket.setNamaPaket(txtNamaPaket.getText());
-            paket.setKotaId(((Kota) cmbKota.getSelectedItem()).getId());
-            paket.setTanggalMulai(Date.valueOf(txtTanggalMulai.getText()));
-            paket.setTanggalAkhir(Date.valueOf(txtTanggalAkhir.getText()));
-            paket.setHarga(new BigDecimal(txtHarga.getText()));
-            paket.setKuota(Integer.parseInt(txtKuota.getText()));
-            paket.setStatus((String) cmbStatus.getSelectedItem());
-            paket.setDeskripsi(txtDeskripsi.getText());
-            paket.setGambar(namaFileGambar);
+        PaketPerjalanan paket = new PaketPerjalanan();
+        paket.setNamaPaket(namaPaketStr);
+        paket.setKotaId(kotaTerpilih.getId());
+        paket.setTanggalMulai(tanggalMulai);
+        paket.setTanggalAkhir(tanggalAkhir);
+        paket.setHarga(harga);
+        paket.setKuota(kuota);
+        paket.setStatus((String) cmbStatus.getSelectedItem());
+        paket.setDeskripsi(txtDeskripsi.getText());
+        paket.setGambar(namaFileGambar);
 
-            boolean sukses;
-            if (paketToEdit == null) {
-                // Mode Tambah: Panggil controller untuk menambah data baru
-                sukses = controller.addPaketPerjalanan(paket);
-            } else {
-                // Mode Ubah: Set ID dan panggil controller untuk memperbarui data
-                paket.setId(paketToEdit.getId());
-                sukses = controller.updatePaketPerjalanan(paket);
-            }
+        boolean sukses;
+        if (paketToEdit == null) {
+            sukses = controller.addPaketPerjalanan(paket);
+        } else {
+            paket.setId(paketToEdit.getId());
+            sukses = controller.updatePaketPerjalanan(paket);
+        }
 
-            if (sukses) {
-                JOptionPane.showMessageDialog(this, "Data berhasil disimpan!");
-                dispose(); // Tutup dialog setelah berhasil
-            } else {
-                JOptionPane.showMessageDialog(this, "Gagal menyimpan data ke basis data.", "Kesalahan", JOptionPane.ERROR_MESSAGE);
-            }
-        } catch (IllegalArgumentException ex) {
-            JOptionPane.showMessageDialog(this, "Input tidak valid. Periksa format tanggal (yyyy-mm-dd) atau angka.", "Input Tidak Valid", JOptionPane.ERROR_MESSAGE);
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Terjadi kesalahan yang tidak terduga: " + ex.getMessage(), "Kesalahan", JOptionPane.ERROR_MESSAGE);
+        if (sukses) {
+            JOptionPane.showMessageDialog(this, "Data berhasil disimpan!");
+            dispose();
         }
     }
 }

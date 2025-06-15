@@ -42,7 +42,7 @@ public class KelolaDestinasiView extends JPanel {
     private File fileGambarDipilih;
     private Destinasi destinasiToEdit = null;
 
-    private final String DIR_GAMBAR_DESTINASI = "images/destinasi";
+    private final String DIR_GAMBAR_DESTINASI = "../SharedAppImages/destinasi";
 
     public KelolaDestinasiView() {
         this.controller = new DestinasiController();
