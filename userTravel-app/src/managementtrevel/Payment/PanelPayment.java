@@ -6,12 +6,14 @@ import db.dao.CustomTripDAO;
 import db.dao.KotaDAO;
 import db.dao.PaketPerjalananDAO;
 import db.dao.PembayaranDAO;
+import db.dao.PenumpangDAO;
 import db.dao.ReservasiDAO;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.Connection;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -66,13 +68,18 @@ public class PanelPayment extends JPanel {
     // Data passed from previous panel
     private final String namaKontak;
     private final String teleponKontak;
+    private List<String> namaPenumpangList;
 
     public PanelPayment(MainAppFrame mainAppFrame, int reservasiId, String namaKontak, String emailKontak, List<String> penumpangList) {
         this.mainAppFrame = mainAppFrame;
         this.reservasiId = reservasiId;
         this.namaKontak = namaKontak;
-        this.teleponKontak = emailKontak; // Assuming emailKontak should be the phone number based on your previous code
-
+        this.teleponKontak = emailKontak; 
+         if (penumpangList != null) {
+            this.namaPenumpangList = penumpangList;
+        } else {
+            this.namaPenumpangList = new ArrayList<>();
+        }
         Connection conn = Koneksi.getConnection(); 
         if (conn == null) {
             JOptionPane.showMessageDialog(mainAppFrame, "Gagal terhubung ke database.", "Koneksi Database Error", JOptionPane.ERROR_MESSAGE);
@@ -360,7 +367,24 @@ public class PanelPayment extends JPanel {
             return;
         }
         
-        double totalPembayaran = hargaDasar + (hargaDasar * 0.05) + (hargaDasar * 0.11);
+        // Asumsi namaPenumpangList sudah diinisialisasi di konstruktor
+        int jumlahPenumpang = this.namaPenumpangList.size();
+        if (jumlahPenumpang == 0 && paketDipesan != null) {
+            // Fallback jika list kosong tapi ini adalah paket, mungkin dari halaman order detail
+            PenumpangDAO pDao = new PenumpangDAO();
+            jumlahPenumpang = pDao.getJumlahPenumpangByReservasiId(this.reservasiId);
+        }
+        
+        // Harga total dihitung berdasarkan tipe trip
+        double totalPembayaran;
+        if(paketDipesan != null) {
+            totalPembayaran = hargaDasar * jumlahPenumpang;
+        } else {
+            totalPembayaran = hargaDasar; // Untuk custom trip, harga sudah total
+        }
+        
+        // Tambahkan biaya layanan dan pajak
+        totalPembayaran += (totalPembayaran * 0.05) + (totalPembayaran * 0.11);
 
         PembayaranModel pembayaran = new PembayaranModel();
         pembayaran.setReservasiId(this.reservasiId);
@@ -371,8 +395,26 @@ public class PanelPayment extends JPanel {
 
         if (pembayaranDAO.insertPembayaran(pembayaran)) {
             if (reservasiDAO.updateStatusReservasi(this.reservasiId, "dibayar")) {
+
+                // --- LOGIKA PENGURANGAN KUOTA DIMULAI DI SINI ---
+                if (paketDipesan != null) {
+                    if (jumlahPenumpang > 0) {
+                        PaketPerjalananDAO paketDAO = new PaketPerjalananDAO();
+                        boolean kuotaUpdated = paketDAO.kurangiKuota(paketDipesan.getId(), jumlahPenumpang);
+
+                        if (!kuotaUpdated) {
+                            JOptionPane.showMessageDialog(this, 
+                                "Peringatan Kritis: Pembayaran berhasil, tetapi kuota paket gagal diperbarui. Silakan hubungi admin.", 
+                                "Peringatan Kuota", 
+                                JOptionPane.WARNING_MESSAGE);
+                        }
+                    }
+                }
+                // --- AKHIR DARI LOGIKA PENGURANGAN KUOTA ---
+
                 JOptionPane.showMessageDialog(this, "Pembayaran berhasil dan reservasi dikonfirmasi!", "Pembayaran Berhasil", JOptionPane.INFORMATION_MESSAGE);
                 mainAppFrame.showPanel(MainAppFrame.PANEL_PESANAN_SAYA);
+
             } else {
                 JOptionPane.showMessageDialog(this, "Pembayaran berhasil, tetapi gagal mengupdate status reservasi.", "Peringatan", JOptionPane.WARNING_MESSAGE);
             }

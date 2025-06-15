@@ -53,6 +53,9 @@ public class PanelSearchResult extends JPanel {
     private JLabel jLabel3; // Durasi label
     private JLabel jLabel4; // Hasil Search: title
     private JLabel jLabel8; // Page info label
+    private int currentPage = 1;
+    private final int itemsPerPage = 4; // Menampilkan 4 hasil per halaman
+    private int totalPages = 1;
     
     private JPanel panelFilter; 
     private JPanel panelResultsContainer; 
@@ -267,28 +270,32 @@ public class PanelSearchResult extends JPanel {
         resultsDisplayPanel.removeAll(); 
 
         if (currentlyDisplayedPackages == null || currentlyDisplayedPackages.isEmpty()) {
-            resultsDisplayPanel.setLayout(new BorderLayout()); 
-            String message = "Tidak ada paket perjalanan yang cocok untuk '" + this.namaKotaAtauDestinasi + "'.";
-            if (this.allFetchedPackages != null && !this.allFetchedPackages.isEmpty() && currentlyDisplayedPackages.isEmpty()){ 
-                message = "Tidak ada paket yang cocok dengan filter saat ini untuk '" + this.namaKotaAtauDestinasi + "'.";
-            }
-
-            JLabel noResultsLabel = new JLabel(message);
-            noResultsLabel.setFont(AppTheme.FONT_SUBTITLE);
-            noResultsLabel.setForeground(AppTheme.TEXT_SECONDARY_DARK);
-            noResultsLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            resultsDisplayPanel.add(noResultsLabel, BorderLayout.CENTER);
+            displayErrorMessage("Tidak ada paket perjalanan yang cocok untuk '" + this.namaKotaAtauDestinasi + "'.");
         } else {
             resultsDisplayPanel.setLayout(new BoxLayout(resultsDisplayPanel, BoxLayout.Y_AXIS)); 
-            for (PaketPerjalananModel paket : currentlyDisplayedPackages) {
-                if (paket != null) { // Pengecekan null untuk paket sebelum membuat kartu
-                    resultsDisplayPanel.add(createSearchResultCardPanel(paket));
-                    resultsDisplayPanel.add(Box.createRigidArea(new Dimension(0, 15))); 
+            
+            // Hitung item untuk halaman saat ini
+            int startIndex = (currentPage - 1) * itemsPerPage;
+            int endIndex = Math.min(startIndex + itemsPerPage, currentlyDisplayedPackages.size());
+
+            if (startIndex >= currentlyDisplayedPackages.size()) {
+                 displayErrorMessage("Tidak ada hasil di halaman ini.");
+            } else {
+                List<PaketPerjalananModel> pageResults = currentlyDisplayedPackages.subList(startIndex, endIndex);
+                for (PaketPerjalananModel paket : pageResults) {
+                    if (paket != null) {
+                        resultsDisplayPanel.add(createSearchResultCardPanel(paket));
+                        resultsDisplayPanel.add(Box.createRigidArea(new Dimension(0, 15))); 
+                    }
                 }
             }
         }
+        
+        updatePaginationControls(); // Perbarui tombol dan label halaman
         resultsDisplayPanel.revalidate();
         resultsDisplayPanel.repaint();
+        // Scroll ke atas setiap kali halaman berubah
+        SwingUtilities.invokeLater(() -> ((JScrollPane)panelResultsContainer.getComponent(1)).getVerticalScrollBar().setValue(0));
     }
     
     private void displayErrorMessage(String message) {
@@ -501,10 +508,20 @@ public class PanelSearchResult extends JPanel {
     private void setupActionListeners() {
         if(btn_back != null) btn_back.addActionListener(this::btn_backActionPerformed);
         if(btn_reset != null) btn_reset.addActionListener(this::btn_resetActionPerformed);
-        if(btn_sebelum != null) btn_sebelum.addActionListener(this::btn_sebelumActionPerformed);
-        if(btn_selanjutnya != null) btn_selanjutnya.addActionListener(this::btn_selanjutnyaActionPerformed);
         if(cb_urutkan != null) cb_urutkan.addActionListener(this::cb_urutkanActionPerformed);
         if(cb_durasi != null) cb_durasi.addActionListener(this::cb_durasiActionPerformed); 
+        btn_sebelum.addActionListener(e -> {
+            if (currentPage > 1) {
+                currentPage--;
+                displayResults();
+            }
+        });
+        btn_selanjutnya.addActionListener(e -> {
+            if (currentPage < totalPages) {
+                currentPage++;
+                displayResults();
+            }
+        });
     }
 
     private void cb_urutkanActionPerformed(java.awt.event.ActionEvent evt) {                                           
@@ -538,5 +555,18 @@ public class PanelSearchResult extends JPanel {
         } else {
             System.err.println("MainAppFrame is null in PanelSearchResult (btn_back)");
         }
-    }                                        
+    }       
+    
+    private void updatePaginationControls() {
+        if (currentlyDisplayedPackages.isEmpty()) {
+            totalPages = 1;
+            currentPage = 1;
+        } else {
+            totalPages = (int) Math.ceil((double) currentlyDisplayedPackages.size() / itemsPerPage);
+        }
+        
+        jLabel8.setText("Halaman " + currentPage + " dari " + totalPages);
+        btn_sebelum.setEnabled(currentPage > 1);
+        btn_selanjutnya.setEnabled(currentPage < totalPages);
+    }
 }

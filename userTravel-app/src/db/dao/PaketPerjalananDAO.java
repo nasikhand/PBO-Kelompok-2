@@ -379,5 +379,84 @@ public class PaketPerjalananDAO {
         return paket;
     }
 
+    public List<PaketPerjalananModel> searchAvailablePaket(String searchTerm) {
+        List<PaketPerjalananModel> list = new ArrayList<>();
+        if (this.conn == null) {
+            System.err.println("DAO Error: Koneksi database null. Tidak dapat mencari paket.");
+            return list;
+        }
+
+        // Query ini menggabungkan pencarian nama dengan filter tanggal
+        String sql = "SELECT pp.* FROM paket_perjalanan pp " +
+                     "JOIN kota k ON pp.kota_id = k.id " +
+                     "WHERE (pp.nama_paket LIKE ? OR k.nama_kota LIKE ?) " +
+                     "AND pp.tanggal_mulai >= ?"; // <-- Filter tanggal ditambahkan di sini
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            // Set parameter untuk pencarian nama
+            ps.setString(1, "%" + searchTerm + "%");
+            ps.setString(2, "%" + searchTerm + "%");
+            
+            // Set parameter untuk tanggal: hanya tampilkan paket mulai dari hari ini
+            ps.setDate(3, Date.valueOf(LocalDate.now()));
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                // Asumsi Anda memiliki metode helper untuk memetakan ResultSet ke Model
+                // list.add(mapResultSetToModel(rs)); 
+                
+                // Atau buat model secara langsung
+                PaketPerjalananModel p = new PaketPerjalananModel();
+                p.setId(rs.getInt("id"));
+                p.setKotaId(rs.getInt("kota_id"));
+                p.setNamaPaket(rs.getString("nama_paket"));
+                p.setTanggalMulai(rs.getString("tanggal_mulai"));
+                p.setTanggalAkhir(rs.getString("tanggal_akhir"));
+                p.setKuota(rs.getInt("kuota"));
+                p.setHarga(rs.getDouble("harga"));
+                p.setDeskripsi(rs.getString("deskripsi"));
+                p.setStatus(rs.getString("status"));
+                p.setGambar(rs.getString("gambar"));
+                p.setRating(rs.getDouble("rating"));
+                list.add(p);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error saat mencari paket yang tersedia: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public boolean kurangiKuota(int paketId, int jumlahPengurang) {
+        if (this.conn == null) {
+            System.err.println("DAO Error: Koneksi database null. Tidak dapat mengurangi kuota.");
+            return false;
+        }
+
+        // Query ini hanya akan berjalan jika kuota yang ada lebih besar atau sama dengan jumlah pengurang.
+        String sql = "UPDATE paket_perjalanan SET kuota = kuota - ? WHERE id = ? AND kuota >= ?";
+        
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, jumlahPengurang);
+            ps.setInt(2, paketId);
+            ps.setInt(3, jumlahPengurang); // Kondisi untuk memastikan kuota tidak menjadi negatif
+
+            int rowsAffected = ps.executeUpdate();
+            
+            if (rowsAffected > 0) {
+                System.out.println("✅ LOG: Kuota untuk paket ID " + paketId + " berhasil dikurangi sebanyak " + jumlahPengurang);
+                return true;
+            } else {
+                // Ini bisa terjadi jika kuota tidak mencukupi saat proses update berjalan.
+                System.err.println("❌ DAO WARNING: Gagal mengurangi kuota. Kemungkinan kuota tidak mencukupi atau paket ID " + paketId + " tidak ditemukan.");
+                return false;
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ DAO Error: Terjadi SQLException saat mengurangi kuota: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
     
 }

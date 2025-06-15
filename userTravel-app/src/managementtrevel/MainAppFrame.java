@@ -165,8 +165,12 @@ public class MainAppFrame extends JFrame {
 
     public void showPanel(String panelName, PaketPerjalananModel paket, String originalSearchNamaKota, String originalSearchTanggal) {
         if (panelName.equals(PANEL_TRIP_DETAIL)) {
+            System.out.println("INFO: Memuat ulang data untuk PanelTripDetail...");
+            int paketId = paket.getId();
+            db.dao.PaketPerjalananDAO paketDAO = new db.dao.PaketPerjalananDAO();
+            PaketPerjalananModel paketTerbaru = paketDAO.getById(paketId);
             removePanelIfExists(panelName);
-            PanelTripDetail panel = new PanelTripDetail(this, paket, originalSearchNamaKota, originalSearchTanggal); 
+            PanelTripDetail panel = new PanelTripDetail(this, (paketTerbaru != null ? paketTerbaru : paket), originalSearchNamaKota, originalSearchTanggal); 
             panel.setName(panelName);
             mainPanelContainer.add(panel, panelName);
             cardLayout.show(mainPanelContainer, panelName);

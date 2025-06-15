@@ -27,6 +27,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.sql.Connection;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -259,7 +260,7 @@ public class PanelBeranda extends JPanel {
         // cmbTravelersCariCepat.setSelectedIndex(0);
 
         dateChooserCariCepat.setDate(null); 
-        dateChooserCariCepat.setMinSelectableDate(new Date()); 
+        // dateChooserCariCepat.setMinSelectableDate(new Date()); 
     }
     
     private void loadDynamicContent() {
@@ -526,43 +527,54 @@ public class PanelBeranda extends JPanel {
 
     // Metode cmbTravelersCariCepatActionPerformed dihapus
 
-    private void tombolCariCepatActionPerformed(java.awt.event.ActionEvent evt) {                                           
+    private void tombolCariCepatActionPerformed(java.awt.event.ActionEvent evt) {                                             
         boolean valid = true;
         String kotaPilihan = null; 
+
+        // Validasi Kota Tujuan
         if(cmbKotaCariCepat.getSelectedIndex() == 0 || cmbKotaCariCepat.getSelectedItem().toString().equals(PLACEHOLDER_KOTA)) {
             JOptionPane.showMessageDialog(this, "Masukkan Kota Tujuan Anda", "Input Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
             cmbKotaCariCepat.requestFocus();
-            cmbKotaCariCepat.setBorder(AppTheme.createFocusBorder()); 
             valid = false;
         } else {
             kotaPilihan = cmbKotaCariCepat.getSelectedItem().toString();
-            cmbKotaCariCepat.setBorder(AppTheme.createDefaultInputBorder());
         }
 
-        if(dateChooserCariCepat.getDate() == null && valid) {
-            JOptionPane.showMessageDialog(this, "Pilih Tanggal Terlebih Dahulu", "Input Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
+        // Ambil tanggal yang dipilih
+        java.util.Date tanggalDipilih = dateChooserCariCepat.getDate();
+
+        // Validasi Tanggal
+        if(tanggalDipilih == null && valid) {
+            JOptionPane.showMessageDialog(this, "Pilih Tanggal Keberangkatan Terlebih Dahulu", "Input Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
             dateChooserCariCepat.requestFocus();
-            ((JTextField) dateChooserCariCepat.getDateEditor()).setBorder(AppTheme.createFocusBorder());
             valid = false;
-        } else if (dateChooserCariCepat.getDate() != null) {
-             ((JTextField) dateChooserCariCepat.getDateEditor()).setBorder(AppTheme.createDefaultInputBorder());
-        }
+        } else if (tanggalDipilih != null && valid) {
+            // --- LOGIKA VALIDASI TANGGAL YANG BARU ---
+            
+            // Konversi java.util.Date ke java.time.LocalDate untuk perbandingan yang lebih mudah
+            LocalDate selectedDate = tanggalDipilih.toInstant()
+                                                .atZone(java.time.ZoneId.systemDefault())
+                                                .toLocalDate();
+            LocalDate today = LocalDate.now();
 
-        // Validasi untuk jumlah traveler dihapus
+            // Cek apakah tanggal yang dipilih adalah sebelum hari ini
+            if (selectedDate.isBefore(today)) {
+                JOptionPane.showMessageDialog(this, "Tanggal keberangkatan tidak boleh di masa lalu.", "Tanggal Tidak Valid", JOptionPane.WARNING_MESSAGE);
+                dateChooserCariCepat.requestFocus();
+                valid = false;
+            }
+            // --- AKHIR DARI LOGIKA BARU ---
+        }
         
+        // Jika semua validasi lolos, lanjutkan pencarian
         if (valid) {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             String tanggalStr = sdf.format(dateChooserCariCepat.getDate());
-            // String travelers = jumlahTravelerDipilihCariCepat; // Dihapus
 
             System.out.println("Pencarian Cepat:");
             System.out.println("Kota Tujuan: " + kotaPilihan); 
             System.out.println("Tanggal: " + tanggalStr);
-            // System.out.println("Travelers: " + travelers); // Dihapus
 
-            // Panggil SearchResult tanpa parameter travelers
-            // SearchResult hasil = new SearchResult(mainAppFrame, kotaPilihan, tanggalStr); 
-            // Jika SearchResult adalah JPanel di MainAppFrame, Anda mungkin perlu:
             mainAppFrame.showSearchResultPanel(kotaPilihan, tanggalStr);
         }
     }                                          

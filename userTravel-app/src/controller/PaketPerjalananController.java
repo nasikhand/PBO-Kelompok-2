@@ -81,17 +81,9 @@ public class PaketPerjalananController {
      * @param namaKota Nama kota yang dicari.
      * @return List PaketPerjalananModel yang cocok.
      */
-    public List<PaketPerjalananModel> cariPaketByNamaKota(String namaKota) {
-        if (paketDao == null || kotaDao == null) {
-            System.err.println("DAO tidak diinisialisasi di PaketPerjalananController (cariPaketByNamaKota).");
-            return new ArrayList<>();
-        }
-        int kotaId = kotaDao.getKotaIdByNama(namaKota);
-        if (kotaId != -1) {
-            return paketDao.getPaketByKotaId(kotaId);
-        }
-        System.out.println("[Controller] Kota '" + namaKota + "' tidak ditemukan ID-nya.");
-        return new ArrayList<>(); 
+     public List<PaketPerjalananModel> cariPaketByNamaKota(String namaKota) {
+        // Panggil metode DAO yang baru yang sudah otomatis memfilter tanggal
+        return paketDao.searchAvailablePaket(namaKota);
     }
 
 
@@ -213,4 +205,6 @@ public class PaketPerjalananController {
             return false; 
         }
     }
+
+    
 }
