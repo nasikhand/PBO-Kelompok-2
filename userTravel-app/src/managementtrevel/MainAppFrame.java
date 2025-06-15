@@ -291,11 +291,11 @@ public class MainAppFrame extends JFrame {
     // 4. PanelParticipantsStep (NEW Step 4) -> PanelFinalStep (Step 5)
     // Menerima semua data yang dikumpulkan sebelumnya, ditambah jumlah peserta
     public void showPanel(String panelName, List<String> destinations, List<CustomTripDetailModel> itineraryDetails,
-                      String transportMode, String transportDetails, List<PenumpangModel> participantDetails,
+                      List<PenumpangModel> participantDetails,
                       double totalEstimatedCost, int numberOfParticipants) {
 
     if (panelName.equals(PANEL_FINAL_STEP)) {
-        PanelFinalStep panel = new PanelFinalStep(this, destinations, itineraryDetails, transportMode, transportDetails,
+        PanelFinalStep panel = new PanelFinalStep(this, destinations, itineraryDetails,
                                                   participantDetails, totalEstimatedCost, numberOfParticipants);
         panel.setName(panelName);
         mainPanelContainer.add(panel, panelName);

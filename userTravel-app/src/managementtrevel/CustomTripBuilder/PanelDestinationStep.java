@@ -400,7 +400,16 @@ public class PanelDestinationStep extends JPanel {
         btnCariDestinasi.addActionListener(this::btnCariDestinasiActionPerformed);
         btnTambahDestinasi.addActionListener(this::btnTambahDestinasiActionPerformed);
         btnHapusDestinasi.addActionListener(this::btnHapusDestinasiActionPerformed);
-        btnSaveTrip.addActionListener(this::btnSaveTripActionPerformed);
+        if (btnSaveTrip != null) {
+            btnSaveTrip.addActionListener(e -> {
+                JOptionPane.showMessageDialog(
+                    this, 
+                    "Harap selesaikan semua langkah hingga tahap finalisasi untuk dapat menyimpan draf.", 
+                    "Informasi", 
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+            });
+        }
         btnNextStep.addActionListener(this::btnNextStepActionPerformed);
         
         txtfield_destinasi.addActionListener(this::txtfield_destinasiActionPerformed);
@@ -449,26 +458,6 @@ public class PanelDestinationStep extends JPanel {
         lblEstimasiHargaValue.setText(AppTheme.formatCurrency(currentCost));
     }
 
-
-    private void btnSaveTripActionPerformed(ActionEvent evt) {
-        if (listModelDestinasi.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Tambahkan minimal satu destinasi sebelum menyimpan draf.", "Trip Kosong", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        
-        List<String> destinationsToSave = new ArrayList<>();
-        for (int i = 0; i < listModelDestinasi.getSize(); i++) {
-            destinationsToSave.add(listModelDestinasi.getElementAt(i));
-        }
-
-        String tripDetails = "Draf Trip Disimpan:\n";
-        for(int i=0; i < destinationsToSave.size(); i++){
-            tripDetails += "- " + destinationsToSave.get(i) + "\n";
-        }
-        tripDetails += "Estimasi Biaya: " + lblEstimasiHargaValue.getText();
-
-        JOptionPane.showMessageDialog(this, tripDetails, "Simpan Draf Trip Berhasil (Simulasi)", JOptionPane.INFORMATION_MESSAGE);
-    }
 
     private void txtfield_destinasiActionPerformed(ActionEvent evt) {
         btnCariDestinasi.doClick();

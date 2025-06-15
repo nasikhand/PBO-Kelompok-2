@@ -107,25 +107,26 @@ public class PanelOrderHistory extends JPanel {
     }
 
     private void loadDataReservasi() {
-        mainContentPanel.removeAll(); // Remove all old templates before loading new ones
-        mainContentPanel.revalidate();
-        mainContentPanel.repaint();
+        mainContentPanel.removeAll(); // Hapus semua kartu lama
 
         try {
             if (Session.currentUser == null) {
-                displayEmptyMessage("Pengguna belum login.");
+                displayEmptyMessage("Anda harus login untuk melihat riwayat pesanan.");
                 return;
             }
 
             int userId = Session.currentUser.getId();
-            // Retrieve finished reservations (status 'selesai')
-            List<ReservasiModel> listReservasi = reservasiDAO.getReservasiSelesaiDenganTrip(userId); // Fetch only 'selesai'
+            
+            // --- FIXED: Panggil metode DAO baru untuk mendapatkan riwayat lengkap ---
+            List<ReservasiModel> listReservasi = reservasiDAO.getHistoryReservasiByUser(userId);
 
-            if (!listReservasi.isEmpty()) {
-                System.out.println("DEBUG PanelOrderHistory - Found " + listReservasi.size() + " finished reservations.");
+            if (listReservasi != null && !listReservasi.isEmpty()) {
+                System.out.println("DEBUG PanelOrderHistory - Ditemukan " + listReservasi.size() + " riwayat pesanan (Paket & Custom).");
                 for (ReservasiModel reservasi : listReservasi) {
+                    // Metode createHistoryCard Anda sekarang harus bisa menangani
+                    // baik reservasi.getPaket() maupun reservasi.getCustomTrip()
                     mainContentPanel.add(createHistoryCard(reservasi));
-                    mainContentPanel.add(Box.createRigidArea(new Dimension(0, 15))); // Space between cards
+                    mainContentPanel.add(Box.createRigidArea(new Dimension(0, 15)));
                 }
             } else {
                 displayEmptyMessage("Tidak ada riwayat pesanan ditemukan.");
@@ -134,6 +135,11 @@ public class PanelOrderHistory extends JPanel {
             displayEmptyMessage("Gagal mengambil data riwayat: " + e.getMessage());
             System.err.println("Error saat mengambil data riwayat di PanelOrderHistory: " + e.getMessage());
             e.printStackTrace();
+        } finally {
+            // Pindahkan revalidate dan repaint ke dalam blok finally
+            // agar panel selalu diperbarui, bahkan jika tidak ada hasil.
+            mainContentPanel.revalidate();
+            mainContentPanel.repaint();
         }
     }
 

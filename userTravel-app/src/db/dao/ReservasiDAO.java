@@ -139,49 +139,47 @@ public class ReservasiDAO {
 
 
     public List<ReservasiModel> getHistoryReservasiByUser(int userId) {
-        List<ReservasiModel> list = new ArrayList<>();
-        if (this.conn == null) {
-            System.err.println("Tidak ada koneksi database untuk getHistoryReservasiByUser.");
-            return list;
-        }
-        String sql = "SELECT r.id, r.user_id, r.trip_type, r.trip_id, r.kode_reservasi, r.tanggal_reservasi, r.status " +
-                     "FROM reservasi r " +
-                     "LEFT JOIN paket_perjalanan pp ON r.trip_type = 'paket_perjalanan' AND r.trip_id = pp.id " +
-                     "LEFT JOIN custom_trip ct ON r.trip_type = 'custom_trip' AND r.trip_id = ct.id " +
-                     "WHERE r.user_id = ? AND r.status = 'selesai' " +
-                     "AND (pp.id IS NOT NULL OR ct.id IS NOT NULL)";
-
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        List<ReservasiModel> listReservasi = new ArrayList<>();
+        // Query ini mengambil reservasi yang statusnya 'dibayar' atau 'selesai'
+        String sql = "SELECT * FROM reservasi WHERE user_id = ? AND status IN ('dibayar', 'selesai') ORDER BY tanggal_reservasi DESC";
+        
+        try (Connection conn = this.conn != null ? this.conn : Koneksi.getConnection(); // Gunakan koneksi yang ada atau buat baru
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+            
             ps.setInt(1, userId);
             ResultSet rs = ps.executeQuery();
+            
+            // Inisialisasi DAO lain di luar loop untuk efisiensi
+            PaketPerjalananDAO paketDAO = new PaketPerjalananDAO(conn);
+            CustomTripDAO customTripDAO = new CustomTripDAO(conn);
+
             while (rs.next()) {
-                ReservasiModel r = new ReservasiModel();
-                r.setId(rs.getInt("id"));
-                r.setUserId(rs.getInt("user_id"));
-                r.setTripType(rs.getString("trip_type"));
+                ReservasiModel reservasi = new ReservasiModel();
+                reservasi.setId(rs.getInt("id"));
+                reservasi.setUserId(rs.getInt("user_id"));
+                reservasi.setTripType(rs.getString("trip_type"));
+                reservasi.setTripId(rs.getInt("trip_id"));
+                reservasi.setKodeReservasi(rs.getString("kode_reservasi"));
                 
-                r.setTripId((Integer) rs.getObject("trip_id"));
-
-                r.setKodeReservasi(rs.getString("kode_reservasi"));
-
-                java.sql.Date sqlDate = rs.getDate("tanggal_reservasi");
-                if (sqlDate != null) {
-                    r.setTanggalReservasi(sqlDate.toLocalDate());
+                java.sql.Date tgl = rs.getDate("tanggal_reservasi");
+                if (tgl != null) {
+                    reservasi.setTanggalReservasi(tgl.toLocalDate());
                 }
-                r.setStatus(rs.getString("status"));
+                reservasi.setStatus(rs.getString("status"));
 
-                if ("paket_perjalanan".equals(r.getTripType()) && r.getTripId() != null) {
-                    r.setPaket(getPaketById(r.getTripId()));
-                } else if ("custom_trip".equals(r.getTripType()) && r.getTripId() != null) {
-                    r.setCustomTrip(getCustomTripById(r.getTripId()));
+                // Muat detail trip berdasarkan trip_type
+                if ("paket_perjalanan".equals(reservasi.getTripType())) {
+                    reservasi.setPaket(paketDAO.getById(reservasi.getTripId()));
+                } else if ("custom_trip".equals(reservasi.getTripType())) {
+                    reservasi.setCustomTrip(customTripDAO.getById(reservasi.getTripId()));
                 }
-                list.add(r);
+                listReservasi.add(reservasi);
             }
         } catch (SQLException e) {
             System.err.println("Error saat mengambil riwayat reservasi: " + e.getMessage());
             e.printStackTrace();
         }
-        return list;
+        return listReservasi;
     }
 
     private PaketPerjalananModel getPaketById(int id) {

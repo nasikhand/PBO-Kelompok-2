@@ -45,14 +45,15 @@ public class CustomTripDAO {
         }
 
         int customTripId = -1;
+        // --- FIXED: Query SQL sekarang lebih sederhana ---
         String sqlCustomTrip = "INSERT INTO custom_trip (user_id, nama_trip, tanggal_mulai, tanggal_akhir, jumlah_peserta, status, total_harga, catatan_user) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        
         String sqlRincianCustomTrip = "INSERT INTO rincian_custom_trip (custom_trip_id, destinasi_id, tanggal_kunjungan, durasi_jam, urutan_kunjungan, harga_destinasi, biaya_transport) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try {
-            // Start transaction
             conn.setAutoCommit(false);
 
-            // 1. Save the main CustomTrip record
+            // 1. Simpan CustomTrip utama
             try (PreparedStatement ps = conn.prepareStatement(sqlCustomTrip, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setInt(1, customTrip.getUserId());
                 ps.setString(2, customTrip.getNamaTrip());
@@ -65,30 +66,20 @@ public class CustomTripDAO {
                 ps.setDouble(7, customTrip.getTotalHarga());
                 ps.setString(8, customTrip.getCatatanUser());
                 
-                // Save new detailed columns
-//                ps.setString(9, customTrip.getDetailedTransportMode());
-//                ps.setString(10, customTrip.getDetailedTransportDetails());
-//                ps.setString(11, customTrip.getDetailedAccommodationName());
-//                ps.setString(12, customTrip.getDetailedRoomType());
-//                ps.setString(13, customTrip.getDetailedAccommodationNotes());
-//                ps.setString(14, customTrip.getDetailedActivities() != null ? String.join(";", customTrip.getDetailedActivities()) : "");
-
                 int affectedRows = ps.executeUpdate();
                 if (affectedRows > 0) {
                     try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
                         if (generatedKeys.next()) {
                             customTripId = generatedKeys.getInt(1);
-                            System.out.println("✅ DEBUG: Custom Trip saved successfully to 'custom_trip' table with ID: " + customTripId);
                         }
                     }
                 } else {
-                    System.err.println("❌ DAO Error: Failed to insert main Custom Trip record, no rows affected.");
                     conn.rollback();
                     return -1;
                 }
             }
 
-            // 2. Save the itinerary details (rincian_custom_trip)
+            // 2. Simpan rincian itinerary
             if (customTripId != -1 && customTrip.getDetailList() != null && !customTrip.getDetailList().isEmpty()) {
                 try (PreparedStatement psRincian = conn.prepareStatement(sqlRincianCustomTrip)) {
                     for (CustomTripDetailModel detail : customTrip.getDetailList()) {
@@ -102,32 +93,20 @@ public class CustomTripDAO {
                         psRincian.addBatch();
                     }
                     psRincian.executeBatch();
-                    System.out.println("✅ DEBUG: Itinerary details saved successfully for Custom Trip ID: " + customTripId);
                 }
-            } else {
-                System.out.println("INFO: No itinerary details to save for Custom Trip ID: " + customTripId);
             }
 
-            // If everything is successful, commit the transaction
             conn.commit();
             return customTripId;
 
         } catch (SQLException e) {
-            System.err.println("❌ DAO Error: SQLException occurred during save operation. Rolling back transaction.");
+            System.err.println("❌ DAO Error: SQLException during save operation. Rolling back transaction.");
             e.printStackTrace();
-            try {
-                if (conn != null) conn.rollback();
-            } catch (SQLException ex) {
-                System.err.println("DAO Error: Failed to rollback transaction: " + ex.getMessage());
-            }
+            try { if (conn != null) conn.rollback(); } catch (SQLException ex) { /* ignored */ }
         } finally {
-            try {
-                if (conn != null) conn.setAutoCommit(true);
-            } catch (SQLException ex) {
-                System.err.println("DAO Error: Failed to restore auto-commit mode: " + ex.getMessage());
-            }
+            try { if (conn != null) conn.setAutoCommit(true); } catch (SQLException ex) { /* ignored */ }
         }
-        return -1; // Return -1 if any error occurred
+        return -1;
     }
 
     /**
@@ -209,50 +188,70 @@ public class CustomTripDAO {
         return customTrip;
     }
 
-    /**
-     * Deletes a custom trip and its associated details from the database within a transaction.
-     * @param id The ID of the custom trip to delete.
-     * @return true if deletion was successful, false otherwise.
-     */
-    public boolean deleteCustomTrip(int id) {
+    public boolean deleteCustomTripAndReservation(int customTripId, int reservasiId) {
         if (this.conn == null) {
             System.err.println("DAO Error: Database connection is null. Cannot delete CustomTrip.");
             return false;
         }
 
+        // Siapkan semua perintah SQL yang diperlukan
         String sqlDeleteRincian = "DELETE FROM rincian_custom_trip WHERE custom_trip_id = ?";
+        String sqlDeletePenumpang = "DELETE FROM penumpang WHERE reservasi_id = ?";
         String sqlDeleteCustomTrip = "DELETE FROM custom_trip WHERE id = ?";
+        String sqlDeleteReservasi = "DELETE FROM reservasi WHERE id = ?";
         
         try {
+            // Mulai transaksi untuk memastikan semua perintah berhasil atau tidak sama sekali
             conn.setAutoCommit(false);
 
-            // 1. Delete details first to avoid foreign key constraint violations
-            try(PreparedStatement psRincian = conn.prepareStatement(sqlDeleteRincian)) {
-                psRincian.setInt(1, id);
-                psRincian.executeUpdate();
+            // 1. Hapus Penumpang terlebih dahulu
+            try(PreparedStatement ps = conn.prepareStatement(sqlDeletePenumpang)) {
+                ps.setInt(1, reservasiId);
+                ps.executeUpdate();
+            }
+            
+            // 2. Hapus Rincian Itinerary
+            try(PreparedStatement ps = conn.prepareStatement(sqlDeleteRincian)) {
+                ps.setInt(1, customTripId);
+                ps.executeUpdate();
             }
 
-            // 2. Delete the main custom trip record
+            // 3. Hapus Trip Utama
             try (PreparedStatement ps = conn.prepareStatement(sqlDeleteCustomTrip)) {
-                ps.setInt(1, id);
+                ps.setInt(1, customTripId);
+                ps.executeUpdate();
+            }
+            
+            // 4. Terakhir, hapus entri Reservasi
+            try (PreparedStatement ps = conn.prepareStatement(sqlDeleteReservasi)) {
+                ps.setInt(1, reservasiId);
                 int affectedRows = ps.executeUpdate();
-                if (affectedRows > 0) {
-                    conn.commit();
-                    System.out.println("✅ DEBUG: Custom Trip ID: " + id + " deleted successfully.");
-                    return true;
-                } else {
-                    System.err.println("❌ DAO Warning: Custom Trip ID: " + id + " not found or could not be deleted. Rolling back.");
-                    conn.rollback();
-                    return false;
+                if (affectedRows == 0) {
+                    // Jika reservasi tidak ditemukan, batalkan semuanya
+                    throw new SQLException("Gagal menghapus reservasi, ID tidak ditemukan: " + reservasiId);
                 }
             }
+            
+            // Jika semua berhasil, commit perubahan ke database
+            conn.commit();
+            System.out.println("✅ DEBUG: Custom Trip (ID: " + customTripId + ") dan semua data terkait berhasil dihapus.");
+            return true;
+
         } catch (SQLException e) {
-            System.err.println("❌ DAO Error: Failed to delete Custom Trip. Rolling back. " + e.getMessage());
-            try { if (conn != null) conn.rollback(); } catch (SQLException ex) { /* ignored */ }
+            System.err.println("❌ DAO Error: Gagal membatalkan Custom Trip. Melakukan rollback. " + e.getMessage());
+            try { 
+                if (conn != null) conn.rollback(); // Batalkan semua perubahan jika terjadi error
+            } catch (SQLException ex) { 
+                System.err.println("DAO Error: Gagal melakukan rollback: " + ex.getMessage());
+            }
             e.printStackTrace();
             return false;
         } finally {
-            try { if (conn != null) conn.setAutoCommit(true); } catch (SQLException ex) { /* ignored */ }
+            try { 
+                if (conn != null) conn.setAutoCommit(true); // Kembalikan ke mode auto-commit
+            } catch (SQLException ex) { 
+                ex.printStackTrace();
+            }
         }
     }
 }

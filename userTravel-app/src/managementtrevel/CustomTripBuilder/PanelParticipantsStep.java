@@ -438,6 +438,16 @@ public class PanelParticipantsStep extends JPanel {
         txtJumlahPeserta.getDocument().addDocumentListener(new SimpleDocumentListener(this::handlePassengerCountChange));
         btnNextStep.addActionListener(this::btnNextStepActionPerformed);
         btnPrevStep.addActionListener(this::btnPrevStepActionPerformed);
+        if (btnSaveTrip != null) {
+        btnSaveTrip.addActionListener(e -> {
+            JOptionPane.showMessageDialog(
+                this, 
+                "Harap selesaikan semua langkah hingga tahap finalisasi untuk dapat menyimpan draf.", 
+                "Informasi", 
+                JOptionPane.INFORMATION_MESSAGE
+            );
+        });
+    }
         validateForm();
     }
 
@@ -733,13 +743,11 @@ public class PanelParticipantsStep extends JPanel {
     List<PenumpangModel> penumpangList = getPassengerDetails();
     
     mainAppFrame.showPanel(MainAppFrame.PANEL_FINAL_STEP,
-                currentDestinations,
-                itineraryDetails,
-                currentTransportMode,
-                currentTransportDetails,
-                penumpangList,
-                finalTotalCost,
-                numberOfParticipants);
+            currentDestinations,
+            itineraryDetails,
+            penumpangList,
+            finalTotalCost,
+            numberOfParticipants);
     }
     private void updateParticipantFields(int count) {
         // Hapus semua komponen yang ada sebelumnya dari panel dinamis

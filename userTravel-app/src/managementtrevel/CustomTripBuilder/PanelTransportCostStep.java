@@ -469,7 +469,16 @@ public class PanelTransportCostStep extends JPanel {
             }
         });
 
-        btnSaveTrip.addActionListener(this::btnSaveTripActionPerformed);
+        if (btnSaveTrip != null) {
+            btnSaveTrip.addActionListener(e -> {
+                JOptionPane.showMessageDialog(
+                    this, 
+                    "Harap selesaikan semua langkah hingga tahap finalisasi untuk dapat menyimpan draf.", 
+                    "Informasi", 
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+            });
+        }
         btnPrevStep.addActionListener(this::btnPrevStepActionPerformed);
         btnNextStep.addActionListener(this::btnNextStepActionPerformed);
 
@@ -553,25 +562,6 @@ public class PanelTransportCostStep extends JPanel {
 
         double finalTotalCost = baseCost + transportTotal;
         lblEstimasiHargaValue.setText(AppTheme.formatCurrency(finalTotalCost));
-    }
-
-    private void btnSaveTripActionPerformed(ActionEvent evt) {
-        selectedTransportMode = (String) cmbTransportMode.getSelectedItem();
-        transportDetailsNotes = txtTransportDetails.getText().trim();
-
-        if (cmbTransportMode.getSelectedIndex() == 0) {
-            JOptionPane.showMessageDialog(this, "Pilih mode transportasi sebelum menyimpan draf.", "Input Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        String message = String.format(
-            "Draf Trip Disimpan (Simulasi):\nDestinasi: %s\nTanggal: %s\nTransportasi: %s (%s)\nEstimasi Biaya: %s",
-            currentDestinations, 
-            lblSummaryDatesDisplay.getText(),
-            selectedTransportMode, transportDetailsNotes.isEmpty() ? "-" : transportDetailsNotes,
-            lblEstimasiHargaValue.getText()
-        );
-        JOptionPane.showMessageDialog(this, message, "Simpan Draf Trip Berhasil (Simulasi)", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void btnPrevStepActionPerformed(ActionEvent evt) {

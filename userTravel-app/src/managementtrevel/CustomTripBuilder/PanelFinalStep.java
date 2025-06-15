@@ -27,8 +27,6 @@ public class PanelFinalStep extends JPanel {
     private final MainAppFrame mainAppFrame;
     private final List<String> currentDestinations;
     private final List<CustomTripDetailModel> itineraryDetails;
-    private final String currentTransportMode;
-    private final String currentTransportDetails;
 
     private final double currentTotalCost;
     private final int numberOfParticipants;
@@ -46,14 +44,13 @@ public class PanelFinalStep extends JPanel {
     //</editor-fold>
 
     public PanelFinalStep(MainAppFrame mainAppFrame, List<String> destinations, List<CustomTripDetailModel> itineraryDetails,
-                      String transportMode, String transportDetails, List<PenumpangModel> participantDetails,
+                      List<PenumpangModel> participantDetails,
                       double totalEstimatedCost, int numberOfParticipants) {
-    this.mainAppFrame = mainAppFrame;
+    
     this.currentDestinations = destinations != null ? new ArrayList<>(destinations) : new ArrayList<>();
     this.itineraryDetails = itineraryDetails != null ? new ArrayList<>(itineraryDetails) : new ArrayList<>();
-    this.currentTransportMode = transportMode;
-    this.currentTransportDetails = transportDetails;
     this.participantDetails = participantDetails != null ? new ArrayList<>(participantDetails) : new ArrayList<>();
+    this.mainAppFrame = mainAppFrame;
     this.currentTotalCost = totalEstimatedCost;
     this.numberOfParticipants = numberOfParticipants;
 
@@ -256,6 +253,7 @@ public class PanelFinalStep extends JPanel {
         populateSummaryDisplay();
         btnPrevStep.addActionListener(this::btnPrevStepActionPerformed);
         btnFinishTrip.addActionListener(this::btnFinishTripActionPerformed);
+        btnSaveTrip.addActionListener(this::btnSaveTripActionPerformed);
     }
     
     private void populateSummaryDisplay() {
@@ -270,9 +268,6 @@ public class PanelFinalStep extends JPanel {
         String startDateFormatted = (overallStartDate != null) ? overallStartDate.format(dtf) : "-";
         String endDateFormatted = (overallEndDate != null) ? overallEndDate.format(dtf) : "-";
         lblDatesSummaryDisplay.setText("<html><b>Tanggal:</b> " + startDateFormatted + " s/d " + endDateFormatted + "</html>");
-
-        String transportInfo = (currentTransportMode != null && !currentTransportMode.isEmpty() ? currentTransportMode : "-");
-        lblTransportSummaryDisplay.setText("<html><b>Transportasi:</b> " + transportInfo + "</html>");
         
         lblParticipantsSummaryDisplay.setText("<html><b>Jumlah Peserta:</b> " + numberOfParticipants + " Orang</html>");
         lblEstimasiHargaValue.setText(AppTheme.formatCurrency(currentTotalCost));
@@ -301,8 +296,6 @@ public class PanelFinalStep extends JPanel {
             customTrip.setTotalHarga(currentTotalCost);
             customTrip.setCatatanUser(txtAreaFinalNotes.getText().trim());
             customTrip.setDetailList(itineraryDetails);
-            customTrip.setDetailedTransportMode(currentTransportMode);
-            customTrip.setDetailedTransportDetails(currentTransportDetails);
 
             int customTripId = tripController.saveCustomTrip(customTrip);
 
@@ -339,7 +332,7 @@ public class PanelFinalStep extends JPanel {
                     mainAppFrame.showPaymentPanel(reservasiId, Session.currentUser.getNamaLengkap(), Session.currentUser.getEmail(), Session.currentUser.getNomorTelepon(), namaPenumpangSaja);
 
                 } else {
-                    tripController.deleteCustomTrip(customTripId); // Rollback
+                    tripController.deleteCustomTrip(customTripId, reservasiId); // Rollback
                     JOptionPane.showMessageDialog(this, "Gagal membuat reservasi untuk trip ini.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
@@ -359,9 +352,7 @@ public class PanelFinalStep extends JPanel {
                 MainAppFrame.PANEL_PARTICIPANTS_STEP,
                 this.currentDestinations,
                 this.itineraryDetails,
-                this.currentTotalCost,
-                this.currentTransportMode,
-                this.currentTransportDetails
+                this.currentTotalCost
             );
         }
     }
@@ -414,5 +405,70 @@ public class PanelFinalStep extends JPanel {
             }
         }
     }
-    //</editor-fold>
+    
+    private void btnSaveTripActionPerformed(ActionEvent evt) {
+        if (Session.currentUser == null) {
+            JOptionPane.showMessageDialog(this, "Anda harus login untuk menyimpan draf.", "Login Diperlukan", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Validasi dasar: pastikan setidaknya ada peserta sebelum menyimpan draf
+        if (this.numberOfParticipants <= 0) {
+            JOptionPane.showMessageDialog(this, "Harap tambahkan setidaknya satu peserta sebelum menyimpan draf.", "Informasi", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            CustomTripController tripController = new CustomTripController();
+            ReservasiController reservasiController = new ReservasiController();
+
+            // 1. Siapkan CustomTripModel dengan status "draft"
+            CustomTripModel customTrip = new CustomTripModel();
+            customTrip.setUserId(Session.currentUser.getId());
+            String namaTrip = currentDestinations.isEmpty() ? "Custom Trip Draft" : String.join(", ", currentDestinations);
+            if (namaTrip.length() > 100) namaTrip = namaTrip.substring(0, 97) + "...";
+            customTrip.setNamaTrip(namaTrip);
+            customTrip.setTanggalMulai(itineraryDetails.stream().map(CustomTripDetailModel::getTanggalKunjungan).min(LocalDate::compareTo).orElse(null));
+            customTrip.setTanggalAkhir(itineraryDetails.stream().map(CustomTripDetailModel::getTanggalKunjungan).max(LocalDate::compareTo).orElse(null));
+            customTrip.setJumlahPeserta(numberOfParticipants);
+            customTrip.setStatus("draft"); // <-- Status diatur menjadi DRAFT
+            customTrip.setTotalHarga(currentTotalCost);
+            customTrip.setCatatanUser(txtAreaFinalNotes.getText().trim());
+            customTrip.setDetailList(itineraryDetails);
+
+            int customTripId = tripController.saveCustomTrip(customTrip);
+
+            if (customTripId != -1) {
+                // 2. Buat ReservasiModel yang sesuai dengan status "draft" atau "pending"
+                ReservasiModel reservasi = new ReservasiModel();
+                reservasi.setUserId(Session.currentUser.getId());
+                reservasi.setTripType("custom_trip");
+                reservasi.setTripId(customTripId);
+                reservasi.setKodeReservasi("DRF-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+                reservasi.setTanggalReservasi(LocalDate.now());
+                reservasi.setStatus("pending"); // Atur status reservasi menjadi draft juga
+
+                int reservasiId = reservasiController.buatReservasi(reservasi);
+
+                if (reservasiId != -1) {
+                    // 3. Simpan semua detail penumpang
+                    for (PenumpangModel penumpang : this.participantDetails) {
+                        reservasiController.tambahPenumpangLengkap(reservasiId, penumpang);
+                    }
+                    
+                    JOptionPane.showMessageDialog(this, "Trip berhasil disimpan sebagai draf!", "Draf Disimpan", JOptionPane.INFORMATION_MESSAGE);
+                    mainAppFrame.showPanel(MainAppFrame.PANEL_PESANAN_SAYA);
+
+                } else {
+                    tripController.deleteCustomTrip(customTripId, reservasiId); // Rollback
+                    JOptionPane.showMessageDialog(this, "Gagal membuat reservasi untuk draf.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Gagal menyimpan draf trip.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Terjadi error yang tidak terduga saat menyimpan draf: " + e.getMessage(), "Error Kritis", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 }

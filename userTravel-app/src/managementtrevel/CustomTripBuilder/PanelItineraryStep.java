@@ -370,9 +370,19 @@ public class PanelItineraryStep extends JPanel {
         updateSummaryDisplays();
         updateEstimatedCost();
 
-        btnSaveTrip.addActionListener(this::btnSaveTripActionPerformed);
         btnPrevStep.addActionListener(this::btnPrevStepActionPerformed);
         btnNextStep.addActionListener(this::btnNextStepActionPerformed);
+
+        if (btnSaveTrip != null) {
+            btnSaveTrip.addActionListener(e -> {
+                JOptionPane.showMessageDialog(
+                    this, 
+                    "Harap selesaikan semua langkah hingga tahap finalisasi untuk dapat menyimpan draf.", 
+                    "Informasi", 
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+            });
+        }
 
         btnMoveUp.addActionListener(e -> moveTableRow(-1));
         btnMoveDown.addActionListener(e -> moveTableRow(1));
@@ -522,62 +532,6 @@ public class PanelItineraryStep extends JPanel {
                 updateMoveButtonsState();
             }
         }
-    }
-
-
-    private void btnSaveTripActionPerformed(ActionEvent evt) {
-        if (itineraryTableModel.getRowCount() == 0) {
-            JOptionPane.showMessageDialog(this, "Tambahkan minimal satu destinasi dan atur tanggal untuk menyimpan draf.", "Trip Kosong", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        List<CustomTripDetailModel> itineraryDetailsToSave = new ArrayList<>();
-        List<String> destinationNamesForSummary = new ArrayList<>();
-
-        for (int i = 0; i < itineraryTableModel.getRowCount(); i++) {
-            int urutan = (Integer) itineraryTableModel.getValueAt(i, 0);
-            String destName = (String) itineraryTableModel.getValueAt(i, 1);
-            Object visitDateObj = itineraryTableModel.getValueAt(i, 2);
-            Integer durasi = (Integer) itineraryTable.getValueAt(i, 3);
-
-            LocalDate visitDate = null;
-            if (visitDateObj instanceof Date) {
-                visitDate = ((Date) visitDateObj).toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            } else if (visitDateObj instanceof LocalDate) {
-                visitDate = (LocalDate) visitDateObj;
-            }
-
-
-            if (visitDate == null) {
-                JOptionPane.showMessageDialog(this, "Tanggal kunjungan untuk '" + destName + "' belum diatur.", "Validasi Tanggal", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            DestinasiModel dest = destinasiController.getDestinasiByName(destName); // Call getDestinasiByName
-            if (dest == null) {
-                JOptionPane.showMessageDialog(this, "Destinasi '" + destName + "' tidak ditemukan di database. Tidak dapat menyimpan.", "Error Data", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            CustomTripDetailModel detail = new CustomTripDetailModel();
-            detail.setDestinasiId(dest.getId());
-            detail.setTanggalKunjungan(visitDate);
-            detail.setDurasiJam(durasi != null ? durasi : 0);
-            detail.setUrutanKunjungan(urutan);
-            detail.setHargaDestinasi(dest.getHarga());
-            detail.setBiayaTransport(0.0);
-            
-            itineraryDetailsToSave.add(detail);
-            destinationNamesForSummary.add(destName);
-        }
-
-        String message = String.format(
-            "Draf Trip Disimpan (Simulasi):\nDestinasi: %s\nTanggal Trip: %s\nEstimasi Biaya: %s",
-            destinationNamesForSummary,
-            lblSummaryDatesDisplay.getText(),
-            lblEstimasiHargaValue.getText()
-        );
-        JOptionPane.showMessageDialog(this, message, "Simpan Draf Trip Berhasil (Simulasi)", JOptionPane.INFORMATION_MESSAGE);
     }
 
 

@@ -26,7 +26,7 @@ public class CustomTripController {
         return customTripDAO.save(customTrip);
     }
 
-    public boolean deleteCustomTrip(int customTripId) {
-        return customTripDAO.deleteCustomTrip(customTripId);
+    public boolean deleteCustomTrip(int customTripId,  int reservasiId) {
+        return customTripDAO.deleteCustomTripAndReservation(customTripId, reservasiId);
     }
 }
