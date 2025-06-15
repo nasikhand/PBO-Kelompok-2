@@ -93,4 +93,22 @@ public class KotaDAO {
         }
         return -1; // Tidak ditemukan
     }
+
+    public String getNamaKotaByDestinasiId(int destinasiId) {
+        if (this.conn == null) return null;
+        
+        String sql = "SELECT k.nama_kota FROM kota k JOIN destinasi d ON k.id = d.kota_id WHERE d.id = ?";
+        
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, destinasiId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("nama_kota");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null; // Kembalikan null jika tidak ditemukan
+    }
 }

@@ -81,17 +81,19 @@ public class PaketPerjalananController {
      * @param namaKota Nama kota yang dicari.
      * @return List PaketPerjalananModel yang cocok.
      */
-    public List<PaketPerjalananModel> cariPaketByNamaKota(String namaKota) {
-        if (paketDao == null || kotaDao == null) {
-            System.err.println("DAO tidak diinisialisasi di PaketPerjalananController (cariPaketByNamaKota).");
-            return new ArrayList<>();
+    public List<PaketPerjalananModel> cariPaketByNamaDanTanggal(String namaKota, String tanggalStr) {
+        LocalDate searchDate;
+        try {
+            // Mengubah String tanggal (format yyyy-MM-dd) menjadi objek LocalDate
+            searchDate = LocalDate.parse(tanggalStr);
+        } catch (DateTimeParseException e) {
+            System.err.println("Format tanggal tidak valid: " + tanggalStr + ". Menggunakan tanggal hari ini sebagai fallback.");
+            // Jika format tanggal salah, gunakan tanggal hari ini sebagai cadangan
+            searchDate = LocalDate.now();
         }
-        int kotaId = kotaDao.getKotaIdByNama(namaKota);
-        if (kotaId != -1) {
-            return paketDao.getPaketByKotaId(kotaId);
-        }
-        System.out.println("[Controller] Kota '" + namaKota + "' tidak ditemukan ID-nya.");
-        return new ArrayList<>(); 
+        
+        // Panggil metode DAO baru dengan parameter tanggal
+        return paketDao.searchAvailablePaket(namaKota, searchDate);
     }
 
 
@@ -213,4 +215,6 @@ public class PaketPerjalananController {
             return false; 
         }
     }
+
+    
 }

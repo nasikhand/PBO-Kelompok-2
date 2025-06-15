@@ -1,5 +1,4 @@
 package db.dao;
-
 import db.Koneksi;
 import java.sql.*; // Untuk mendapatkan koneksi jika tidak di-inject
 import java.time.LocalDate;
@@ -10,7 +9,7 @@ import model.PaketPerjalananModel;
 
 public class PaketPerjalananDAO {
     private Connection conn;
-    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd MMMM YYYY");
 
     // Konstruktor default, bisa mengambil koneksi dari kelas Koneksi
     public PaketPerjalananDAO() {
@@ -167,25 +166,34 @@ public class PaketPerjalananDAO {
             System.err.println("Tidak ada koneksi database untuk getById.");
             return null;
         }
-        String query = "SELECT * FROM paket_perjalanan WHERE id = ?";
+        String query = "SELECT pp.*, k.nama_kota FROM paket_perjalanan pp " +
+                   "JOIN kota k ON pp.kota_id = k.id WHERE pp.id = ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                return new PaketPerjalananModel(
-                        rs.getInt("id"),
-                        rs.getInt("kota_id"),
-                        rs.getString("nama_paket"),
-                        rs.getString("tanggal_mulai"),
-                        rs.getString("tanggal_akhir"),
-                        rs.getInt("kuota"),
-                        rs.getDouble("harga"),
-                        rs.getString("deskripsi"),
-                        rs.getString("status"),
-                        rs.getString("gambar"),
-                        rs.getDouble("rating")
-                );
+                PaketPerjalananModel paket = new PaketPerjalananModel();
+                paket.setId(rs.getInt("id"));
+                paket.setKotaId(rs.getInt("kota_id"));
+                paket.setNamaPaket(rs.getString("nama_paket"));
+                
+                // Pastikan tanggal dimuat agar durasi bisa dihitung
+                paket.setTanggalMulai(rs.getString("tanggal_mulai"));
+                paket.setTanggalAkhir(rs.getString("tanggal_akhir"));
+                
+                paket.setKuota(rs.getInt("kuota"));
+                paket.setHarga(rs.getDouble("harga"));
+                paket.setDeskripsi(rs.getString("deskripsi"));
+                paket.setStatus(rs.getString("status"));
+                paket.setGambar(rs.getString("gambar"));
+                paket.setRating(rs.getDouble("rating"));
+                
+                // --- FIXED: Isi nama kota dari hasil JOIN ---
+                paket.setNamaKota(rs.getString("nama_kota"));
+                
+                return paket;
+                
             }
         } catch (SQLException e) {
             System.err.println("Error saat mengambil paket perjalanan by ID: " + e.getMessage());
@@ -324,5 +332,147 @@ public class PaketPerjalananDAO {
     return list;
 }
 
+ public PaketPerjalananModel getPaketPerjalananById(int id) { // Metode ini menerima 'int'
+        if (this.conn == null) {
+            System.err.println("Tidak ada koneksi database untuk operasi getPaketPerjalananById.");
+            return null;
+        }
+
+        PaketPerjalananModel paket = null;
+        String sql = "SELECT pp.*, k.nama_kota FROM paket_perjalanan pp " +
+                     "JOIN kota k ON pp.kota_id = k.id WHERE pp.id = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    paket = new PaketPerjalananModel();
+                    paket.setId(rs.getInt("id"));
+                    paket.setKotaId(rs.getInt("kota_id"));
+                    paket.setNamaPaket(rs.getString("nama_paket"));
+
+                    java.sql.Date sqlTanggalMulai = rs.getDate("tanggal_mulai");
+                    if (sqlTanggalMulai != null) {
+                        // Konversi java.sql.Date ke LocalDate lalu format ke String
+                        paket.setTanggalMulai(sqlTanggalMulai.toLocalDate().format(dateFormatter));
+                    } else {
+                        paket.setTanggalMulai(null); // Penting: set null jika memang null dari DB
+                    }
+
+                    java.sql.Date sqlTanggalAkhir = rs.getDate("tanggal_akhir");
+                    if (sqlTanggalAkhir != null) {
+                        // Konversi java.sql.Date ke LocalDate lalu format ke String
+                        paket.setTanggalAkhir(sqlTanggalAkhir.toLocalDate().format(dateFormatter));
+                    } else {
+                        paket.setTanggalAkhir(null); // Penting: set null jika memang null dari DB
+                    }
+
+                    paket.setKuota(rs.getInt("kuota"));
+                    paket.setHarga(rs.getDouble("harga"));
+                    paket.setDeskripsi(rs.getString("deskripsi"));
+                    paket.setStatus(rs.getString("status"));
+                    paket.setGambar(rs.getString("gambar"));
+                    paket.setRating(rs.getDouble("rating"));
+
+                    paket.setNamaKota(rs.getString("nama_kota"));
+                    
+                    // Jumlah hari dihitung di PaketPerjalananModel.getDurasi()
+                    paket.setJumlahHari((int) paket.getDurasi());
+
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error saat mengambil paket perjalanan dengan ID " + id + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+        return paket;
+    }
+
+    public List<PaketPerjalananModel> searchAvailablePaket(String searchTerm, LocalDate searchDate) {
+        List<PaketPerjalananModel> list = new ArrayList<>();
+        if (this.conn == null) {
+            System.err.println("DAO Error: Koneksi database null. Tidak dapat mencari paket.");
+            return list;
+        }
+
+        // Query ini menggabungkan pencarian nama dengan filter tanggal
+        String sql = "SELECT pp.* FROM paket_perjalanan pp " +
+                     "JOIN kota k ON pp.kota_id = k.id " +
+                     "WHERE (pp.nama_paket LIKE ? OR k.nama_kota LIKE ?) " +
+                     "AND pp.tanggal_mulai >= ?"; // <-- Filter tanggal ditambahkan di sini
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            // Set parameter untuk pencarian nama
+            ps.setString(1, "%" + searchTerm + "%");
+            ps.setString(2, "%" + searchTerm + "%");
+            
+            // Set parameter untuk tanggal: hanya tampilkan paket mulai dari hari ini
+            if (searchDate != null) {
+                ps.setDate(3, Date.valueOf(searchDate));
+            } else {
+                // Fallback: jika tanggal null, gunakan tanggal hari ini
+                ps.setDate(3, Date.valueOf(LocalDate.now()));
+            }
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                // Asumsi Anda memiliki metode helper untuk memetakan ResultSet ke Model
+                // list.add(mapResultSetToModel(rs)); 
+                
+                // Atau buat model secara langsung
+                PaketPerjalananModel p = new PaketPerjalananModel();
+                p.setId(rs.getInt("id"));
+                p.setKotaId(rs.getInt("kota_id"));
+                p.setNamaPaket(rs.getString("nama_paket"));
+                p.setTanggalMulai(rs.getString("tanggal_mulai"));
+                p.setTanggalAkhir(rs.getString("tanggal_akhir"));
+                p.setKuota(rs.getInt("kuota"));
+                p.setHarga(rs.getDouble("harga"));
+                p.setDeskripsi(rs.getString("deskripsi"));
+                p.setStatus(rs.getString("status"));
+                p.setGambar(rs.getString("gambar"));
+                p.setRating(rs.getDouble("rating"));
+                list.add(p);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error saat mencari paket yang tersedia: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public boolean kurangiKuota(int paketId, int jumlahPengurang) {
+        if (this.conn == null) {
+            System.err.println("DAO Error: Koneksi database null. Tidak dapat mengurangi kuota.");
+            return false;
+        }
+
+        // Query ini hanya akan berjalan jika kuota yang ada lebih besar atau sama dengan jumlah pengurang.
+        String sql = "UPDATE paket_perjalanan SET kuota = kuota - ? WHERE id = ? AND kuota >= ?";
+        
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, jumlahPengurang);
+            ps.setInt(2, paketId);
+            ps.setInt(3, jumlahPengurang); // Kondisi untuk memastikan kuota tidak menjadi negatif
+
+            int rowsAffected = ps.executeUpdate();
+            
+            if (rowsAffected > 0) {
+                System.out.println("✅ LOG: Kuota untuk paket ID " + paketId + " berhasil dikurangi sebanyak " + jumlahPengurang);
+                return true;
+            } else {
+                // Ini bisa terjadi jika kuota tidak mencukupi saat proses update berjalan.
+                System.err.println("❌ DAO WARNING: Gagal mengurangi kuota. Kemungkinan kuota tidak mencukupi atau paket ID " + paketId + " tidak ditemukan.");
+                return false;
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ DAO Error: Terjadi SQLException saat mengurangi kuota: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    
     
 }

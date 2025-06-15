@@ -26,9 +26,9 @@ public class PaketPerjalananModel {
     }
 
     // Konstruktor untuk membuat objek baru sebelum disimpan ke DB (tanpa ID)
-    public PaketPerjalananModel(int kotaId, String namaPaket, String tanggalMulai, String tanggalAkhir, 
-                                int kuota, double harga, String deskripsi, String status, 
-                                String gambar, double rating) {
+    public PaketPerjalananModel(int kotaId, String namaPaket, String tanggalMulai, String tanggalAkhir,
+                                 int kuota, double harga, String deskripsi, String status,
+                                 String gambar, double rating) {
         this.kotaId = kotaId;
         this.namaPaket = namaPaket;
         this.tanggalMulai = tanggalMulai;
@@ -40,11 +40,11 @@ public class PaketPerjalananModel {
         this.gambar = gambar;
         this.rating = rating;
     }
-    
+
     // Konstruktor lengkap (biasanya digunakan saat mengambil data dari DB)
-    public PaketPerjalananModel(int id, int kotaId, String namaPaket, String tanggalMulai, String tanggalAkhir, 
-                                int kuota, double harga, String deskripsi, String status, 
-                                String gambar, double rating) {
+    public PaketPerjalananModel(int id, int kotaId, String namaPaket, String tanggalMulai, String tanggalAkhir,
+                                 int kuota, double harga, String deskripsi, String status,
+                                 String gambar, double rating) {
         this.id = id;
         this.kotaId = kotaId;
         this.namaPaket = namaPaket;
@@ -117,21 +117,21 @@ public class PaketPerjalananModel {
      * @return Durasi dalam hari, atau 0 jika tanggal tidak valid.
      */
     public long getDurasi() {
-        if (this.tanggalMulai == null || this.tanggalAkhir == null || 
+        if (this.tanggalMulai == null || this.tanggalAkhir == null ||
             this.tanggalMulai.isEmpty() || this.tanggalAkhir.isEmpty()) {
-            return 0; 
+            return 0;
         }
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             LocalDate mulai = LocalDate.parse(this.tanggalMulai, formatter);
             LocalDate akhir = LocalDate.parse(this.tanggalAkhir, formatter);
             if (akhir.isBefore(mulai)) {
-                return 0; 
+                return 0;
             }
-            return ChronoUnit.DAYS.between(mulai, akhir) + 1; 
+            return ChronoUnit.DAYS.between(mulai, akhir) + 1;
         } catch (DateTimeParseException e) {
             System.err.println("Error parsing tanggal di getDurasi() untuk paket ID " + this.id + ": " + e.getMessage());
-            return 0; 
+            return 0;
         } catch (Exception e) {
             System.err.println("Error tidak terduga di getDurasi() untuk paket ID " + this.id + ": " + e.getMessage());
             return 0;
@@ -152,7 +152,7 @@ public class PaketPerjalananModel {
                 ", status='" + status + '\'' +
                 ", gambar='" + gambar + '\'' +
                 ", rating=" + rating +
-                ", durasi=" + getDurasi() + 
+                ", durasi=" + getDurasi() +
                 '}';
     }
 

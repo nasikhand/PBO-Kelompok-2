@@ -10,6 +10,7 @@ public class CustomTripDetailModel {
     private int urutanKunjungan;
     private double hargaDestinasi;
     private double biayaTransport;
+    private int customTripId;   
 
     // Setter
     public void setId(int id) {
@@ -67,5 +68,9 @@ public class CustomTripDetailModel {
 
     public double getBiayaTransport() {
         return biayaTransport;
+    }
+
+    public void setCustomTripId(int customTripId) {
+    this.customTripId = customTripId; 
     }
 }

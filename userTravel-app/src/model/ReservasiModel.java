@@ -1,26 +1,26 @@
 package model;
 
 import java.time.LocalDate;
-import java.util.Objects; 
+import java.util.Objects;
 
 public class ReservasiModel {
     private int id;
-    private int userId; 
-    private String tripType; 
-    private int tripId;
+    private int userId;
+    private String tripType;
+    private Integer tripId; // <--- UBAH INI dari 'int' menjadi 'Integer'
     private String kodeReservasi;
-    private LocalDate tanggalReservasi; 
+    private LocalDate tanggalReservasi;
     private String status;
-    private PaketPerjalananModel paket; 
-    private CustomTripModel customTrip; 
-    private int jumlahHari;
+    private PaketPerjalananModel paket;
+    private CustomTripModel customTrip;
+    private int jumlahHari; // Ini tidak digunakan di toString atau equals/hashCode
 
     // Konstruktor default
     public ReservasiModel() {
     }
 
     // Konstruktor untuk membuat reservasi baru (sebelum disimpan ke DB, tanpa ID auto-increment)
-    public ReservasiModel(int userId, String tripType, int tripId, String kodeReservasi, LocalDate tanggalReservasi, String status) {
+    public ReservasiModel(int userId, String tripType, Integer tripId, String kodeReservasi, LocalDate tanggalReservasi, String status) {
         this.userId = userId;
         this.tripType = tripType;
         this.tripId = tripId;
@@ -29,7 +29,7 @@ public class ReservasiModel {
         this.status = status;
     }
 
-    public ReservasiModel(int id, int userId, String tripType, int tripId, String kodeReservasi, LocalDate tanggalReservasi, String status) {
+    public ReservasiModel(int id, int userId, String tripType, Integer tripId, String kodeReservasi, LocalDate tanggalReservasi, String status) {
         this.id = id;
         this.userId = userId;
         this.tripType = tripType;
@@ -53,9 +53,8 @@ public class ReservasiModel {
     }
 
     public void setUserId(int userId) {
-        this.userId = userId; 
+        this.userId = userId;
     }
-    
 
     public String getTripType() {
         return tripType;
@@ -65,11 +64,11 @@ public class ReservasiModel {
         this.tripType = tripType;
     }
 
-    public int getTripId() {
+    public Integer getTripId() { // Return type sudah Integer, sesuai
         return tripId;
     }
 
-    public void setTripId(int tripId) {
+    public void setTripId(Integer tripId) { // Parameter type sudah Integer, sesuai
         this.tripId = tripId;
     }
 
@@ -113,7 +112,13 @@ public class ReservasiModel {
         this.customTrip = customTrip;
     }
 
-    
+    public int getJumlahHari() { // Asumsi ada getter/setter untuk ini
+        return jumlahHari;
+    }
+
+    public void setJumlahHari(int jumlahHari) {
+        this.jumlahHari = jumlahHari;
+    }
 
     @Override
     public String toString() {
@@ -135,9 +140,10 @@ public class ReservasiModel {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ReservasiModel that = (ReservasiModel) o;
+        // Gunakan Objects.equals untuk tipe wrapper (Integer) untuk menangani null dengan benar
         return id == that.id &&
                 userId == that.userId &&
-                tripId == that.tripId &&
+                Objects.equals(tripId, that.tripId) && // <--- UBAH INI
                 Objects.equals(tripType, that.tripType) &&
                 Objects.equals(kodeReservasi, that.kodeReservasi) &&
                 Objects.equals(tanggalReservasi, that.tanggalReservasi) &&

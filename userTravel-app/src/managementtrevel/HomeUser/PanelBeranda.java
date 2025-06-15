@@ -10,8 +10,7 @@ import db.dao.KotaDAO;
 import db.dao.PaketPerjalananDAO;
 import db.dao.ReservasiDAO;
 import managementtrevel.MainAppFrame;
-import managementtrevel.SearchResultScreen.SearchResult;
-import managementtrevel.TripDetailScreen.TripDetail;
+import model.CustomTripModel;
 import model.KotaModel; 
 import model.PaketPerjalananModel;
 import model.ReservasiModel;
@@ -29,6 +28,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.sql.Connection;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -108,12 +108,12 @@ public class PanelBeranda extends JPanel {
         mainContentPanel.add(sectionPerjalananSebelumnya);
         mainContentPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        JPanel sectionPenawaranSpesial = createSectionPanel("Penawaran Spesial");
-        panelPenawaranSpesialContentHolder = new JPanel();
-        panelPenawaranSpesialContentHolder.setOpaque(false);
-        sectionPenawaranSpesial.add(panelPenawaranSpesialContentHolder, BorderLayout.CENTER);
-        mainContentPanel.add(sectionPenawaranSpesial);
-        mainContentPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        // JPanel sectionPenawaranSpesial = createSectionPanel("Penawaran Spesial");
+        // panelPenawaranSpesialContentHolder = new JPanel();
+        // panelPenawaranSpesialContentHolder.setOpaque(false);
+        // sectionPenawaranSpesial.add(panelPenawaranSpesialContentHolder, BorderLayout.CENTER);
+        // mainContentPanel.add(sectionPenawaranSpesial);
+        // mainContentPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
         JPanel sectionDestinasiPopuler = createSectionPanel("Destinasi Populer");
         panelDestinasiPopulerContentHolder = new JPanel();
@@ -261,13 +261,16 @@ public class PanelBeranda extends JPanel {
         // cmbTravelersCariCepat.setSelectedIndex(0);
 
         dateChooserCariCepat.setDate(null); 
-        dateChooserCariCepat.setMinSelectableDate(new Date()); 
+        // dateChooserCariCepat.setMinSelectableDate(new Date()); 
     }
-    
+
     private void loadDynamicContent() {
         loadPerjalananSebelumnya();
-        loadPenawaranSpesial();
+//        loadPenawaranSpesial();
         loadDestinasiPopuler();
+
+        revalidate();
+        repaint();
     }
 
     private void loadPerjalananSebelumnya() {
@@ -296,9 +299,9 @@ public class PanelBeranda extends JPanel {
                 ReservasiModel r = previousTrips.get(i);
                 if (r.getTripType().equals("paket_perjalanan")) {
                     panelPerjalananSebelumnyaContentHolder.add(createTripPackageCard(r.getPaket(), true));
-                } // else {
-                //     panelPerjalananSebelumnyaContentHolder.add(createTripPackageCard(r.getCustomTrip(), true));
-                // }
+                } else if ("custom_trip".equals(r.getTripType()) && r.getCustomTrip() != null) {
+                panelPerjalananSebelumnyaContentHolder.add(createCustomTripCard(r.getCustomTrip()));
+                 }
             }
 
         }
@@ -309,31 +312,31 @@ public class PanelBeranda extends JPanel {
 
 
 
-    private void loadPenawaranSpesial() {
-        panelPenawaranSpesialContentHolder.removeAll();
-        panelPenawaranSpesialContentHolder.setLayout(new GridLayout(1, 3, 15, 15)); // misal 3 card max
+    // private void loadPenawaranSpesial() {
+    //     panelPenawaranSpesialContentHolder.removeAll();
+    //     panelPenawaranSpesialContentHolder.setLayout(new GridLayout(1, 3, 15, 15)); // misal 3 card max
 
-        PenawaranDAO penawaranDAO = new PenawaranDAO(Koneksi.getConnection());
-        List<PenawaranModel> penawaranList = penawaranDAO.getPenawaranSpesial();
+    //     PenawaranDAO penawaranDAO = new PenawaranDAO(Koneksi.getConnection());
+    //     List<PenawaranModel> penawaranList = penawaranDAO.getPenawaranSpesial();
 
-        if (penawaranList == null || penawaranList.isEmpty()) {
-            panelPenawaranSpesialContentHolder.setLayout(new BorderLayout());
-            JLabel noDataLabel = new JLabel("Penawaran spesial menarik akan segera tersedia!");
-            noDataLabel.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
-            noDataLabel.setForeground(AppTheme.TEXT_SECONDARY_DARK);
-            noDataLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            panelPenawaranSpesialContentHolder.add(noDataLabel, BorderLayout.CENTER);
-        } else {
-            int maxToShow = Math.min(3, penawaranList.size());
-            for (int i = 0; i < maxToShow; i++) {
-                PenawaranModel p = penawaranList.get(i);
-                panelPenawaranSpesialContentHolder.add(createPenawaranCard(p));
-            }
-        }
+    //     if (penawaranList == null || penawaranList.isEmpty()) {
+    //         panelPenawaranSpesialContentHolder.setLayout(new BorderLayout());
+    //         JLabel noDataLabel = new JLabel("Penawaran spesial menarik akan segera tersedia!");
+    //         noDataLabel.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
+    //         noDataLabel.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+    //         noDataLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    //         panelPenawaranSpesialContentHolder.add(noDataLabel, BorderLayout.CENTER);
+    //     } else {
+    //         int maxToShow = Math.min(3, penawaranList.size());
+    //        for (int i = 0; i < maxToShow; i++) {
+    //            PenawaranModel p = penawaranList.get(i);
+    //            panelPenawaranSpesialContentHolder.add(createPenawaranCard(p));
+    //        }
+    //     }
 
-        panelPenawaranSpesialContentHolder.revalidate();
-        panelPenawaranSpesialContentHolder.repaint();
-    }
+    //     panelPenawaranSpesialContentHolder.revalidate();
+    //     panelPenawaranSpesialContentHolder.repaint();
+    // }
 
     private void loadDestinasiPopuler() {
         panelDestinasiPopulerContentHolder.removeAll();
@@ -374,26 +377,73 @@ public class PanelBeranda extends JPanel {
         return kotaDAO.getNamaKotaById(kotaId); 
     }
 
-    private JPanel createPenawaranCard(PenawaranModel penawaran) {
-        JPanel card = new JPanel();
-        card.setLayout(new BorderLayout());
-        card.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+    // private JPanel createPenawaranCard(PenawaranModel penawaran) {
+    //     JPanel card = new JPanel();
+    //     card.setLayout(new BorderLayout());
+    //     card.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+    //     card.setBackground(Color.WHITE);
+
+    //     JLabel titleLabel = new JLabel(penawaran.getNama());
+    //     titleLabel.setFont(AppTheme.FONT_PRIMARY_MEDIUM);
+    //     titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    //     JTextArea deskripsiArea = new JTextArea(penawaran.getDeskripsi());
+    //     deskripsiArea.setLineWrap(true);
+    //     deskripsiArea.setWrapStyleWord(true);
+    //     deskripsiArea.setEditable(false);
+    //     deskripsiArea.setBackground(null);
+    //     deskripsiArea.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
+    //     deskripsiArea.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+
+    //     card.add(titleLabel, BorderLayout.NORTH);
+    //     card.add(deskripsiArea, BorderLayout.CENTER);
+
+    //     return card;
+    // }
+
+    private JPanel createCustomTripCard(CustomTripModel customTrip) {
+        // Metode ini mirip dengan createPaketCard, tetapi mengambil data dari CustomTripModel
+        JPanel card = new JPanel(new BorderLayout(0, 8));
+        card.setPreferredSize(new Dimension(220, 280)); // Sesuaikan ukurannya
         card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createLineBorder(AppTheme.BORDER_COLOR));
 
-        JLabel titleLabel = new JLabel(penawaran.getNama());
-        titleLabel.setFont(AppTheme.FONT_PRIMARY_MEDIUM);
-        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        JTextArea deskripsiArea = new JTextArea(penawaran.getDeskripsi());
-        deskripsiArea.setLineWrap(true);
-        deskripsiArea.setWrapStyleWord(true);
-        deskripsiArea.setEditable(false);
-        deskripsiArea.setBackground(null);
-        deskripsiArea.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
-        deskripsiArea.setForeground(AppTheme.TEXT_SECONDARY_DARK);
+        // Panel untuk detail teks
+        JPanel detailPanel = new JPanel();
+        detailPanel.setLayout(new BoxLayout(detailPanel, BoxLayout.Y_AXIS));
+        detailPanel.setOpaque(false);
+        detailPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        card.add(titleLabel, BorderLayout.NORTH);
-        card.add(deskripsiArea, BorderLayout.CENTER);
+        JLabel namaTrip = new JLabel(customTrip.getNamaTrip());
+        namaTrip.setFont(AppTheme.FONT_SUBTITLE);
 
+        JLabel tanggal = new JLabel(customTrip.getTanggalMulai().toString() + " - " + customTrip.getTanggalAkhir().toString());
+        tanggal.setFont(AppTheme.FONT_PRIMARY_DEFAULT);
+
+        JLabel harga = new JLabel(AppTheme.formatCurrency(customTrip.getTotalHarga()));
+        harga.setFont(AppTheme.FONT_PRIMARY_MEDIUM_BOLD);
+        harga.setForeground(AppTheme.ACCENT_ORANGE);
+
+        JButton detailButton = new JButton("Lihat Detail");
+        AppTheme.stylePrimaryButton(detailButton, "Lihat Detail");
+        detailButton.addActionListener(e -> {
+            // Navigasi ke halaman detail pesanan
+            // Anda perlu mengambil ReservasiModel yang sesuai untuk custom trip ini
+            ReservasiDAO dao = new ReservasiDAO();
+            ReservasiModel reservasi = dao.getReservasiByCustomTripId(customTrip.getId());
+            if (reservasi != null) {
+                mainAppFrame.showPanel(MainAppFrame.PANEL_ORDER_DETAIL, reservasi);
+            }
+        });
+
+        detailPanel.add(namaTrip);
+        detailPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        detailPanel.add(tanggal);
+        detailPanel.add(Box.createVerticalGlue());
+        detailPanel.add(harga);
+        detailPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        detailPanel.add(detailButton);
+
+        card.add(detailPanel, BorderLayout.CENTER);
         return card;
     }
 
@@ -492,7 +542,7 @@ public class PanelBeranda extends JPanel {
              JButton btnPesanLagi = new JButton("Pesan Lagi");
             styleSecondaryButton(btnPesanLagi, "Pesan Lagi");
             btnPesanLagi.addActionListener(e -> {
-                 JOptionPane.showMessageDialog(this, "Fitur 'Pesan Lagi' untuk '" + paket.getNamaPaket() + "' belum diimplementasikan.", "Info", JOptionPane.INFORMATION_MESSAGE);
+                 mainAppFrame.showPanel(MainAppFrame.PANEL_BOOKING_SCREEN, paket);
             });
             buttonPanelCard.add(btnPesanLagi);
         }
@@ -528,43 +578,47 @@ public class PanelBeranda extends JPanel {
 
     // Metode cmbTravelersCariCepatActionPerformed dihapus
 
-    private void tombolCariCepatActionPerformed(java.awt.event.ActionEvent evt) {                                           
+    private void tombolCariCepatActionPerformed(java.awt.event.ActionEvent evt) {                                             
         boolean valid = true;
         String kotaPilihan = null; 
+
+        // Validasi Kota Tujuan
         if(cmbKotaCariCepat.getSelectedIndex() == 0 || cmbKotaCariCepat.getSelectedItem().toString().equals(PLACEHOLDER_KOTA)) {
             JOptionPane.showMessageDialog(this, "Masukkan Kota Tujuan Anda", "Input Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
             cmbKotaCariCepat.requestFocus();
-            cmbKotaCariCepat.setBorder(AppTheme.createFocusBorder()); 
             valid = false;
         } else {
             kotaPilihan = cmbKotaCariCepat.getSelectedItem().toString();
-            cmbKotaCariCepat.setBorder(AppTheme.createDefaultInputBorder());
         }
 
-        if(dateChooserCariCepat.getDate() == null && valid) {
-            JOptionPane.showMessageDialog(this, "Pilih Tanggal Terlebih Dahulu", "Input Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
+        // Ambil tanggal yang dipilih
+        java.util.Date tanggalDipilih = dateChooserCariCepat.getDate();
+
+        // Validasi Tanggal
+        if(tanggalDipilih == null && valid) {
+            JOptionPane.showMessageDialog(this, "Pilih Tanggal Keberangkatan Terlebih Dahulu", "Input Tidak Lengkap", JOptionPane.WARNING_MESSAGE);
             dateChooserCariCepat.requestFocus();
-            ((JTextField) dateChooserCariCepat.getDateEditor()).setBorder(AppTheme.createFocusBorder());
             valid = false;
-        } else if (dateChooserCariCepat.getDate() != null) {
-             ((JTextField) dateChooserCariCepat.getDateEditor()).setBorder(AppTheme.createDefaultInputBorder());
-        }
+        } else if (tanggalDipilih != null && valid) {
+            // --- LOGIKA VALIDASI TANGGAL YANG BARU ---
+            
+            // Konversi java.util.Date ke java.time.LocalDate untuk perbandingan yang lebih mudah
+            LocalDate selectedDate = tanggalDipilih.toInstant()
+                                                .atZone(java.time.ZoneId.systemDefault())
+                                                .toLocalDate();
+            LocalDate today = LocalDate.now();
 
-        // Validasi untuk jumlah traveler dihapus
+        }
         
+        // Jika semua validasi lolos, lanjutkan pencarian
         if (valid) {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             String tanggalStr = sdf.format(dateChooserCariCepat.getDate());
-            // String travelers = jumlahTravelerDipilihCariCepat; // Dihapus
 
             System.out.println("Pencarian Cepat:");
             System.out.println("Kota Tujuan: " + kotaPilihan); 
             System.out.println("Tanggal: " + tanggalStr);
-            // System.out.println("Travelers: " + travelers); // Dihapus
 
-            // Panggil SearchResult tanpa parameter travelers
-            // SearchResult hasil = new SearchResult(mainAppFrame, kotaPilihan, tanggalStr); 
-            // Jika SearchResult adalah JPanel di MainAppFrame, Anda mungkin perlu:
             mainAppFrame.showSearchResultPanel(kotaPilihan, tanggalStr);
         }
     }                                          
