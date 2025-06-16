@@ -346,8 +346,8 @@ public class PanelTripDetail extends JPanel {
                 String deskripsi = d.getDeskripsi();
                 String durasi = "Durasi: " + d.getDurasiJam() + " Jam";
 
-                String userDir = System.getProperty("user.dir");
-                File baseDir = new File(userDir).getParentFile();
+                final String IMAGE_BASE_PATH = "SharedAppImages/destinasi/";
+                File projectBaseDir = new File(System.getProperty("user.dir")).getParentFile();
 
                 String gambarRelatif = d.getGambar();
 
@@ -358,7 +358,7 @@ public class PanelTripDetail extends JPanel {
                         gambarRelatif = gambarRelatif.substring(1);
                     }
 
-                    File imageFile = new File(baseDir, gambarRelatif);
+                    File imageFile = new File(projectBaseDir,IMAGE_BASE_PATH + gambarRelatif);
                     if (imageFile.exists()) {
                         iconUntukItem = new ImageIcon(imageFile.getAbsolutePath());
                     } else {
