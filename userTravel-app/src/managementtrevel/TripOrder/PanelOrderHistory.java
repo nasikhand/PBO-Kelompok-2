@@ -180,10 +180,9 @@ public class PanelOrderHistory extends JPanel {
             if (gambarPath != null && !gambarPath.isEmpty()) {
                 SwingUtilities.invokeLater(() -> {
                     try {
-                        final String IMAGE_BASE_PATH = "SharedAppImages/paket_perjalanan/";
-                        File projectBaseDir = new File(System.getProperty("user.dir")).getParentFile();
-                        String gambarRelatif = gambarPath.startsWith("/") ? gambarPath.substring(1) : gambarPath;
-                        File imageFile = new File(projectBaseDir,IMAGE_BASE_PATH + gambarRelatif);
+                        File baseDir = new File(System.getProperty("user.dir")).getParentFile();
+                        String gambarRelatif = gambarPath.startsWith("/") || gambarPath.startsWith("\\") ? gambarPath.substring(1) : gambarPath;
+                        File imageFile = new File(baseDir, gambarRelatif);
 
                         if (imageFile.exists()) {
                             ImageIcon originalIcon = new ImageIcon(imageFile.toURI().toURL());

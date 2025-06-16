@@ -269,15 +269,15 @@ public class PanelTripDetail extends JPanel {
                 String gambarPath = currentPaket.getGambar();
                 if (gambarPath != null && !gambarPath.isEmpty()) {
                     SwingUtilities.invokeLater(() -> {
-                        final String IMAGE_BASE_PATH = "SharedAppImages/paket_perjalanan/";
-                        File projectBaseDir = new File(System.getProperty("user.dir")).getParentFile();
+                        String userDir = System.getProperty("user.dir");
+                        File baseDir = new File(userDir).getParentFile();
                         String gambarRelatif = gambarPath;
 
                         if (gambarRelatif.startsWith("/") || gambarRelatif.startsWith("\\")) {
                             gambarRelatif = gambarRelatif.substring(1);
                         }
 
-                        File imageFile = new File(projectBaseDir, IMAGE_BASE_PATH + gambarRelatif);
+                        File imageFile = new File(baseDir, gambarRelatif);
                         System.out.println("[PanelTripDetail] Mencoba memuat gambar utama: " + imageFile.getAbsolutePath());
 
                         if (imageFile.exists()) {

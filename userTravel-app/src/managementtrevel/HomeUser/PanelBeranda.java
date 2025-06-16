@@ -462,12 +462,12 @@ public class PanelBeranda extends JPanel {
         setPlaceholderImage(lblImage, "Memuat..."); 
         
         SwingUtilities.invokeLater(() -> {
-            final String IMAGE_BASE_PATH = "SharedAppImages/paket_perjalanan/";
-            File projectBaseDir = new File(System.getProperty("user.dir")).getParentFile();
+            String userDir = System.getProperty("user.dir");
+            File baseDir = new File(System.getProperty("user.dir")).getParentFile();
             String gambarRelatif = paket.getGambar();
             if (gambarRelatif != null && !gambarRelatif.isEmpty()) {
                 if (gambarRelatif.startsWith("/")) gambarRelatif = gambarRelatif.substring(1);
-                File gambarFile = new File(projectBaseDir, IMAGE_BASE_PATH + gambarRelatif);
+                File gambarFile = new File(baseDir, gambarRelatif);
                 if (gambarFile.exists()) {
                     ImageIcon icon = new ImageIcon(new ImageIcon(gambarFile.getAbsolutePath()).getImage().getScaledInstance(lblImage.getPreferredSize().width, lblImage.getPreferredSize().height, Image.SCALE_SMOOTH));
                     lblImage.setIcon(icon);
